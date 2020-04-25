@@ -1,0 +1,7 @@
+Export-Package: \
+	com.nabiki.corona.api,\
+	com.nabiki.corona.kernel.api,\
+	com.nabiki.corona.kernel.conn.api,\
+	com.nabiki.corona.kernel.biz.api
+Bundle-Version: 0.0.1
+-buildpath: osgi.cmpn
