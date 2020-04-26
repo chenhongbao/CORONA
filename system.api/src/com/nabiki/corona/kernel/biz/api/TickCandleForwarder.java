@@ -6,7 +6,7 @@ import com.nabiki.corona.api.Tick;
 public interface TickCandleForwarder {
 	String name();
 	
-	void forTick(Tick tick);
+	void tick(Tick tick);
 	
-	void forCandle(Candle candle);
+	void candle(Candle candle);
 }

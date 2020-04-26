@@ -1,10 +1,11 @@
-package com.nabiki.corona.candle;
+package com.nabiki.corona.candle.core;
 
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.biz.api.CandleInstantQuery;
+import com.nabiki.corona.kernel.settings.api.CandleInstantQuery;
 
 public class CandleEngine implements Runnable {
 	
@@ -12,10 +13,17 @@ public class CandleEngine implements Runnable {
 	
 	private Collection<CandleInstantQuery> queries;
 	private CandleEngineListener listener;
+	
+	// Working mark
+	private AtomicBoolean working = new AtomicBoolean(false);
 
 	public CandleEngine(CandleEngineListener l, Collection<CandleInstantQuery> queries) {
 		this.listener = l;
 		this.queries = queries;
+	}
+	
+	public void state(boolean working) {
+		this.working.set(working);
 	}
 
 	@Override

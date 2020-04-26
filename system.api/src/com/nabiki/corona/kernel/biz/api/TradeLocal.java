@@ -6,11 +6,13 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public interface TradeLocal {
-	void onOrderStatus(KerOrderStatus o);
+	String name();
 	
-	void onTradeReport(KerTradeReport r);
+	void orderStatus(KerOrderStatus o);
 	
-	void onPositionDetail(KerPositionDetail p);
+	void tradeReport(KerTradeReport r);
 	
-	void onAccount(KerAccount a);
+	void positionDetail(KerPositionDetail p);
+	
+	void account(KerAccount a);
 }
