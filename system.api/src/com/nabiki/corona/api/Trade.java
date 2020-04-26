@@ -5,10 +5,11 @@ import java.util.Collection;
 public interface Trade {
 	/**
 	 * Identifier for this trade across system.
+	 * 
 	 * @return trade id
 	 */
 	String id();
-	
+
 	/**
 	 * Send order and wait for complete or cancel.
 	 * 
@@ -17,16 +18,16 @@ public interface Trade {
 	 * @throws TradeException order execution error
 	 */
 	OrderStatus sendAndWait(NewOrder order);
-	
+
 	OrderStatus send(NewOrder order);
-	
+
 	OrderStatus lastStatus();
-	
+
 	Collection<OrderStatus> statuses();
-	
+
 	TradeReport lastTrade();
-	
+
 	Collection<TradeReport> trades();
-	
+
 	OrderStatus cancel();
 }

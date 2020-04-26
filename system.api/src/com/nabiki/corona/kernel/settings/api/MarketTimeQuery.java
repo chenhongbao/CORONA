@@ -4,11 +4,11 @@ import java.time.Instant;
 
 public interface MarketTimeQuery {
 	String name();
-	
+
 	boolean open(Instant now);
-	
+
 	boolean closed(Instant now);
-	
+
 	/**
 	 * Return true if now is after market close of the day and before market open of the next day.
 	 * 

@@ -4,8 +4,8 @@ import com.nabiki.corona.api.Tick;
 
 public interface TickLocal {
 	String name();
-	
+
 	void state(boolean working);
-	
+
 	void tick(Tick tick);
 }

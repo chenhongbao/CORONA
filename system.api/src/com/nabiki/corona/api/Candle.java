@@ -11,30 +11,30 @@ import java.time.Instant;
  */
 public interface Candle {
 	String symbol();
-	
+
 	double openPrice();
-	
+
 	double highPrice();
-	
+
 	double lowPrice();
-	
+
 	double closePrice();
-	
+
 	int openInterest();
-	
+
 	int volume();
-	
+
 	int minutePeriod();
-	
+
 	boolean isDay();
-	
+
 	boolean isLastOfDay();
-	
+
 	boolean isRealTime();
-	
+
 	Instant updateTime();
 
 	Date tradingDay();
-	
+
 	Date actionDay();
 }

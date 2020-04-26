@@ -6,12 +6,12 @@ import com.nabiki.corona.api.TradeSession;
 
 public interface KerTradeSession extends TradeSession {
 	KerTrade newKerTrade();
-	
+
 	KerTrade recallKerTrade(String id);
-	
+
 	KerAccount kerAccount();
-	
+
 	Collection<KerPositionDetail> kerPositions();
-	
+
 	Collection<KerPositionDetail> kerPositions(String symbol);
 }

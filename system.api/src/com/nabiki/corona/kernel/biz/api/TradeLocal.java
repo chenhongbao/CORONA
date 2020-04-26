@@ -7,12 +7,12 @@ import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public interface TradeLocal {
 	String name();
-	
+
 	void orderStatus(KerOrderStatus o);
-	
+
 	void tradeReport(KerTradeReport r);
-	
+
 	void positionDetail(KerPositionDetail p);
-	
+
 	void account(KerAccount a);
 }

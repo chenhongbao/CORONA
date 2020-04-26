@@ -10,12 +10,12 @@ import com.nabiki.corona.api.MarketDataSession;
  */
 public interface KerMarketDataSession extends MarketDataSession {
 	Boolean isRunning();
-	
+
 	Collection<String> subscribedSymbols();
-	
+
 	void asyncRun();
-	
+
 	void run();
-	
+
 	void stop();
 }

@@ -5,6 +5,6 @@ import com.nabiki.corona.kernel.api.KerError;
 
 public interface CandleEngineListener {
 	void candle(Candle candle);
-	
+
 	void error(KerError e);
 }

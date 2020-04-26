@@ -18,13 +18,13 @@ import com.nabiki.corona.candle.core.CandleEngineListener;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.biz.api.TickCandleForwarder;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
-import com.nabiki.corona.kernel.settings.api.CandleInstantQuery;
+import com.nabiki.corona.kernel.settings.api.SymbolQuery;
 
 /**
  * Process tick into candle, and re-forward ticks and candles to client.
  * <p>
- * The processor exposes it interface to upstream to be injected ticks by simply
- * not specifying any parameters for annotation Component.
+ * The processor exposes it interface to upstream to be injected ticks by simply not specifying any parameters for
+ * annotation Component.
  * 
  * @author Hongbao Chen
  *
@@ -39,9 +39,9 @@ public class TickProcessor implements TickLocal {
 	// is generated. This function is built into bundle and injected.
 	@Reference(bind = "bindQuery", updated = "updatedQuery", unbind = "unbindQuery",
 			cardinality = ReferenceCardinality.AT_LEAST_ONE)
-	volatile Collection<CandleInstantQuery> queries = new ConcurrentSkipListSet<>();
+	volatile Collection<SymbolQuery> queries = new ConcurrentSkipListSet<>();
 
-	public void bindQuery(CandleInstantQuery query) {
+	public void bindQuery(SymbolQuery query) {
 		if (query == null)
 			return;
 
@@ -53,7 +53,7 @@ public class TickProcessor implements TickLocal {
 		}
 	}
 
-	public void updatedQuery(CandleInstantQuery query) {
+	public void updatedQuery(SymbolQuery query) {
 		if (query == null)
 			return;
 
@@ -61,7 +61,7 @@ public class TickProcessor implements TickLocal {
 		bindQuery(query);
 	}
 
-	public void unbindQuery(CandleInstantQuery query) {
+	public void unbindQuery(SymbolQuery query) {
 		if (query == null)
 			return;
 

@@ -8,7 +8,7 @@ package com.nabiki.corona.api;
  */
 public interface MarketDataSession {
 	String accountId();
-	
+
 	MarketDataSubscriber marketDataSubscriber();
 
 	Error lastError();

@@ -5,8 +5,8 @@ import com.nabiki.corona.api.Tick;
 
 public interface TickCandleForwarder {
 	String name();
-	
+
 	void tick(Tick tick);
-	
+
 	void candle(Candle candle);
 }

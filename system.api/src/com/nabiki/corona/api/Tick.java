@@ -4,8 +4,7 @@ import java.util.Date;
 import java.time.Instant;
 
 /**
- * Any object implementing this interface provides concrete data access to the
- * tick flow from market.
+ * Any object implementing this interface provides concrete data access to the tick flow from market.
  * 
  * @author Hongbao Chen
  *
@@ -20,7 +19,7 @@ public interface Tick {
 	int bidVolume();
 
 	double bidPrice();
-	
+
 	int askVolume2();
 
 	double askPrice2();
@@ -70,7 +69,7 @@ public interface Tick {
 	double averagePrice();
 
 	double lastPrice();
-	
+
 	double openPrice();
 
 	double closePrice();
@@ -80,11 +79,11 @@ public interface Tick {
 	double settlementPrice();
 
 	double preSettlementPrice();
-	
+
 	boolean isPreMarket();
-	
+
 	boolean isPostMarket();
-	
+
 	boolean isRealTime();
 
 	Instant updateTime();

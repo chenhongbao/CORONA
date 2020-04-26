@@ -11,24 +11,24 @@ import java.util.Date;
  */
 public interface TradeReport {
 	String orderId();
-	
+
 	String tradeId();
-	
+
 	char direction();
-	
+
 	char offsetFlag();
-	
+
 	char hedgeFlag();
-	
+
 	double price();
-	
+
 	int volume();
-	
+
 	Instant tradeTime();
-	
+
 	Date tradingDay();
-	
+
 	int sequenceNo();
-	
+
 	int brokerOrderSequence();
 }

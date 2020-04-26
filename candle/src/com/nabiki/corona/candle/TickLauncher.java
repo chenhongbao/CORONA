@@ -29,6 +29,7 @@ import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.settings.api.BrokerAccount;
 import com.nabiki.corona.kernel.settings.api.MarketTimeQuery;
 import com.nabiki.corona.kernel.settings.api.NativeExecutableInfo;
+import com.nabiki.corona.kernel.settings.api.SymbolQuery;
 
 @Component(service = {})
 public class TickLauncher implements Runnable {
@@ -37,37 +38,24 @@ public class TickLauncher implements Runnable {
 	private Logger log;
 
 	// User's note for different accounts.
-	public final static String TRADING_USER_NOTE = "trading";
-	public final static String MD_USER_NOTE = "md";
+	public final static String MD_USER_NOTE = "marketdata";
 
 	// Broker-end user accounts.
-	private BrokerAccount tradeUser;
-	private BrokerAccount mdUser;
+	private BrokerAccount user;
 
 	@Reference(cardinality = ReferenceCardinality.AT_LEAST_ONE, policy = ReferencePolicy.DYNAMIC)
 	public void addUser(BrokerAccount user) {
-		switch (user.note().toLowerCase()) {
-		case TickLauncher.MD_USER_NOTE:
-			this.mdUser = user;
-			break;
-		case TickLauncher.TRADING_USER_NOTE:
-			this.tradeUser = user;
-			break;
-		default:
+		if (user.note().compareToIgnoreCase(TickLauncher.MD_USER_NOTE) != 0) {
 			return;
 		}
 
+		this.user = user;
 		this.log.info("Add broker({}) {} account: {}", user.broker(), user.note(), user.user());
 	}
 
 	public void removeUser(BrokerAccount user) {
-		if (this.tradeUser != user && this.mdUser != user)
+		if (this.user != user)
 			return;
-
-		if (this.tradeUser == user)
-			this.tradeUser = null;
-		else if (this.mdUser == user)
-			this.mdUser = null;
 
 		this.log.info("Remove broker({}) {} account: {}", user.broker(), user.note(), user.user());
 	}
@@ -93,6 +81,10 @@ public class TickLauncher implements Runnable {
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindExecInfo(NativeExecutableInfo info) {
+		if (info.title().compareToIgnoreCase(TickEngine.NATIVE_TITLE) != 0) {
+			return;
+		}
+
 		this.execInfo = info;
 		this.log.info("Bind native executable info: {}.", info.title());
 	}
@@ -122,6 +114,29 @@ public class TickLauncher implements Runnable {
 	public void unbindTickLocal(TickLocal local) {
 		if (this.tickLocals.remove(local))
 			this.log.info("Unbind tick local processor: {}.", local.name());
+	}
+
+	// Need to know all available symbols to subscribe.
+	volatile Collection<String> symbols = new ConcurrentSkipListSet<>();
+
+	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
+	public void addSymbols(SymbolQuery symbol) {
+		for (var s : symbol.symbols()) {
+			this.symbols.add(s);
+		}
+
+		this.log.info("Add {} symbols to tick engine.", symbol.symbols().size());
+	}
+
+	public void removeSymbols(SymbolQuery symbol) {
+		int count = 0;
+		for (var s : symbol.symbols()) {
+			if (this.symbols.remove(s))
+				++count;
+		}
+
+		this.log.info("Remove {} symbols from tick engine, {} symbols not found.", count,
+				symbol.symbols().size() - count);
 	}
 
 	// Scheduled executor as timer.
@@ -173,7 +188,7 @@ public class TickLauncher implements Runnable {
 			}
 
 			try {
-				this.engine = new TickEngine(new TickPostListener(), this.tradeUser, this.mdUser, this.execInfo);
+				this.engine = new TickEngine(new TickPostListener(), this.user, this.execInfo, this.symbols);
 				this.tickFuture = this.executor.submit(this.engine);
 				this.log.info("Launche tick engine.");
 			} catch (RejectedExecutionException e) {
@@ -186,7 +201,7 @@ public class TickLauncher implements Runnable {
 				this.log.warn("Fail stopping tick engine for it is done.");
 				break;
 			}
-			
+
 			// Notify engine to stop and turn its state to stopping.
 			this.engine.tellStopping();
 			if (!this.tickFuture.cancel(true))
@@ -203,7 +218,7 @@ public class TickLauncher implements Runnable {
 	}
 
 	private boolean userReady() {
-		return this.mdUser != null && this.tradeUser != null && this.execInfo != null;
+		return this.user != null && this.execInfo != null;
 	}
 
 	private EngineAction nextAction() {
