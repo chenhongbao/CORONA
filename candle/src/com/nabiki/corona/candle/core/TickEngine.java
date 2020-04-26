@@ -4,11 +4,6 @@ import com.nabiki.corona.kernel.settings.api.BrokerAccount;
 import com.nabiki.corona.kernel.settings.api.NativeExecutableInfo;
 
 public class TickEngine implements Runnable {
-	//Tick engine state.
-	private enum EngineState {
-		STARTING, STARTED, STOPPING, STOPPED
-	}
-	
 	private EngineState state = EngineState.STOPPED;
 
 	public TickEngine(TickEngineListener l, BrokerAccount trade, BrokerAccount md, NativeExecutableInfo exec) {
@@ -21,7 +16,11 @@ public class TickEngine implements Runnable {
 
 	}
 
-	public void stopping() {
+	public void tellStopping() {
 		this.state = EngineState.STOPPING;
+	}
+	
+	public EngineState state() {
+		return this.state;
 	}
 }

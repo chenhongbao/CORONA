@@ -20,6 +20,8 @@ import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.candle.core.CandleEngine;
+import com.nabiki.corona.candle.core.EngineAction;
+import com.nabiki.corona.candle.core.EngineState;
 import com.nabiki.corona.candle.core.TickEngine;
 import com.nabiki.corona.candle.core.TickEngineListener;
 import com.nabiki.corona.kernel.api.KerError;
@@ -30,15 +32,6 @@ import com.nabiki.corona.kernel.settings.api.NativeExecutableInfo;
 
 @Component(service = {})
 public class TickLauncher implements Runnable {
-	// Internal states.
-	private enum LauncherState {
-		STARTING, STARTED, STOPPING, STOPPED
-	}
-
-	private enum LauncherAction {
-		START, STOP, NONE
-	}
-
 	// Use OSGi logging service.
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
@@ -137,9 +130,6 @@ public class TickLauncher implements Runnable {
 	private ScheduledThreadPoolExecutor executor;
 	public final static int CHECK_PERIOD_MILLIS = 60 * 1000;
 
-	// Current state.
-	private LauncherState state = LauncherState.STOPPED;
-
 	public TickLauncher() {
 	}
 
@@ -178,7 +168,7 @@ public class TickLauncher implements Runnable {
 		switch (action) {
 		case START:
 			if (!userReady()) {
-				this.log.warn("Presiquites not ready before new launch.");
+				this.log.warn("Presiquites not ready before new tick launch.");
 				break;
 			}
 
@@ -196,9 +186,9 @@ public class TickLauncher implements Runnable {
 				this.log.warn("Fail stopping tick engine for it is done.");
 				break;
 			}
-
+			
 			// Notify engine to stop and turn its state to stopping.
-			this.engine.stopping();
+			this.engine.tellStopping();
 			if (!this.tickFuture.cancel(true))
 				this.log.warn("Fail canceling tick engine.");
 
@@ -216,23 +206,23 @@ public class TickLauncher implements Runnable {
 		return this.mdUser != null && this.tradeUser != null && this.execInfo != null;
 	}
 
-	private LauncherAction nextAction() {
-		LauncherAction next = LauncherAction.NONE;
+	private EngineAction nextAction() {
+		EngineAction next = EngineAction.NONE;
 
 		if (this.mktQuery != null) {
-			switch (this.state) {
+			switch (this.engine.state()) {
 			case STARTED:
 				if (this.mktQuery.closed(Instant.now()))
-					next = LauncherAction.STOP;
+					next = EngineAction.STOP;
 				break;
 			case STOPPED:
 				if (this.mktQuery.open(Instant.now()))
-					next = LauncherAction.START;
+					next = EngineAction.START;
 				break;
 			case STARTING:
 			case STOPPING:
 			default:
-				this.log.warn("Unhandled launcher state: {}.", this.state);
+				this.log.warn("Unhandled launcher state: {}.", this.engine.state());
 				break;
 			}
 		} else {
@@ -256,6 +246,11 @@ public class TickLauncher implements Runnable {
 		@Override
 		public void error(KerError e) {
 			log.warn("Tick engine encounters error. {}", e.getMessage());
+		}
+
+		@Override
+		public void state(EngineState s) {
+			log.info("Tick engine state: {}.", s);
 		}
 
 	}

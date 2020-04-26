@@ -7,4 +7,6 @@ public interface TickEngineListener {
 	void tick(Tick tick);
 	
 	void error(KerError e);
+	
+	void state(EngineState s);
 }
