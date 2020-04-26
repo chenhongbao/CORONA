@@ -50,14 +50,14 @@ public class TickLauncher implements Runnable {
 		}
 
 		this.user = user;
-		this.log.info("Add broker({}) {} account: {}", user.broker(), user.note(), user.user());
+		this.log.info("Add broker({}) {} account: {}.", user.broker(), user.note(), user.user());
 	}
 
 	public void removeUser(BrokerAccount user) {
 		if (this.user != user)
 			return;
 
-		this.log.info("Remove broker({}) {} account: {}", user.broker(), user.note(), user.user());
+		this.log.info("Remove broker({}) {} account: {}.", user.broker(), user.note(), user.user());
 	}
 
 	// Market time query.
@@ -66,13 +66,13 @@ public class TickLauncher implements Runnable {
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindMktQuery(MarketTimeQuery query) {
 		this.mktQuery = query;
-		this.log.info("Bind market time query: " + query.name());
+		this.log.info("Bind market time query: {}.", query.name());
 	}
 
 	public void unbindMktQuery(MarketTimeQuery query) {
 		if (this.mktQuery == query) {
 			this.mktQuery = null;
-			this.log.info("Unbind market time query: " + query.name());
+			this.log.info("Unbind market time query: {}.", query.name());
 		}
 	}
 
@@ -117,26 +117,19 @@ public class TickLauncher implements Runnable {
 	}
 
 	// Need to know all available symbols to subscribe.
-	volatile Collection<String> symbols = new ConcurrentSkipListSet<>();
+	// Don't extract symbols from the interface until tick engined is initiated because the data behind the interface
+	// could change without notice. It is good to let the interface to handle the change.
+	volatile Collection<SymbolQuery> symbols = new ConcurrentSkipListSet<>();
 
 	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
-	public void addSymbols(SymbolQuery symbol) {
-		for (var s : symbol.symbols()) {
-			this.symbols.add(s);
-		}
-
-		this.log.info("Add {} symbols to tick engine.", symbol.symbols().size());
+	public void addSymbol(SymbolQuery s) {
+		this.symbols.add(s);
+		this.log.info("Add symbols to tick engine: {}.", s.name());
 	}
 
-	public void removeSymbols(SymbolQuery symbol) {
-		int count = 0;
-		for (var s : symbol.symbols()) {
-			if (this.symbols.remove(s))
-				++count;
-		}
-
-		this.log.info("Remove {} symbols from tick engine, {} symbols not found.", count,
-				symbol.symbols().size() - count);
+	public void removeSymbol(SymbolQuery s) {
+		if (this.symbols.remove(s))
+			this.log.info("Remove symbol from tick engine: {}.", s.name());
 	}
 
 	// Scheduled executor as timer.
@@ -188,7 +181,7 @@ public class TickLauncher implements Runnable {
 			}
 
 			try {
-				this.engine = new TickEngine(new TickPostListener(), this.user, this.execInfo, this.symbols);
+				this.engine = new TickEngine(new TickPostListener(), this.user, this.execInfo, extractSymbols());
 				this.tickFuture = this.executor.submit(this.engine);
 				this.log.info("Launche tick engine.");
 			} catch (RejectedExecutionException e) {
@@ -215,6 +208,14 @@ public class TickLauncher implements Runnable {
 			this.log.warn("Unhandled launching action: {}.", action);
 			break;
 		}
+	}
+	
+	private Collection<String> extractSymbols() {
+		Collection<String> ret = new ConcurrentSkipListSet<>();
+		for (var symbol : this.symbols)
+			ret.addAll(symbol.symbols());
+		
+		return ret;
 	}
 
 	private boolean userReady() {
