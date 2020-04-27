@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.osgi.service.log.LogEntry;
 
-public interface LogKeeper {
+public interface LogQuery {
 	/**
 	 * Get all active logger names.
 	 * @return collection of logger names

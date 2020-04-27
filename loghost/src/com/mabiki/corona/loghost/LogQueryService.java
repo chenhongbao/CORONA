@@ -19,10 +19,10 @@ import com.mabiki.corona.loghost.core.CacheErrorListener;
 import com.mabiki.corona.loghost.core.LogCache;
 import com.mabiki.corona.loghost.core.LogWriter;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.biz.api.LogKeeper;
+import com.nabiki.corona.kernel.biz.api.LogQuery;
 
 @Component
-public class LogKeeperService implements LogKeeper {
+public class LogQueryService implements LogQuery {
 	public final static int LOG_CACHE_NUM = 10000;
 	public final static String LOG_CACHE_ROOT = "./.logs/";
 
@@ -48,10 +48,10 @@ public class LogKeeperService implements LogKeeper {
 	private LogWriter writer;
 
 	// If cache encounters error, write that message for debug.
-	private class KeeperListener implements CacheErrorListener {
+	private class CacheListener implements CacheErrorListener {
 		private PrintWriter pw;
 
-		public KeeperListener() {
+		public CacheListener() {
 			var f = new File("fatal.txt");
 			try {
 				if (!f.exists())
@@ -72,9 +72,9 @@ public class LogKeeperService implements LogKeeper {
 
 	}
 
-	public LogKeeperService() {
-		this.cache = new LogCache(Paths.get(LogKeeperService.LOG_CACHE_ROOT).toAbsolutePath(),
-				LogKeeperService.LOG_CACHE_NUM, new KeeperListener());
+	public LogQueryService() {
+		this.cache = new LogCache(Paths.get(LogQueryService.LOG_CACHE_ROOT).toAbsolutePath(),
+				LogQueryService.LOG_CACHE_NUM, new CacheListener());
 		this.writer = new LogWriter(this.cache);
 	}
 
