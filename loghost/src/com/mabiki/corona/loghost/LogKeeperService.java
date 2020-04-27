@@ -64,8 +64,10 @@ public class LogKeeperService implements LogKeeper {
 
 		@Override
 		public void error(KerError e, LogEntry l) {
-			e.cause().printStackTrace(this.pw);
-			this.pw.println(l.toString());
+			if (e != null)
+				e.cause().printStackTrace(this.pw);
+			if (l != null)
+				this.pw.println(l.toString());
 		}
 
 	}

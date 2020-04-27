@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 
 import org.osgi.service.log.LogEntry;
 
+import com.nabiki.corona.kernel.api.KerError;
+
 public class LogCache {
 
 	private final int maxLogs;
@@ -47,6 +49,9 @@ public class LogCache {
 				Files.createDirectories(this.root);
 			}
 		} catch (IOException | SecurityException e) {
+			try {if (this.listener != null)
+				this.listener.error(new KerError("Fail creating logs root.", e), null);
+			} catch (Exception ex) {}
 		}
 	}
 
@@ -85,6 +90,10 @@ public class LogCache {
 
 			return new PrintWriter(newPath.toFile());
 		} catch (IOException | NumberFormatException e) {
+			try {if (this.listener != null)
+				this.listener.error(new KerError("Fail creating logs file: " + newPath, e), null);
+			} catch (Exception ex) {}
+			
 			return null;
 		}
 	}
@@ -118,6 +127,12 @@ public class LogCache {
 		
 		// Separator.
 		this.pw.println("[END]");
+		
+		if (this.pw.checkError()) {
+			try {if (this.listener != null)
+				this.listener.error(new KerError("Fail writing log to file."), entry);
+			} catch (Exception ex) {}
+		}
 	}
 	
 	private void addEntry(LogEntry entry) {
