@@ -5,10 +5,9 @@ import java.util.Collection;
 public interface Trade {
 	/**
 	 * Identifier for this trade across system.
-	 * 
 	 * @return trade id
 	 */
-	String id();
+	String sessionId();
 
 	/**
 	 * Send order and wait for complete or cancel.

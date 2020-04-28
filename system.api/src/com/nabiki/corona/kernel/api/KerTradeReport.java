@@ -12,6 +12,10 @@ import com.nabiki.corona.api.TradeReport;
  *
  */
 public interface KerTradeReport extends TradeReport {
+	String sessionId();
+	
+	void sessionId(String s);
+	
 	String brokerId();
 
 	void brokerId(String s);

@@ -1,11 +1,16 @@
 package com.nabiki.corona.kernel.biz.api;
 
+import java.util.Collection;
+
+import com.nabiki.corona.api.NewOrder;
 import com.nabiki.corona.kernel.api.KerAccount;
+import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
+import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public interface TradeLocal {
@@ -18,10 +23,43 @@ public interface TradeLocal {
 	void positionDetail(KerPositionDetail p);
 
 	void account(KerAccount a);
-	
+
 	void instrument(KerInstrument i);
-	
+
 	void margin(KerMargin m);
-	
+
 	void commission(KerCommission c);
+
+	/**
+	 * Allocate margin for order.
+	 * 
+	 * @param op open order
+	 * @return allocation report
+	 */
+	KerOrderEvalue evaluateOrder(NewOrder op);
+
+	/**
+	 * Query account with given account id.
+	 * 
+	 * @param id account id
+	 * @return account info
+	 */
+	KerAccount account(String id);
+
+	/**
+	 * Query position detail of given symbol under given account.
+	 * 
+	 * @param id     account id
+	 * @param symbol symbol of the query detail
+	 * @return collection of position detail
+	 */
+	Collection<KerPositionDetail> positionDetails(String id, String symbol);
+
+	/**
+	 * Query trade session with given reference. The trade returned from the method can be either ongoing or completed.
+	 * 
+	 * @param id trade session identifier
+	 * @return trade session
+	 */
+	KerTrade trade(String sid);
 }
