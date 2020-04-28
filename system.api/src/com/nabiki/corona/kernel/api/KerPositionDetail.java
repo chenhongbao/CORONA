@@ -1,6 +1,6 @@
 package com.nabiki.corona.kernel.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.nabiki.corona.api.PositionDetail;
 
@@ -25,7 +25,7 @@ public interface KerPositionDetail extends PositionDetail {
 
 	void direction(char t);
 
-	void openDate(Date d);
+	void openDate(LocalDate d);
 
 	void tradeId(String s);
 
@@ -33,7 +33,7 @@ public interface KerPositionDetail extends PositionDetail {
 
 	void openPrice(double d);
 
-	void tradingDay(Date d);
+	void tradingDay(LocalDate d);
 
 	void settlementId(String s);
 
@@ -61,7 +61,7 @@ public interface KerPositionDetail extends PositionDetail {
 
 	void marginRateByMoney(double d);
 
-	void maringRateByVolume(double d);
+	void marginRateByVolume(double d);
 
 	void lastSettlementPrice(double d);
 

@@ -1,6 +1,6 @@
 package com.nabiki.corona.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * Position detail per trade.
@@ -15,7 +15,7 @@ public interface PositionDetail {
 
 	char direction();
 
-	Date openDate();
+	LocalDate openDate();
 
 	String tradeId();
 
@@ -23,7 +23,7 @@ public interface PositionDetail {
 
 	double openPrice();
 
-	Date tradingDay();
+	LocalDate tradingDay();
 
 	String settlementId();
 
@@ -43,7 +43,7 @@ public interface PositionDetail {
 
 	double marginRateByMoney();
 
-	double maringRateByVolume();
+	double marginRateByVolume();
 
 	double lastSettlementPrice();
 

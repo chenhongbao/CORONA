@@ -8,6 +8,16 @@ public interface Trade {
 	 * @return trade id
 	 */
 	String sessionId();
+	
+	/**
+	 * Create an new order associated with this trade session. The return order object has some field already set by
+	 * session. Don't modify those fields if you don't mean to manipulate the internal session data.
+	 * <p>
+	 * A trade session can have only one order. Call the method a second time will return null.
+	 * 
+	 * @return new order associated with the calling session
+	 */
+	Order order();
 
 	/**
 	 * Send order and wait for complete or cancel.
@@ -16,9 +26,9 @@ public interface Trade {
 	 * @return order status
 	 * @throws TradeException order execution error
 	 */
-	OrderStatus sendAndWait(NewOrder order);
+	OrderStatus sendAndWait(Order order);
 
-	OrderStatus send(NewOrder order);
+	OrderStatus send(Order order);
 
 	OrderStatus lastStatus();
 

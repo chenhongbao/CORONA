@@ -1,22 +1,31 @@
 package com.nabiki.corona.api;
 
-public class NewOrder {
-	String symbol;
-	String accountId;
-	double price;
-	double stopPrice;
-	int volume;
-	int minVolume;
-	char direction;
-	char priceType;
-	char offsetFlag;
-	char hedgeFlag;
-	char timeCondition;
-	char volumeCondition;
-	char contigentCondition;
+public class Order {
+	public String symbol;
+	public String sessionId;
+	public String accountId;
+	public double price;
+	public double stopPrice;
+	public int volume;
+	public int minVolume;
+	public char direction;
+	public char priceType;
+	public char offsetFlag;
+	public char hedgeFlag;
+	public char timeCondition;
+	public char volumeCondition;
+	public char contigentCondition;
 	String note;
 
-	public NewOrder() {
+	public Order() {
+	}
+	
+	public void sessionId(String s) {
+		this.sessionId = s;
+	}
+	
+	public String sessionId() {
+		return this.sessionId;
 	}
 
 	public void symbol(String s) {

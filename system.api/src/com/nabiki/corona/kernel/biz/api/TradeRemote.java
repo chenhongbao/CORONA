@@ -1,11 +1,11 @@
 package com.nabiki.corona.kernel.biz.api;
 
-import com.nabiki.corona.api.NewOrder;
+import com.nabiki.corona.api.Order;
 
 public interface TradeRemote {
 	String name();
 
-	void newOrder(NewOrder o);
+	void newOrder(Order o);
 	
 	void instrument(String symbol);
 	

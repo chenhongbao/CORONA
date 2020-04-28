@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import org.osgi.service.component.annotations.*;
 
-import com.nabiki.corona.api.NewOrder;
+import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerCommission;
@@ -87,7 +87,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public KerOrderEvalue evaluateOrder(NewOrder op) {
+	public KerOrderEvalue evaluateOrder(Order op) {
 		// TODO evaluateOrder
 		return null;
 	}

@@ -2,7 +2,7 @@ package com.nabiki.corona.kernel.api;
 
 import java.util.Date;
 
-import com.nabiki.corona.api.NewOrder;
+import com.nabiki.corona.api.Order;
 
 /**
  * Internally used order with full attributes.
@@ -10,7 +10,7 @@ import com.nabiki.corona.api.NewOrder;
  * @author Hongbao Chen
  *
  */
-public abstract class KerNewOrder extends NewOrder {
+public abstract class KerNewOrder extends Order {
 	public abstract String brokerId();
 
 	public abstract void brokerId(String s);

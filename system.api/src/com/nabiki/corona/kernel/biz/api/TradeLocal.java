@@ -2,7 +2,7 @@ package com.nabiki.corona.kernel.biz.api;
 
 import java.util.Collection;
 
-import com.nabiki.corona.api.NewOrder;
+import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerCommission;
@@ -36,7 +36,7 @@ public interface TradeLocal {
 	 * @param op open order
 	 * @return allocation report
 	 */
-	KerOrderEvalue evaluateOrder(NewOrder op);
+	KerOrderEvalue evaluateOrder(Order op);
 
 	/**
 	 * Query account with given account id.

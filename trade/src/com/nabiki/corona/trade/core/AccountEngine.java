@@ -1,6 +1,6 @@
 package com.nabiki.corona.trade.core;
 
-import com.nabiki.corona.api.NewOrder;
+import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerTradeReport;
@@ -28,7 +28,7 @@ public class AccountEngine {
 	 * @param order order, must have an order ID
 	 * @return evaluation result
 	 */
-	public KerOrderEvalue evaluateOrder(NewOrder order) {
+	public KerOrderEvalue evaluateOrder(Order order) {
 		// TODO evaluate order
 		return null;
 	}
