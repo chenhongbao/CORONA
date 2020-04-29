@@ -22,6 +22,10 @@ public interface TradeLocal {
 
 	void positionDetail(KerPositionDetail p);
 
+	/**
+	 * Set the global account info. The account is the remote broker account.
+	 * @param a account
+	 */
 	void account(KerAccount a);
 
 	void instrument(KerInstrument i);

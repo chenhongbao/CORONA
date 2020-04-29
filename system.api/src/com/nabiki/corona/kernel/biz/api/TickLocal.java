@@ -8,4 +8,6 @@ public interface TickLocal {
 	void state(boolean working);
 
 	void tick(Tick tick);
+	
+	Tick last(String symbol);
 }

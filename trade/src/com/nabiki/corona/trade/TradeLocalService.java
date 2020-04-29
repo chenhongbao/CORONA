@@ -19,6 +19,8 @@ import com.nabiki.corona.kernel.biz.api.TradeLocal;
 
 @Component
 public class TradeLocalService implements TradeLocal {
+	
+	private RuntimeInfo info = new RuntimeInfo();
 
 	@Override
 	public String name() {
@@ -52,20 +54,17 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public void instrument(KerInstrument i) {
-		// TODO instrument
-		
+		this.info.instrument(i);
 	}
 
 	@Override
 	public void margin(KerMargin m) {
-		// TODO margin
-		
+		this.info.margin(m);
 	}
 
 	@Override
 	public void commission(KerCommission c) {
-		// TODO commission
-		
+		this.info.commission(c);
 	}
 
 	@Override

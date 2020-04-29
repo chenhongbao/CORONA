@@ -1,2 +1,91 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1587696280120"/>
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1588127500723">
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="license" value="https://repository.jboss.org/licenses/apache-2.0.txt"/>
+      <attribute name="osgi.identity" value="jakarta.enterprise.cdi-api"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="2.0.2" type="Version"/>
+      <attribute name="documentation" value="https://jakarta.ee"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="2.0.2" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="jakarta.enterprise.cdi-api"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="2.0.2" type="Version"/>
+      <attribute name="osgi.wiring.host" value="jakarta.enterprise.cdi-api"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.inject"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.decorator"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.util,javax.inject"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.context"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.context,javax.interceptor"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.context.control"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.context.spi"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.util"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.event"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.context,javax.enterprise.util,javax.inject"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.util,javax.inject"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject.literal"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.inject,javax.enterprise.inject.spi"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject.se"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.el,javax.enterprise.context.spi,javax.enterprise.event,javax.enterprise.inject,javax.enterprise.inject.spi.configurator,javax.interceptor"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject.spi"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="javax.enterprise.context.spi,javax.enterprise.event,javax.enterprise.inject,javax.enterprise.inject.spi,javax.enterprise.util"/>
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.inject.spi.configurator"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="version" value="2.0.0" type="Version"/>
+      <attribute name="osgi.wiring.package" value="javax.enterprise.util"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="109422" type="Long"/>
+      <attribute name="url" value="jakarta.enterprise.cdi-api/jakarta.enterprise.cdi-api-2.0.2.jar"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="osgi.content" value="E71BBE0E4CACFCE5B7D609021344D883531AA3E19321DB17390F849FDB04A509"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=javax.el)(version&gt;=2.2.0))"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=javax.inject))"/>
+    </requirement>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=javax.interceptor)(&amp;(version&gt;=1.2.0)(!(version&gt;=2.0.0))))"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=1.8))"/>
+    </requirement>
+  </resource>
+</repository>

@@ -1,6 +1,8 @@
 package com.nabiki.corona.candle;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -111,9 +113,13 @@ public class TickProcessor implements TickLocal {
 		}
 	}
 
+	// Candle engine.
 	private ScheduledThreadPoolExecutor executor;
 	private CandleEngine engine;
 
+	// Last tick preserve.
+	private Map<String, Tick> lastTicks = new ConcurrentHashMap<>();
+	
 	public TickProcessor() {
 	}
 
@@ -153,18 +159,21 @@ public class TickProcessor implements TickLocal {
 
 	@Override
 	public void tick(Tick tick) {
-		// Forward ticks
+		// Forward ticks.
 		var iter = this.forwarders.iterator();
 		while (iter.hasNext()) {
 			iter.next().tick(tick);
 		}
 
-		// Process tick into candle
+		// Process tick into candle.
 		try {
 			this.engine.tick(tick);
 		} catch (KerError e) {
 			log.warn("Fail processing tick. {}", e.getMessage());
 		}
+		
+		// Keep the tick as last tick.
+		this.lastTicks.put(tick.symbol(), tick);
 	}
 
 	private class CandlePostListener implements CandleEngineListener {
@@ -197,5 +206,13 @@ public class TickProcessor implements TickLocal {
 	@Override
 	public String name() {
 		return this.getClass().getName();
+	}
+
+	@Override
+	public Tick last(String symbol) {
+		if (symbol == null)
+			return null;
+		
+		return this.lastTicks.get(symbol);
 	}
 }

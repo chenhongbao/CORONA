@@ -1,0 +1,5 @@
+-buildpath: \
+	system.api;version=latest,\
+	jsonb;version=latest
+Export-Package: com.nabiki.corona.kernel.data
+-runrequires: bnd.identity;id='jsonb'

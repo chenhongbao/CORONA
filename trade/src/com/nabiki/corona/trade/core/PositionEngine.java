@@ -1,6 +1,5 @@
 package com.nabiki.corona.trade.core;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,12 +9,16 @@ import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
+import com.nabiki.corona.trade.RuntimeInfo;
 
 public class PositionEngine {
 
+	private final RuntimeInfo info;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
 
-	public PositionEngine(Collection<RuntimePositionDetail> init) {
+	public PositionEngine(RuntimeInfo info, Collection<RuntimePositionDetail> init) {
+		this.info = info;
 		if (init != null)
 			this.details.addAll(init);
 
@@ -84,7 +87,7 @@ public class PositionEngine {
 
 		// Get the locked position.
 		KerPositionDetail sumLocked() {
-			var a = deepCopy(origin());
+			var a = new KerPositionDetailImpl(origin());
 			
 			int volume = 0;
 			for (var p : locked()) {
@@ -100,7 +103,7 @@ public class PositionEngine {
 
 		// Get the closed position.
 		KerPositionDetail sumClosed() {
-			var a = deepCopy(origin());
+			var a = new KerPositionDetailImpl(origin());
 			
 			// Sum up.
 			int volume = 0, closeVolume = 0;
@@ -133,7 +136,7 @@ public class PositionEngine {
 		KerPositionDetail available() {
 			var l = sumLocked();
 			var c = sumClosed();
-			var a = deepCopy(origin());
+			var a = new KerPositionDetailImpl(origin());
 
 			// Available position = total origin - closed - locked.
 			a.volume(origin().volume() - l.volume() - c.volume());
@@ -153,50 +156,10 @@ public class PositionEngine {
 			return a;
 		}
 
-		LocalDate deepCopy(LocalDate old) {
-			return LocalDate.of(origin.openDate().getYear(), origin.openDate().getMonthValue(),
-					origin().openDate().getDayOfMonth());
-		}
-		
-		KerPositionDetail deepCopy(KerPositionDetail old) {
-			var a = ensure(null);
-			
-			a.symbol(old.symbol());
-			a.brokerId(old.brokerId());
-			a.investorId(old.investorId());
-			a.hedgeFlag(old.hedgeFlag());
-			a.direction(old.direction());
-			a.openDate(deepCopy(old.openDate()));
-			a.tradeId(old.tradeId());
-			a.volume(old.volume());
-			a.openPrice(old.openPrice());
-			a.tradingDay(deepCopy(old.tradingDay()));
-			a.settlementId(old.settlementId());
-			a.tradeType(old.tradeType());
-			a.combSymbol(old.combSymbol());
-			a.exchangeId(old.exchangeId());
-			a.closeProfitByDate(old.closeProfitByDate());
-			a.closeProfitByTrade(old.closeProfitByTrade());
-			a.positionProfitByDate(old.positionProfitByDate());
-			a.positionProfitByTrade(old.positionProfitByTrade());
-			a.margin(old.margin());
-			a.exchangeMargin(old.exchangeMargin());
-			a.marginRateByMoney(old.marginRateByMoney());
-			a.marginRateByVolume(old.marginRateByVolume());
-			a.lastSettlementPrice(old.lastSettlementPrice());
-			a.settlementPrice(old.settlementPrice());
-			a.closeVolume(old.closeVolume());
-			a.closeAmount(old.closeAmount());
-			a.timeFirstVolume(old.timeFirstVolume());
-			a.investUnitId(old.investUnitId());
-			
-			return a;
-		}
-
 		// Get own position that are not closed yet.
 		KerPositionDetail own() {
 			var c = sumClosed();
-			var a = deepCopy(origin());
+			var a = new KerPositionDetailImpl(origin());
 
 			// Own position = total origin - closed.
 			a.volume(origin().volume() - c.volume());
@@ -218,7 +181,7 @@ public class PositionEngine {
 		
 		KerPositionDetail current() {
 			var c = sumClosed();
-			var a = deepCopy(origin());
+			var a = new KerPositionDetailImpl(origin());
 			
 			// Set close info.
 			a.closeProfitByDate(c.closeProfitByDate());
@@ -248,10 +211,15 @@ public class PositionEngine {
 			// TODO cancel the session.
 		}
 
+		/**
+		 * Check the trade session ID of the current position detail. If it matches the given trade report's session ID,
+		 * close the position that was locked by the trade of the same session ID. Otherwise, nothing happens.
+		 * 
+		 * @param origin the trade report to close
+		 * @return the trade volume left to close in other position details
+		 */
 		KerTradeReport close(KerTradeReport origin) {
-			// TODO If given trade report belongs to a trade session that closes positions in this position detail,
-			// remove that positions as many as possible. Then return remaining part of trade to be remove from other
-			// position details if there are. Must check the trade session ID to find the right locked position.
+			// TODO close position detail
 			return null;
 		}
 	}

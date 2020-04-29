@@ -1,7 +1,7 @@
 package com.nabiki.corona.kernel.api;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.nabiki.corona.api.TradeReport;
 
@@ -98,7 +98,7 @@ public interface KerTradeReport extends TradeReport {
 
 	void sequenceNo(int i);
 
-	void tradingDay(Date d);
+	void tradingDay(LocalDate d);
 
 	String settlementId();
 
