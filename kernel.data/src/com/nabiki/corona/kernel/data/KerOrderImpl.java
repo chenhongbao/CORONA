@@ -6,23 +6,23 @@ import com.nabiki.corona.kernel.api.KerOrder;
 
 public class KerOrderImpl extends KerOrder {
 
-	private String brokerId;
-	private String investorId;
-	private String orderId;
-	private String userId;
-	private LocalDate gtdDate;
-	private char forceCloseReason;
-	private boolean isAutoSuspend;
-	private String businessUnit;
-	private int requestId;
-	private boolean userForceClose;
-	private boolean isSwapOrder;
-	private String exchangeId;
-	private String investUnitId;
-	private String currencyId;
-	private String clientId;
-	private String ipAddress;
-	private String macAddress;
+	public String brokerId;
+	public String investorId;
+	public String orderId;
+	public String userId;
+	public LocalDate gtdDate;
+	public char forceCloseReason;
+	public boolean isAutoSuspend;
+	public String businessUnit;
+	public int requestId;
+	public boolean userForceClose;
+	public boolean isSwapOrder;
+	public String exchangeId;
+	public String investUnitId;
+	public String currencyId;
+	public String clientId;
+	public String ipAddress;
+	public String macAddress;
 
 	public KerOrderImpl() {
 	}
@@ -31,7 +31,7 @@ public class KerOrderImpl extends KerOrder {
 		deepCopy(o);
 	}
 
-	private void deepCopy(KerOrder o) {
+	public void deepCopy(KerOrder o) {
 		brokerId(o.brokerId());
 		businessUnit(o.businessUnit());
 		clientId(o.clientId());
