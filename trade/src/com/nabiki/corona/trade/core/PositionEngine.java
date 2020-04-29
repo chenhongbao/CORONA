@@ -27,6 +27,22 @@ public class PositionEngine {
 		}
 	}
 
+	public void cancel(String sessionId) throws KerError {
+		if (sessionId == null)
+			throw new KerError("Cancel session ID can't be a null pointer.");
+
+		var iter = this.details.iterator();
+		while (iter.hasNext())
+			iter.next().cancel(sessionId);
+	}
+
+	/**
+	 * Trade report must have a trade session ID.
+	 * 
+	 * @param rep trade report
+	 * @throws KerError Throw exception upon failure of initialization position detail for open order, or closing all
+	 *                  locked position for close order, or unknown offset flag.
+	 */
 	public synchronized void trade(KerTradeReport rep) throws KerError {
 		switch (rep.offsetFlag()) {
 		case State.OFFSET_OPEN:
@@ -45,18 +61,18 @@ public class PositionEngine {
 	public String symbol() {
 		return this.symbol;
 	}
-	
+
 	public synchronized void lock(KerOrder o) throws KerError {
 		if (!canLock(o))
 			throw new KerError("Can't lock position for order: " + o.orderId());
-		
+
 		KerOrder noLock = o;
 		var iter = this.details.iterator();
-		
-		while(iter.hasNext() && noLock.volume() > 0) {
+
+		while (iter.hasNext() && noLock.volume() > 0) {
 			noLock = iter.next().lock(noLock);
 		}
-		
+
 		if (noLock.volume() > 0)
 			throw new KerError(
 					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
@@ -65,14 +81,14 @@ public class PositionEngine {
 	private boolean canLock(KerOrder o) throws KerError {
 		if (o == null || o.volume() == 0)
 			return false;
-		
+
 		int volumeToLock = o.volume();
 		var iter = this.details.iterator();
-		
+
 		while (iter.hasNext() && volumeToLock > 0) {
 			volumeToLock -= iter.next().available().volume();
 		}
-		
+
 		if (volumeToLock > 0)
 			return false;
 		else
