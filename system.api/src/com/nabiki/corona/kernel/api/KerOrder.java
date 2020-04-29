@@ -1,6 +1,6 @@
 package com.nabiki.corona.kernel.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.nabiki.corona.api.Order;
 
@@ -10,7 +10,7 @@ import com.nabiki.corona.api.Order;
  * @author Hongbao Chen
  *
  */
-public abstract class KerNewOrder extends Order {
+public abstract class KerOrder extends Order {
 	public abstract String brokerId();
 
 	public abstract void brokerId(String s);
@@ -27,9 +27,9 @@ public abstract class KerNewOrder extends Order {
 
 	public abstract void userId(String s);
 
-	public abstract Date gtdDate();
+	public abstract LocalDate gtdDate();
 
-	public abstract void gtdDate(Date d);
+	public abstract void gtdDate(LocalDate d);
 
 	public abstract char forceCloseReason();
 

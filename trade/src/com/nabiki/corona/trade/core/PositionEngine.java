@@ -4,25 +4,26 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nabiki.corona.api.Order;
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerPositionDetail;
+import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerTradeReport;
-import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
-import com.nabiki.corona.trade.RuntimeInfo;
 
 public class PositionEngine {
-
-	private final RuntimeInfo info;
+	private final RuntimeInfo runtime;
+	private final String symbol;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
 
-	public PositionEngine(RuntimeInfo info, Collection<RuntimePositionDetail> init) {
-		this.info = info;
-		if (init != null)
-			this.details.addAll(init);
-
-		// TODO manage positions
+	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init) throws KerError {
+		this.symbol = symbol;
+		this.runtime = runtime;
+		if (init != null) {
+			for (var d : init) {
+				if (d.origin().symbol().compareTo(this.symbol) != 0)
+					throw new KerError("Wrong symbol. Want " + this.symbol + " but found " + d.origin().symbol());
+				this.details.add(d);
+			}
+		}
 	}
 
 	public synchronized void trade(KerTradeReport rep) throws KerError {
@@ -40,6 +41,43 @@ public class PositionEngine {
 		}
 	}
 
+	public String symbol() {
+		return this.symbol;
+	}
+	
+	public synchronized void lock(KerOrder o) throws KerError {
+		if (!canLock(o))
+			throw new KerError("Can't lock position for order: " + o.orderId());
+		
+		KerOrder noLock = o;
+		var iter = this.details.iterator();
+		
+		while(iter.hasNext() && noLock.volume() > 0) {
+			noLock = iter.next().lock(noLock);
+		}
+		
+		if (noLock.volume() > 0)
+			throw new KerError(
+					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
+	}
+
+	private boolean canLock(KerOrder o) throws KerError {
+		if (o == null || o.volume() == 0)
+			return false;
+		
+		int volumeToLock = o.volume();
+		var iter = this.details.iterator();
+		
+		while (iter.hasNext() && volumeToLock > 0) {
+			volumeToLock -= iter.next().available().volume();
+		}
+		
+		if (volumeToLock > 0)
+			return false;
+		else
+			return true;
+	}
+
 	private void closePosition(KerTradeReport rep) throws KerError {
 		KerTradeReport noClose = rep;
 		var iter = this.details.iterator();
@@ -55,173 +93,6 @@ public class PositionEngine {
 	}
 
 	private void openPosition(KerTradeReport rep) throws KerError {
-		this.details.add(new RuntimePositionDetail(rep));
+		this.details.add(new RuntimePositionDetail(rep, this.runtime));
 	}
-
-	private class RuntimePositionDetail {
-		private KerPositionDetail origin;
-		private List<KerPositionDetail> locked = new LinkedList<>();
-		private List<KerPositionDetail> closed = new LinkedList<>();
-
-		RuntimePositionDetail(KerTradeReport rep) throws KerError {
-			this.origin = ensure(rep);
-			if (this.origin == null) {
-				throw new KerError("Trade report needs to be an open trade.");
-			}
-		}
-
-		RuntimePositionDetail(KerPositionDetail origin, Collection<KerPositionDetail> locked,
-				Collection<KerPositionDetail> closed) {
-			this.origin = origin;
-			if (locked != null)
-				this.locked.addAll(locked);
-			if (closed != null)
-				this.closed.addAll(closed);
-		}
-
-		// If rep is null, return an empty position.
-		KerPositionDetail ensure(KerTradeReport rep) {
-			// TODO check the state of trade and create a new position detail, or null if error.
-			return null;
-		}
-
-		// Get the locked position.
-		KerPositionDetail sumLocked() {
-			var a = new KerPositionDetailImpl(origin());
-			
-			int volume = 0;
-			for (var p : locked()) {
-				volume += p.volume();
-			}
-			
-			a.volume(volume);
-			a.margin(origin().margin() * a.volume() / origin().volume());
-			a.exchangeMargin(origin().exchangeMargin() * a.volume() / origin().volume());
-			
-			return a;
-		}
-
-		// Get the closed position.
-		KerPositionDetail sumClosed() {
-			var a = new KerPositionDetailImpl(origin());
-			
-			// Sum up.
-			int volume = 0, closeVolume = 0;
-			double closeAmount = 0.0, closeProfitByDate = 0.0F, closeProfitByTrade = 0.0F;
-			for (var c : closed()) {
-				volume += c.volume();
-				closeVolume += c.closeVolume();
-				closeAmount += c.closeAmount();
-				closeProfitByDate += c.closeProfitByDate();
-				closeProfitByTrade += c.closeProfitByTrade();
-			}
-			
-			//Reset some fields.
-			a.volume(volume);
-			a.closeVolume(closeVolume);
-			a.closeAmount(closeAmount);
-			a.closeProfitByDate(closeProfitByDate);
-			a.closeProfitByTrade(closeProfitByTrade);
-			a.margin(0.0F);
-			a.exchangeMargin(0.0);
-			
-			return a;
-		}
-
-		KerPositionDetail origin() {
-			return this.origin;
-		}
-
-		// Get available position that are neither closed nor locked.
-		KerPositionDetail available() {
-			var l = sumLocked();
-			var c = sumClosed();
-			var a = new KerPositionDetailImpl(origin());
-
-			// Available position = total origin - closed - locked.
-			a.volume(origin().volume() - l.volume() - c.volume());
-
-			// Available position are position at hand and not locked. So they are not closed, neither have close quota.
-			a.closeProfitByDate(0.0);
-			a.closeProfitByTrade(0.0);
-			a.positionProfitByDate(0.0);
-			a.positionProfitByTrade(0.0);
-			a.closeVolume(0);
-			a.closeAmount(0.0);
-			
-			// Get the part of margin used by available position.
-			a.margin(origin().margin() * a.volume() / origin().volume());
-			a.exchangeMargin(origin().exchangeMargin() * a.volume() / origin().volume());
-			
-			return a;
-		}
-
-		// Get own position that are not closed yet.
-		KerPositionDetail own() {
-			var c = sumClosed();
-			var a = new KerPositionDetailImpl(origin());
-
-			// Own position = total origin - closed.
-			a.volume(origin().volume() - c.volume());
-
-			// Own position are position at hand, that are not closed yet.
-			a.closeProfitByDate(0.0);
-			a.closeProfitByTrade(0.0);
-			a.positionProfitByDate(0.0);
-			a.positionProfitByTrade(0.0);
-			a.closeVolume(0);
-			a.closeAmount(0.0);
-			
-			// Get the part of margin used by own position.
-			a.margin(origin().margin() * a.volume() / origin().volume());
-			a.exchangeMargin(origin().exchangeMargin() * a.volume() / origin().volume());
-			
-			return a;
-		}
-		
-		KerPositionDetail current() {
-			var c = sumClosed();
-			var a = new KerPositionDetailImpl(origin());
-			
-			// Set close info.
-			a.closeProfitByDate(c.closeProfitByDate());
-			a.closeProfitByTrade(c.closeProfitByTrade());
-			a.closeAmount(c.closeAmount());
-			a.closeVolume(c.closeVolume());
-			
-			return a;
-		}
-
-		Collection<KerPositionDetail> locked() {
-			return this.locked;
-		}
-
-		Collection<KerPositionDetail> closed() {
-			return this.closed;
-		}
-		
-		Order lock(Order o) {
-			// TODO lock the resource for the given order. If there are still resource to be locked, return the
-			// remaining.
-			return null;
-		}
-		
-		// Cancel the trade with session ID.
-		void cancel(String sessionId) {
-			// TODO cancel the session.
-		}
-
-		/**
-		 * Check the trade session ID of the current position detail. If it matches the given trade report's session ID,
-		 * close the position that was locked by the trade of the same session ID. Otherwise, nothing happens.
-		 * 
-		 * @param origin the trade report to close
-		 * @return the trade volume left to close in other position details
-		 */
-		KerTradeReport close(KerTradeReport origin) {
-			// TODO close position detail
-			return null;
-		}
-	}
-
 }

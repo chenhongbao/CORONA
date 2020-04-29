@@ -34,6 +34,7 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public String tradeId;
 	public char tradeType;
 	public int volume;
+	public String tradeSessionId;
 	
 	@JsonbDateFormat("yyyyMMdd")
 	public LocalDate openDate;
@@ -357,6 +358,16 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 		closeAmount(old.closeAmount());
 		timeFirstVolume(old.timeFirstVolume());
 		investUnitId(old.investUnitId());
+	}
+
+	@Override
+	public String tradeSessionId() {
+		return this.tradeSessionId;
+	}
+
+	@Override
+	public void tradeSessionId(String s) {
+		this.tradeSessionId = s;
 	}
 
 }

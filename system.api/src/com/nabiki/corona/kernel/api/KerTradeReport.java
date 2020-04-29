@@ -69,6 +69,8 @@ public interface KerTradeReport extends TradeReport {
 	void price(double d);
 
 	void volume(int i);
+	
+	void tradeDate(LocalDate date);
 
 	void tradeTime(Instant t);
 

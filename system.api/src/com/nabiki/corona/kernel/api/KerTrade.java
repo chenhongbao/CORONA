@@ -5,9 +5,9 @@ import java.util.Collection;
 import com.nabiki.corona.api.Trade;
 
 public interface KerTrade extends Trade {
-	KerOrderStatus kerSendAndWait(KerNewOrder order);
+	KerOrderStatus kerSendAndWait(KerOrder order);
 
-	KerOrderStatus kerSend(KerNewOrder order);
+	KerOrderStatus kerSend(KerOrder order);
 
 	KerOrderStatus kerStatus();
 

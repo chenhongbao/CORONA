@@ -78,4 +78,8 @@ public interface KerPositionDetail extends PositionDetail {
 	String investUnitId();
 
 	void investUnitId(String s);
+	
+	String tradeSessionId();
+	
+	void tradeSessionId(String s);
 }

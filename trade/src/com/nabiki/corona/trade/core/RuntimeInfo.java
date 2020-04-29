@@ -1,4 +1,4 @@
-package com.nabiki.corona.trade;
+package com.nabiki.corona.trade.core;
 
 import java.util.Collection;
 import java.util.Map;
@@ -10,6 +10,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
@@ -88,5 +89,16 @@ public class RuntimeInfo {
 	
 	public KerCommission commission(String symbol) {
 		return this.commissions.get(symbol);
+	}
+	
+	public Tick lastTick(String symbol) {
+		Tick ret = null;
+		for (var t : ticks) {
+			ret = t.last(symbol);
+			if (ret != null)
+				break;
+		}
+		
+		return ret;
 	}
 }

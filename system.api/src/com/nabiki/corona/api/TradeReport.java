@@ -23,6 +23,8 @@ public interface TradeReport {
 	double price();
 
 	int volume();
+	
+	LocalDate tradeDate();
 
 	Instant tradeTime();
 

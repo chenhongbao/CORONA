@@ -42,6 +42,9 @@ public class KerTradeReportImpl implements KerTradeReport {
 	
 	@JsonbDateFormat("yyyyMMdd")
 	public LocalDate tradingDay;
+	
+	@JsonbDateFormat("yyyyMMdd")
+	public LocalDate tradeDate;
 
 	public KerTradeReportImpl() {
 	}
@@ -392,6 +395,16 @@ public class KerTradeReportImpl implements KerTradeReport {
 	@Override
 	public void volume(int i) {
 		this.volume = i;
+	}
+
+	@Override
+	public LocalDate tradeDate() {
+		return this.tradeDate;
+	}
+
+	@Override
+	public void tradeDate(LocalDate date) {
+		this.tradeDate = date;
 	}
 
 }
