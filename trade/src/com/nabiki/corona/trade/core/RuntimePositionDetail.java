@@ -209,18 +209,10 @@ public class RuntimePositionDetail {
 	public KerPositionDetail available() throws KerError {
 		var l = sumLocked();
 		var c = sumClosed();
-		var a = new KerPositionDetailImpl(origin());
+		var a = copyPart(origin(), origin().volume() - l.volume() - c.closeVolume());
 
-		// Available position = total origin - closed - locked.
-		a.volume(a.volume() - l.volume() - c.volume());
-
-		// Get the part of margin used by available position.
-		a.margin(a.margin() - l.margin() - c.margin());
-		a.exchangeMargin(a.exchangeMargin() - l.exchangeMargin() - c.exchangeMargin());
-
-		// Calculate position profits.
+		// Profit info.
 		calculatePositionInfo(a);
-
 		return a;
 	}
 
@@ -233,17 +225,10 @@ public class RuntimePositionDetail {
 	 */
 	public KerPositionDetail own() throws KerError {
 		var c = sumClosed();
-		var a = new KerPositionDetailImpl(origin());
+		var a = copyPart(origin(), origin().volume() - c.closeVolume());
 
-		// Own position = total origin - closed.
-		a.volume(a.volume() - c.volume());
-
-		// Get the part of margin used by own position.
-		a.margin(a.margin() - c.volume());
-		a.exchangeMargin(a.exchangeMargin() - c.exchangeMargin());
-
+		// Profit info.
 		calculatePositionInfo(a);
-
 		return a;
 	}
 
@@ -264,8 +249,8 @@ public class RuntimePositionDetail {
 		a.closeAmount(c.closeAmount());
 		a.closeVolume(c.closeVolume());
 
+		// Profit info.
 		calculatePositionInfo(a);
-
 		return a;
 	}
 
@@ -334,14 +319,14 @@ public class RuntimePositionDetail {
 				|| origin.closeProfitByTrade() > 0)
 			throw new KerError("Can't split a closed position.");
 
-		var r = new KerPositionDetailImpl(origin);
 		if (splitVol <= 0)
-			return r;
+			throw new KerError("Can't split a zero volume position.");
 
+		var r = new KerPositionDetailImpl(origin);
+		
 		r.margin(r.margin() * splitVol / r.volume());
 		r.exchangeMargin(r.exchangeMargin() * splitVol / r.volume());
 		r.volume(splitVol);
-
 		return r;
 	}
 
