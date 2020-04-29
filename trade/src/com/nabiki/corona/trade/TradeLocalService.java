@@ -16,7 +16,6 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
-import com.nabiki.corona.trade.core.RuntimeInfo;
 
 @Component
 public class TradeLocalService implements TradeLocal {

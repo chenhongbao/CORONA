@@ -12,6 +12,7 @@ import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.data.KerOrderImpl;
 import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
 import com.nabiki.corona.kernel.data.KerTradeReportImpl;
+import com.nabiki.corona.trade.RuntimeInfo;
 
 public class RuntimePositionDetail {
 	private final String symbol;
