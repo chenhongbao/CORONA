@@ -15,11 +15,12 @@ import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
+import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
 
-@Component(service = {})
-public class RuntimeInfo {
+@Component
+public class RuntimeInfoService implements RuntimeInfo {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
 
@@ -90,7 +91,7 @@ public class RuntimeInfo {
 	private final Map<String, KerMargin> margins = new ConcurrentHashMap<>();
 	private final Map<String, KerCommission> commissions = new ConcurrentHashMap<>();
 
-	public RuntimeInfo() {
+	public RuntimeInfoService() {
 	}
 
 	/**
@@ -99,11 +100,12 @@ public class RuntimeInfo {
 	 * @param symbol symbol
 	 * @return true if all info are ready, false otherwise.
 	 */
+	@Override
 	public boolean ready(String symbol) {
-		return instrument(symbol) != null && margin(symbol) != null && commission(symbol) != null
-				&& lastTick(symbol) != null;
+		return instrument(symbol) != null && margin(symbol) != null && commission(symbol) != null && lastTick(symbol) != null;
 	}
 
+	@Override
 	public void instrument(KerInstrument in) {
 		if (in == null || in.symbol() == null)
 			this.log.warn("kernel instrument null pointer.");
@@ -111,6 +113,7 @@ public class RuntimeInfo {
 		this.instruments.put(in.symbol(), in);
 	}
 
+	@Override
 	public void margin(KerMargin margin) {
 		if (margin == null || margin.symbol() == null)
 			this.log.warn("Kenerl margin null pointer.");
@@ -118,6 +121,7 @@ public class RuntimeInfo {
 		this.margins.put(margin.symbol(), margin);
 	}
 
+	@Override
 	public void commission(KerCommission comm) {
 		if (comm == null || comm.symbol() == null)
 			this.log.warn("Kenerl commission null pointer.");
@@ -125,18 +129,22 @@ public class RuntimeInfo {
 		this.commissions.put(comm.symbol(), comm);
 	}
 
+	@Override
 	public KerInstrument instrument(String symbol) {
 		return this.instruments.get(symbol);
 	}
 
+	@Override
 	public KerMargin margin(String symbol) {
 		return this.margins.get(symbol);
 	}
 
+	@Override
 	public KerCommission commission(String symbol) {
 		return this.commissions.get(symbol);
 	}
 
+	@Override
 	public Tick lastTick(String symbol) {
 		Tick ret = null;
 		for (var t : ticks) {
@@ -146,5 +154,10 @@ public class RuntimeInfo {
 		}
 
 		return ret;
+	}
+
+	@Override
+	public String name() {
+		return "Global Runtime";
 	}
 }

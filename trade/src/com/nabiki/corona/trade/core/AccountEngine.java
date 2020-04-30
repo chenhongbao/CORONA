@@ -2,8 +2,8 @@ package com.nabiki.corona.trade.core;
 
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.data.DefaultDataFactory;
-import com.nabiki.corona.trade.RuntimeInfo;
 import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;
@@ -18,13 +18,14 @@ public class AccountEngine {
 
 	private final String accountId;
 	private final RuntimeInfo info;
-
+	private final DataFactory factory;
+	
 	private KerAccount account; // TODO init account
-	private DataFactory factory = DefaultDataFactory.create();
 
-	public AccountEngine(String accountId, RuntimeInfo info) {
+	public AccountEngine(String accountId, RuntimeInfo info, DataFactory factory) {
 		this.accountId = accountId;
 		this.info = info;
+		this.factory = factory;
 		this.positions = new PositionManager(this.info);
 		this.sessionIds = new SessionIdManager();
 

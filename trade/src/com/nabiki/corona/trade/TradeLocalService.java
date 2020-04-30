@@ -8,17 +8,13 @@ import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
-import com.nabiki.corona.kernel.api.KerCommission;
-import com.nabiki.corona.kernel.api.KerInstrument;
-import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
-import com.nabiki.corona.kernel.data.DefaultDataFactory;
-import com.nabiki.corona.kernel.data.KerOrderEvalueImpl;
 
 @Component
 public class TradeLocalService implements TradeLocal {
@@ -27,7 +23,24 @@ public class TradeLocalService implements TradeLocal {
 	
 	// TODO Service needs to wait runtime info all ready before start to work.
 	
-	private RuntimeInfo info = new RuntimeInfo();
+	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
+	private volatile RuntimeInfo info;
+	
+	public void bindRuntimeInfo(RuntimeInfo info) {
+		if (info == null)
+			return;
+		
+		this.info = info;
+		this.log.info("Bind runtime info.");
+	}
+	
+	public void unbindRuntimeInfo(RuntimeInfo info) {
+		if (this.info != info)
+			return;
+		
+		this.info = null;
+		this.log.info("Unbind runtime info.");
+	}
 
 	@Override
 	public String name() {
@@ -57,21 +70,6 @@ public class TradeLocalService implements TradeLocal {
 	public void account(KerAccount a) {
 		// TODO account
 		
-	}
-
-	@Override
-	public void instrument(KerInstrument i) {
-		this.info.instrument(i);
-	}
-
-	@Override
-	public void margin(KerMargin m) {
-		this.info.margin(m);
-	}
-
-	@Override
-	public void commission(KerCommission c) {
-		this.info.commission(c);
 	}
 
 	@Override

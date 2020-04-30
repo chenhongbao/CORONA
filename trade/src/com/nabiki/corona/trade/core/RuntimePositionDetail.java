@@ -8,13 +8,13 @@ import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.data.DefaultDataFactory;
 import com.nabiki.corona.kernel.data.KerOrderImpl;
 import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
 import com.nabiki.corona.kernel.data.KerTradeReportImpl;
-import com.nabiki.corona.trade.RuntimeInfo;
 
 public class RuntimePositionDetail {
 	private final String symbol;

@@ -4,9 +4,6 @@ import java.util.Collection;
 
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
-import com.nabiki.corona.kernel.api.KerCommission;
-import com.nabiki.corona.kernel.api.KerInstrument;
-import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -27,12 +24,6 @@ public interface TradeLocal {
 	 * @param a account
 	 */
 	void account(KerAccount a);
-
-	void instrument(KerInstrument i);
-
-	void margin(KerMargin m);
-
-	void commission(KerCommission c);
 
 	/**
 	 * Allocate margin for order.
