@@ -40,7 +40,7 @@ public class PositionEngine {
 	 * Trade report must have a trade session ID.
 	 * 
 	 * @param rep trade report
-	 * @throws KerErrorImpl Throw exception upon failure of initialization position detail for open order, or closing all
+	 * @throws KerError Throw exception upon failure of initialization position detail for open order, or closing all
 	 *                  locked position for close order, or unknown offset flag.
 	 */
 	public synchronized void trade(KerTradeReport rep) throws KerError {
