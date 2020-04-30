@@ -1,4 +1,4 @@
-package com.nabiki.corona.trade;
+package com.nabiki.corona.info;
 
 import java.util.Collection;
 import java.util.Map;
