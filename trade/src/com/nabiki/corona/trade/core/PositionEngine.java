@@ -8,7 +8,7 @@ import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
-import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class PositionEngine {

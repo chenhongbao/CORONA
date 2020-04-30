@@ -1,4 +1,4 @@
-package com.nabiki.corona.kernel.biz.api;
+package com.nabiki.corona.kernel.settings.api;
 
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;

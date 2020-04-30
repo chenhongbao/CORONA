@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class PositionManager {
 	private final Map<String, PositionEngine> positions = new ConcurrentHashMap<>();

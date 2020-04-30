@@ -2,8 +2,8 @@ package com.nabiki.corona.trade.core;
 
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerTradeReport;
-import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.data.DefaultDataFactory;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;

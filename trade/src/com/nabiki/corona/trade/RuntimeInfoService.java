@@ -15,9 +15,9 @@ import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
-import com.nabiki.corona.kernel.biz.api.RuntimeInfo;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
 public class RuntimeInfoService implements RuntimeInfo {
