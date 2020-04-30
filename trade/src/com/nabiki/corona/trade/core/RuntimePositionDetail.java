@@ -8,7 +8,9 @@ import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.data.DefaultDataFactory;
 import com.nabiki.corona.kernel.data.KerOrderImpl;
 import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
 import com.nabiki.corona.kernel.data.KerTradeReportImpl;
@@ -20,6 +22,9 @@ public class RuntimePositionDetail {
 	private final KerPositionDetail origin;
 	private final List<KerPositionDetail> locked = new LinkedList<>();
 	private final List<KerPositionDetail> closed = new LinkedList<>();
+	
+	// Data factory.
+	private DataFactory factory = DefaultDataFactory.create();
 
 	public RuntimePositionDetail(KerTradeReport rep, RuntimeInfo info) throws KerError {
 		this.symbol = rep.symbol();
@@ -51,7 +56,7 @@ public class RuntimePositionDetail {
 		// TODO Exchange margin rate needs a new query to remote counter. Trade-off too big.
 		double exMargin = margin;
 		
-		var p = new KerPositionDetailImpl();
+		var p = this.factory.kerPositionDetail();
 		
 		p.brokerId(rep.brokerId());
 		p.closeAmount(0.0);
@@ -139,7 +144,7 @@ public class RuntimePositionDetail {
 
 	// Get the locked position.
 	private KerPositionDetail sumLocked() {
-		var a = new KerPositionDetailImpl(origin());
+		var a = this.factory.kerPositionDetail(origin());
 
 		int volume = 0;
 		double margin = 0.0, exMargin = 0.0;
@@ -158,7 +163,7 @@ public class RuntimePositionDetail {
 
 	// Get the closed position.
 	private KerPositionDetail sumClosed() {
-		var a = new KerPositionDetailImpl(origin());
+		var a = this.factory.kerPositionDetail(origin());
 
 		// Sum up.
 		int volume = 0, closeVolume = 0;
@@ -241,7 +246,7 @@ public class RuntimePositionDetail {
 	 */
 	public KerPositionDetail current() throws KerError {
 		var c = sumClosed();
-		var a = new KerPositionDetailImpl(origin());
+		var a = this.factory.kerPositionDetail(origin());
 
 		// Set close info.
 		a.closeProfitByDate(c.closeProfitByDate());
@@ -287,7 +292,7 @@ public class RuntimePositionDetail {
 		int lockVol = 0;
 		var a = available();
 		if (a.volume() == 0)
-			return new KerOrderImpl(o);
+			return this.factory.kerOrder(o);
 		
 		if (a.volume() < 0)
 			throw new KerError("[FATAL]Negative position volume.");
@@ -301,7 +306,7 @@ public class RuntimePositionDetail {
 			lockVol = l.volume();
 		}
 
-		var r = new KerOrderImpl(o);
+		var r = this.factory.kerOrder(o);
 		r.volume(r.volume() - lockVol);
 
 		return r;
@@ -324,7 +329,7 @@ public class RuntimePositionDetail {
 		if (splitVol < 0)
 			throw new KerError("Can't split a negative volume position.");
 
-		var r = new KerPositionDetailImpl(origin);
+		var r = this.factory.kerPositionDetail(origin);
 		
 		r.margin(r.margin() * splitVol / r.volume());
 		r.exchangeMargin(r.exchangeMargin() * splitVol / r.volume());
@@ -392,7 +397,7 @@ public class RuntimePositionDetail {
 		}
 
 		// Return trade left to close in other position details.
-		var r = new KerTradeReportImpl(rep);
+		var r = this.factory.kerTradeReport(rep);
 		r.volume(r.volume() - closeVol);
 
 		return r;

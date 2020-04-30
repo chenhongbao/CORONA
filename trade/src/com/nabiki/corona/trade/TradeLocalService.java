@@ -3,8 +3,9 @@ package com.nabiki.corona.trade;
 import java.util.Collection;
 
 import org.osgi.service.component.annotations.*;
+import org.osgi.service.log.Logger;
+import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerCommission;
@@ -16,10 +17,14 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
+import com.nabiki.corona.kernel.data.DefaultDataFactory;
 import com.nabiki.corona.kernel.data.KerOrderEvalueImpl;
 
 @Component
 public class TradeLocalService implements TradeLocal {
+	@Reference(service = LoggerFactory.class)
+	private Logger log;
+	
 	// TODO Service needs to wait runtime info all ready before start to work.
 	
 	private RuntimeInfo info = new RuntimeInfo();
@@ -89,12 +94,19 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public KerOrderEvalue evaluateOrder(KerOrder op) {
-		KerOrderEvalue eval = new KerOrderEvalueImpl();
+		var factory = DefaultDataFactory.create();
+		var eval = factory.kerOrderEvalue();
 		
 		if (op == null) {
-			this.info.log.warn("KerOrder null pointer.");
-			return null;
+			this.log.warn("KerOrder null pointer.");
+			return eval;
+		}	
+		// Don't insert order if the information for the denoted instrument is not ready.
+		if (!this.info.ready(op.symbol)) {
+			this.log.warn("Instrument not ready for order: " + op.symbol());
+			return eval;
 		}
+		
 		// TODO evaluateOrder
 		return null;
 	}

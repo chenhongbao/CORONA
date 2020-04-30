@@ -19,7 +19,7 @@ import com.nabiki.corona.kernel.biz.api.TickLocal;
 @Component(service = {})
 public class RuntimeInfo {
 	@Reference(service = LoggerFactory.class)
-	public Logger log;
+	private Logger log;
 
 	// Last ticks.
 	@Reference(bind = "bindTickLocal", updated = "updatedTickLocal", unbind = "unbindTickLocal")
