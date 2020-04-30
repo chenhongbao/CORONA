@@ -8,17 +8,19 @@ import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerCommission;
-import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
+import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
+import com.nabiki.corona.kernel.data.KerOrderEvalueImpl;
 
 @Component
 public class TradeLocalService implements TradeLocal {
+	// TODO Service needs to wait runtime info all ready before start to work.
 	
 	private RuntimeInfo info = new RuntimeInfo();
 
@@ -86,7 +88,13 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public KerOrderEvalue evaluateOrder(Order op) {
+	public KerOrderEvalue evaluateOrder(KerOrder op) {
+		KerOrderEvalue eval = new KerOrderEvalueImpl();
+		
+		if (op == null) {
+			this.info.log.warn("KerOrder null pointer.");
+			return null;
+		}
 		// TODO evaluateOrder
 		return null;
 	}

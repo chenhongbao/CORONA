@@ -5,9 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.nabiki.corona.api.State;
-import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.trade.RuntimeInfo;
 
 public class PositionEngine {
@@ -40,7 +40,7 @@ public class PositionEngine {
 	 * Trade report must have a trade session ID.
 	 * 
 	 * @param rep trade report
-	 * @throws KerError Throw exception upon failure of initialization position detail for open order, or closing all
+	 * @throws KerErrorImpl Throw exception upon failure of initialization position detail for open order, or closing all
 	 *                  locked position for close order, or unknown offset flag.
 	 */
 	public synchronized void trade(KerTradeReport rep) throws KerError {

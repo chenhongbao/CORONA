@@ -268,6 +268,5 @@ public class TickLauncher implements Runnable {
 		public void state(EngineState s) {
 			log.info("Tick engine state: {}.", s);
 		}
-
 	}
 }

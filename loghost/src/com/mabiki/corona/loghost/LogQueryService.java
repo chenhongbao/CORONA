@@ -18,8 +18,8 @@ import org.osgi.service.log.LoggerFactory;
 import com.mabiki.corona.loghost.core.CacheErrorListener;
 import com.mabiki.corona.loghost.core.LogCache;
 import com.mabiki.corona.loghost.core.LogWriter;
-import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.biz.api.LogQuery;
+import com.nabiki.corona.kernel.api.KerError;
 
 @Component
 public class LogQueryService implements LogQuery {

@@ -5,10 +5,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.nabiki.corona.api.State;
-import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.data.KerOrderImpl;
 import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
 import com.nabiki.corona.kernel.data.KerTradeReportImpl;
@@ -204,7 +204,7 @@ public class RuntimePositionDetail {
 	 * to it will not affect the original data.
 	 * 
 	 * @return available position detail
-	 * @throws KerError throw exception on failure calculating internal data
+	 * @throws KerErrorImpl throw exception on failure calculating internal data
 	 */
 	public KerPositionDetail available() throws KerError {
 		var l = sumLocked();
@@ -221,7 +221,7 @@ public class RuntimePositionDetail {
 	 * to it will not affect the original data.
 	 * 
 	 * @return own position detail
-	 * @throws KerError throw exception on failure calculating internal data
+	 * @throws KerErrorImpl throw exception on failure calculating internal data
 	 */
 	public KerPositionDetail own() throws KerError {
 		var c = sumClosed();
@@ -237,7 +237,7 @@ public class RuntimePositionDetail {
 	 * info. The return instance is newly created, any change to it won't affect the original data.
 	 * 
 	 * @return current summarization of position detail
-	 * @throws KerError KerError throw exception on failure calculating internal data
+	 * @throws KerErrorImpl KerError throw exception on failure calculating internal data
 	 */
 	public KerPositionDetail current() throws KerError {
 		var c = sumClosed();
@@ -278,7 +278,7 @@ public class RuntimePositionDetail {
 	 * 
 	 * @param o order
 	 * @return new created order with unfilled volume
-	 * @throws KerError throw exception if the order has wrong state
+	 * @throws KerErrorImpl throw exception if the order has wrong state
 	 */
 	public KerOrder lock(KerOrder o) throws KerError {
 		if (o.offsetFlag() == State.OFFSET_OPEN)
@@ -286,9 +286,11 @@ public class RuntimePositionDetail {
 
 		int lockVol = 0;
 		var a = available();
-		if (a.volume() == 0) {
+		if (a.volume() == 0)
 			return new KerOrderImpl(o);
-		}
+		
+		if (a.volume() < 0)
+			throw new KerError("[FATAL]Negative position volume.");
 
 		if (a.volume() <= o.volume()) {
 			locked.add(a);
@@ -312,15 +314,15 @@ public class RuntimePositionDetail {
 	 * @param origin   original position
 	 * @param splitVol volume to copy out of the original position
 	 * @return new create position of the given volume
-	 * @throws KerError throw exception if the original position has been closed(or partly)
+	 * @throws KerErrorImpl throw exception if the original position has been closed(or partly)
 	 */
 	private KerPositionDetail copyPart(KerPositionDetail origin, int splitVol) throws KerError {
 		if (origin.closeVolume() > 0 || origin.closeAmount() > 0 || origin.closeProfitByDate() > 0
 				|| origin.closeProfitByTrade() > 0)
 			throw new KerError("Can't split a closed position.");
 
-		if (splitVol <= 0)
-			throw new KerError("Can't split a zero volume position.");
+		if (splitVol < 0)
+			throw new KerError("Can't split a negative volume position.");
 
 		var r = new KerPositionDetailImpl(origin);
 		
@@ -350,7 +352,7 @@ public class RuntimePositionDetail {
 	 * 
 	 * @param rep the trade report to close
 	 * @return the trade volume left to close in other position details
-	 * @throws KerError
+	 * @throws KerErrorImpl
 	 */
 	public KerTradeReport close(KerTradeReport rep) throws KerError {
 		int closeVol = 0;
@@ -402,7 +404,7 @@ public class RuntimePositionDetail {
 	 * 
 	 * @param toClose    position to close
 	 * @param closePrice close price
-	 * @throws KerError throws if failing to get instrument info
+	 * @throws KerErrorImpl throws if failing to get instrument info
 	 */
 	private void calculateCloseInfo(KerPositionDetail toClose, double closePrice) throws KerError {
 		var inst = this.info.instrument(origin.symbol());
