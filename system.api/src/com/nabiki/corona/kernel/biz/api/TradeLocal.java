@@ -40,7 +40,7 @@ public interface TradeLocal {
 	 * @param op open order
 	 * @return allocation report
 	 */
-	KerOrderEvalue evaluateOrder(KerOrder op);
+	KerOrderEvalue allocateOrder(KerOrder op);
 
 	/**
 	 * Query account with given account id.

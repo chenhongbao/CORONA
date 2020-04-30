@@ -93,20 +93,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public KerOrderEvalue evaluateOrder(KerOrder op) {
-		var factory = DefaultDataFactory.create();
-		var eval = factory.kerOrderEvalue();
-		
-		if (op == null) {
-			this.log.warn("KerOrder null pointer.");
-			return eval;
-		}	
-		// Don't insert order if the information for the denoted instrument is not ready.
-		if (!this.info.ready(op.symbol)) {
-			this.log.warn("Instrument not ready for order: " + op.symbol());
-			return eval;
-		}
-		
+	public KerOrderEvalue allocateOrder(KerOrder op) {		
 		// TODO evaluateOrder
 		return null;
 	}

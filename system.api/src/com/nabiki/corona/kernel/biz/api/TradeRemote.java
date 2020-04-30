@@ -9,6 +9,13 @@ public interface TradeRemote {
 	 * @return service name
 	 */
 	String name();
+	
+	/**
+	 * Get next valid order ID. The order ID increases per call.
+	 * 
+	 * @return order ID
+	 */
+	String nextOrderId();
 
 	/**
 	 * Send new order to remote counter and return the number of currently pending order requests in queue.

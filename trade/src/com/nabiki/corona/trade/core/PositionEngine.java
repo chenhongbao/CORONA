@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
+import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.trade.RuntimeInfo;
@@ -62,7 +63,7 @@ public class PositionEngine {
 		return this.symbol;
 	}
 
-	public synchronized void lock(KerOrder o) throws KerError {
+	public void lock(KerOrder o) throws KerError {
 		if (!canLock(o))
 			throw new KerError("Can't lock position for order: " + o.orderId());
 
@@ -76,6 +77,58 @@ public class PositionEngine {
 		if (noLock.volume() > 0)
 			throw new KerError(
 					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
+	}
+
+	/**
+	 * Get all locked position of this position engine.
+	 * 
+	 * @return locked positions
+	 */
+	public Collection<KerPositionDetail> locked() {
+		var ret = new LinkedList<KerPositionDetail>();	
+		for (var rt : this.details) {
+			ret.addAll(rt.locked());
+		}
+		return ret;
+	}
+
+	/**
+	 * Get all closed position of this position engine.
+	 * 
+	 * @return closed positions
+	 */
+	public Collection<KerPositionDetail> closed() {
+		var ret = new LinkedList<KerPositionDetail>();	
+		for (var rt : this.details) {
+			ret.addAll(rt.closed());
+		}
+		return ret;
+	}
+	
+	/**
+	 * Get own position of this position engine.
+	 * 
+	 * @return own position
+	 */
+	public Collection<KerPositionDetail> own() throws KerError {
+		var ret = new LinkedList<KerPositionDetail>();	
+		for (var rt : this.details) {
+			ret.add(rt.own());
+		}
+		return ret;
+	}
+	
+	/**
+	 * Get available position of this position engine.
+	 * 
+	 * @return available position
+	 */
+	public Collection<KerPositionDetail> available() throws KerError {
+		var ret = new LinkedList<KerPositionDetail>();	
+		for (var rt : this.details) {
+			ret.add(rt.available());
+		}
+		return ret;
 	}
 
 	private boolean canLock(KerOrder o) throws KerError {

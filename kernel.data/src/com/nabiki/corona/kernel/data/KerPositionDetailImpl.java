@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 import javax.json.bind.annotation.JsonbDateFormat;
 
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 
 public class KerPositionDetailImpl implements KerPositionDetail {

@@ -9,7 +9,8 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 
 public class KerOrderEvalueImpl implements KerOrderEvalue {
-	private KerError error = new KerError(0, "");
+	private String tradeSessionId;
+	private KerError error;
 	private List<KerPositionDetail> details = new LinkedList<>();
 
 	public KerOrderEvalueImpl() {
@@ -38,6 +39,16 @@ public class KerOrderEvalueImpl implements KerOrderEvalue {
 	@Override
 	public void positionsToClose(Collection<KerPositionDetail> p) {
 		this.details.addAll(p);
+	}
+
+	@Override
+	public String tradeSessionId() {
+		return this.tradeSessionId;
+	}
+
+	@Override
+	public void tradeSessionId(String s) {
+		this.tradeSessionId = s;
 	}
 
 }

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
@@ -15,6 +16,7 @@ import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
+import com.nabiki.corona.kernel.biz.api.TradeRemote;
 
 @Component(service = {})
 public class RuntimeInfo {
@@ -22,7 +24,8 @@ public class RuntimeInfo {
 	private Logger log;
 
 	// Last ticks.
-	@Reference(bind = "bindTickLocal", updated = "updatedTickLocal", unbind = "unbindTickLocal")
+	@Reference(bind = "bindTickLocal", updated = "updatedTickLocal", unbind = "unbindTickLocal",
+			policy = ReferencePolicy.DYNAMIC)
 	private volatile Collection<TickLocal> ticks = new ConcurrentSkipListSet<>();
 
 	public void bindTickLocal(TickLocal local) {
@@ -48,6 +51,38 @@ public class RuntimeInfo {
 
 		this.ticks.remove(local);
 		this.log.info("Unbind local tick: {}.", local.name());
+	}
+
+	@Reference(bind = "bindTradeRemote", updated = "updatedTradeRemote", unbind = "unbindTradeRemote",
+			policy = ReferencePolicy.DYNAMIC)
+	private volatile TradeRemote tradeRemote;
+	
+	public void bindTradeRemote(TradeRemote remote) {
+		if (remote == null)
+			return;
+		
+		this.tradeRemote = remote;
+		this.log.info("Bind trade remote: {}.", remote.name());
+	}
+	
+	public void updatedTradeRemote(TradeRemote remote) {
+		if (remote == null)
+			return;
+		
+		this.tradeRemote = remote;
+		this.log.info("Update trade remote: {}.", remote.name());
+	}
+	
+	public void unbindTradeRemote(TradeRemote remote) {
+		if (remote == null)
+			return;
+		
+		this.tradeRemote = remote;
+		this.log.info("Unbind trade remote: {}.", remote.name());
+	}
+	
+	public TradeRemote tradeRemote() {
+		return this.tradeRemote;
 	}
 
 	// Information keepers.
