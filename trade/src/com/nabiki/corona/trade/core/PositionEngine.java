@@ -9,16 +9,19 @@ import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class PositionEngine {
 	private final RuntimeInfo runtime;
 	private final String symbol;
+	private final DataFactory fatory;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
 
-	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init) throws KerError {
+	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init, DataFactory factory) throws KerError {
 		this.symbol = symbol;
 		this.runtime = runtime;
+		this.fatory = factory;
 		if (init != null) {
 			for (var d : init) {
 				if (d.origin().symbol().compareTo(this.symbol) != 0)
@@ -63,20 +66,27 @@ public class PositionEngine {
 		return this.symbol;
 	}
 
-	public void lock(KerOrder o) throws KerError {
+	public Collection<KerPositionDetail> lock(KerOrder o) throws KerError {
 		if (!canLock(o))
 			throw new KerError("Can't lock position for order: " + o.orderId());
 
-		KerOrder noLock = o;
+		Collection<KerPositionDetail> ret = new LinkedList<>();
+		KerOrder toLock = this.fatory.kerOrder(o);
 		var iter = this.details.iterator();
 
-		while (iter.hasNext() && noLock.volume() > 0) {
-			noLock = iter.next().lock(noLock);
+		while (iter.hasNext() && toLock.volume() > 0) {
+			var lck = iter.next().lock(toLock);
+			
+			// Update to lock volume and return collection.
+			ret.add(lck);
+			toLock.volume(toLock.volume() - lck.volume());
 		}
 
-		if (noLock.volume() > 0)
+		if (toLock.volume() > 0)
 			throw new KerError(
 					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
+		
+		return ret;
 	}
 
 	/**
@@ -163,6 +173,6 @@ public class PositionEngine {
 	}
 
 	private void openPosition(KerTradeReport rep) throws KerError {
-		this.details.add(new RuntimePositionDetail(rep, this.runtime));
+		this.details.add(new RuntimePositionDetail(rep, this.runtime, this.fatory));
 	}
 }

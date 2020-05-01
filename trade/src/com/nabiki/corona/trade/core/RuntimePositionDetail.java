@@ -24,18 +24,20 @@ public class RuntimePositionDetail {
 	private final List<KerPositionDetail> closed = new LinkedList<>();
 	
 	// Data factory.
-	private DataFactory factory = DefaultDataFactory.create();
+	private final DataFactory factory;
 
-	public RuntimePositionDetail(KerTradeReport rep, RuntimeInfo info) throws KerError {
+	public RuntimePositionDetail(KerTradeReport rep, RuntimeInfo info, DataFactory factory) throws KerError {
 		this.symbol = rep.symbol();
 		this.info = info;
+		this.factory = factory;
 		this.origin = ensure(rep);
 	}
 
 	public RuntimePositionDetail(KerPositionDetail origin, Collection<KerPositionDetail> locked,
-			Collection<KerPositionDetail> closed, RuntimeInfo info) {
+			Collection<KerPositionDetail> closed, RuntimeInfo info, DataFactory factory) {
 		this.symbol = origin.symbol();
 		this.info = info;
+		this.factory= factory;
 		this.origin = origin;
 		if (locked != null)
 			this.locked.addAll(locked);
@@ -279,37 +281,32 @@ public class RuntimePositionDetail {
 	}
 
 	/**
-	 * Lock the position for close order and return the unfilled part of order.
+	 * Lock the position for close order and return the locked part of order.
 	 * 
 	 * @param o order
-	 * @return new created order with unfilled volume
+	 * @return the locked position
 	 * @throws KerError throw exception if the order has wrong state
 	 */
-	public KerOrder lock(KerOrder o) throws KerError {
+	public KerPositionDetail lock(KerOrder o) throws KerError {
 		if (o.offsetFlag() == State.OFFSET_OPEN)
 			throw new KerError("Can't lock position for an open order.");
 
-		int lockVol = 0;
 		var a = available();
-		if (a.volume() == 0)
-			return this.factory.kerOrder(o);
+		if (a.volume() == 0) {
+			return a;
+		}
 		
 		if (a.volume() < 0)
 			throw new KerError("[FATAL]Negative position volume.");
 
 		if (a.volume() <= o.volume()) {
 			locked.add(a);
-			lockVol = a.volume();
+			return a;
 		} else {
 			var l = copyPart(a, o.volume());
 			locked.add(l);
-			lockVol = l.volume();
+			return l;
 		}
-
-		var r = this.factory.kerOrder(o);
-		r.volume(r.volume() - lockVol);
-
-		return r;
 	}
 
 	/**

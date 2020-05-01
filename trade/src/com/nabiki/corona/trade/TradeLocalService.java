@@ -6,7 +6,11 @@ import org.osgi.service.component.annotations.*;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.api.ErrorCode;
+import com.nabiki.corona.api.ErrorMessage;
+import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
@@ -41,6 +45,8 @@ public class TradeLocalService implements TradeLocal {
 		this.info = null;
 		this.log.info("Unbind runtime info.");
 	}
+	
+	private final DataFactory factory = null;
 
 	@Override
 	public String name() {
@@ -91,9 +97,8 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public KerOrderEvalue allocateOrder(KerOrder op) {		
-		// TODO evaluateOrder
+	public KerOrderEvalue allocateOrder(KerOrder op) {
+		// TODO allocate res for order.
 		return null;
 	}
-
 }
