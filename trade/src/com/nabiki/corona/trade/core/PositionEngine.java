@@ -76,10 +76,11 @@ public class PositionEngine {
 
 		while (iter.hasNext() && toLock.volume() > 0) {
 			var lck = iter.next().lock(toLock);
-			
-			// Update to lock volume and return collection.
-			ret.add(lck);
-			toLock.volume(toLock.volume() - lck.volume());
+			// Update to-lock volume and ret-collection.
+			if (lck.volume() > 0) {
+				ret.add(lck);
+				toLock.volume(toLock.volume() - lck.volume());
+			}
 		}
 
 		if (toLock.volume() > 0)

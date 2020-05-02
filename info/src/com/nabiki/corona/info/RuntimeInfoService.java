@@ -1,5 +1,6 @@
 package com.nabiki.corona.info;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -159,5 +160,19 @@ public class RuntimeInfoService implements RuntimeInfo {
 	@Override
 	public String name() {
 		return "Global Runtime";
+	}
+
+	@Override
+	public LocalDate tradingDay() {
+		LocalDate day = null;
+		for (var t : this.ticks) {
+			if (t != null) {
+				day = t.tradingDay();
+				if (day != null)
+					break;
+			}
+		}
+		
+		return day;
 	}
 }

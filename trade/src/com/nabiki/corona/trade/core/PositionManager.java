@@ -15,20 +15,11 @@ public class PositionManager {
 	PositionManager(RuntimeInfo runtime, DataFactory factory) {
 		this.runtime = runtime;
 		this.factory = factory;
+		
+		// TODO try initialize positions
 	}
 	
 	PositionEngine getPositon(String symbol) {
 		return this.positions.get(symbol);
-	}
-	
-	void setPosition(String symbol) {
-		if (this.positions.containsKey(symbol))
-			return;
-		
-		try {
-			this.positions.put(symbol, new PositionEngine(symbol, this.runtime, null, this.factory));
-		} catch (KerError e) {
-			// Since init runtime position detail is null, no exception is thrown.
-		}
 	}
 }

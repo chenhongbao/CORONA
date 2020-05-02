@@ -12,8 +12,9 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class InvestorAccount {
 	private final AccountEngine account;
-	private final PositionManager positions;
-	private final SessionIdManager sessionIds;
+	private final AccountManager accountManager;
+	private final PositionManager positionManager;
+	private final SessionManager sessionManager;
 
 	private final String accountId;
 	private final RuntimeInfo info;
@@ -23,9 +24,13 @@ public class InvestorAccount {
 		this.accountId = accountId;
 		this.info = info;
 		this.factory = factory;
-		this.account = new AccountEngine();
-		this.positions = new PositionManager(this.info, this.factory);
-		this.sessionIds = new SessionIdManager();
+		
+		// Account manager initializes account.
+		this.accountManager = new AccountManager(this.info, this.factory);
+		this.positionManager = new PositionManager(this.info, this.factory);
+		this.sessionManager = new SessionManager();
+		// Get account engine from account manager.
+		this.account = this.accountManager.account();
 		
 		// TODO total engine for both account and position
 	}
@@ -37,6 +42,10 @@ public class InvestorAccount {
 	public void trade(KerTradeReport rep) throws KerError {
 		// TODO Set the trade session ID and update position.
 		// TODO trade
+	}
+	
+	public void cancel(KerOrder order) throws KerError {
+		// TODO cancel an existing but not completed order.
 	}
 	
 	/**
@@ -52,7 +61,9 @@ public class InvestorAccount {
 		}
 		// Don't insert order if the information for the denoted instrument is not ready.
 		if (!this.info.ready(order.symbol)) {
-			throw new KerError("Instrument not ready for order: " + order.symbol());
+			var r = this.factory.kerOrderEvalue();
+			r.error(new KerError(ErrorCode.NOT_INITED, ErrorMessage.NOT_INITED));
+			return r;
 		}
 
 		KerOrderEvalue r = null;
@@ -62,12 +73,13 @@ public class InvestorAccount {
 			r = validateClose(order);
 		}
 		
+		// Set default NONE error, says it is OK.
 		if (r.error() == null)
 			r.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
 		
-		if (r.error().code() == ErrorCode.NONE) {
-			r.tradeSessionId(this.sessionIds.createSessionId(order.orderId()));
-		}
+		// Create trade session ID for verified order.
+		if (r.error().code() == ErrorCode.NONE)
+			r.tradeSessionId(this.sessionManager.createSessionId(order.orderId()));
 		
 		return r;
 	}
@@ -75,7 +87,7 @@ public class InvestorAccount {
 	private KerOrderEvalue validateClose(KerOrder order) {
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
 		
-		var positionEngine = this.positions.getPositon(order.symbol());
+		var positionEngine = this.positionManager.getPositon(order.symbol());
 		if (positionEngine == null) {
 			eval.error( new KerError(ErrorCode.INSTRUMENT_NOT_FOUND, ErrorMessage.INSTRUMENT_NOT_FOUND));
 		} else {
@@ -111,7 +123,7 @@ public class InvestorAccount {
 		}
 		
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockedAmount > this.account.available()) {
+		if (lockedAmount > this.account.current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
 			this.account.lock(lockedAmount);

@@ -1,5 +1,6 @@
 package com.nabiki.corona.candle;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,6 +121,8 @@ public class TickProcessor implements TickLocal {
 	// Last tick preserve.
 	private Map<String, Tick> lastTicks = new ConcurrentHashMap<>();
 	
+	private LocalDate tradingDay;
+	
 	public TickProcessor() {
 	}
 
@@ -174,6 +177,9 @@ public class TickProcessor implements TickLocal {
 		
 		// Keep the tick as last tick.
 		this.lastTicks.put(tick.symbol(), tick);
+		
+		if (tradingDay() == null)
+			this.tradingDay = tick.tradingDay();
 	}
 
 	private class CandlePostListener implements CandleEngineListener {
@@ -214,5 +220,10 @@ public class TickProcessor implements TickLocal {
 			return null;
 		
 		return this.lastTicks.get(symbol);
+	}
+
+	@Override
+	public LocalDate tradingDay() {
+		return this.tradingDay;
 	}
 }

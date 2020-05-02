@@ -1,16 +1,21 @@
 package com.nabiki.corona.trade.core;
 
+import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public class AccountEngine {
 
-	
-	private KerAccount origin; // TODO init account
+	private final KerAccount origin; // TODO init account
+	private final DataFactory factory;
 
-	public AccountEngine() {
-
+	public AccountEngine(KerAccount init, DataFactory factory) {
+		this.factory = factory;
+		if (init != null)
+			this.origin = init;
+		else
+			this.origin = this.factory.kerAccount();
 
 		// TODO account engine: compute account upon newly arriving trade
 	}
@@ -28,8 +33,8 @@ public class AccountEngine {
 		// TODO complete both open and close order
 	}
 	
-	public double available() {
-		// TODO get available money
-		return 0.0;
+	public KerAccount current() {
+		// TODO get current account
+		return null;
 	}
 }

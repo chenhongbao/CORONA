@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.biz.api;
 
+import java.time.LocalDate;
+
 import com.nabiki.corona.api.Order;
 
 public interface TradeRemote {
@@ -16,6 +18,13 @@ public interface TradeRemote {
 	 * @return order ID
 	 */
 	String nextOrderId();
+	
+	/**
+	 * Get trading day.
+	 * 
+	 * @return trading day
+	 */
+	LocalDate tradingDay();
 
 	/**
 	 * Send new order to remote counter and return the number of currently pending order requests in queue.
