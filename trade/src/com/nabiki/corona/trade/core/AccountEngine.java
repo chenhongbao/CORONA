@@ -18,10 +18,12 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 public class AccountEngine {
 	private class RuntimeLockMoney {
 		private double amount;
+		private int volume;
 		private String sessionId;
 		
-		RuntimeLockMoney(double amount, String sessionId) {
+		RuntimeLockMoney(double amount, int volume, String sessionId) {
 			this.amount = amount;
+			this.volume = volume;
 			this.sessionId = sessionId;
 		}
 		
@@ -29,8 +31,16 @@ public class AccountEngine {
 			return this.amount;
 		}
 		
+		int volume() {
+			return this.volume;
+		}
+		
 		void amount(double d) {
 			this.amount = d;
+		}
+		
+		void volume(int v) {
+			this.volume = v;
 		}
 		
 		String sessionId() {
@@ -58,8 +68,6 @@ public class AccountEngine {
 			this.origin = init;
 		else
 			this.origin = this.factory.kerAccount();
-
-		// TODO account engine: compute account upon newly arriving trade
 	}
 
 
@@ -80,21 +88,52 @@ public class AccountEngine {
 		double lockAmount = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
 		
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockAmount > available()) {
+		if (lockAmount > current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
-			lockCash(lockAmount, order.sessionId());
+			lockCash(lockAmount, order.volume(), order.sessionId());
 		}
 		
 		return eval;
 	}
 	
 	public void cancel(String sessionId) {
-		// TODO cancel open order
+		var iter = this.locked.listIterator();
+		while (iter.hasNext()) {
+			var s = iter.next();
+			if (s.sessionId().compareTo(sessionId) == 0)
+				iter.remove();
+				
+		}
 	}
 
-	public void trade(KerTradeReport rep) {
-		// TODO complete both open and close order
+	public void trade(KerTradeReport rep) throws KerError {
+		if (rep.offsetFlag() != State.OFFSET_OPEN)
+			throw new KerError("Can't unlock cash for a close order.");
+		
+		int volToUnlock = rep.volume();
+		var iter =  this.locked.listIterator();
+		while (volToUnlock > 0 && iter.hasNext()) {
+			var s = iter.next();
+			if (s.sessionId().compareTo(rep.sessionId()) != 0)
+				continue;
+			
+			if (s.volume() <= volToUnlock) {
+				// Unlock all the cash and search for next bucket.
+				iter.remove();
+				volToUnlock -= s.volume();
+			} else {
+				// Unlock part of the cash and wait for next trade.
+				// Cash in this trade is all unlocked.
+				int remain = s.volume() - volToUnlock;
+				s.amount(s.amount() * remain / s.volume());
+				s.volume(remain);
+				volToUnlock = 0;
+			}
+		}
+
+		if (volToUnlock > 0)
+			throw new KerError("Can't unlock cash more than that locked.");
 	}
 	
 	public KerAccount current() {
@@ -102,71 +141,8 @@ public class AccountEngine {
 		return null;
 	}
 	
-	private void lockCash(double amount, String sid) throws KerError {
-		if (amount > available())
-			throw new KerError("Not enough available money to lock.");
-		
-		this.locked.add(new RuntimeLockMoney(amount, sid));
-	}
-	
-	// Following methods compute fields of account.
-	private double deposit() {
-		// TODO deposit
-		return 0.0D;
-	}
-	
-	private double withdraw() {
-		// TODO withdraw
-		return 0.0D;
-	}
-	
-	private double frozenMargin() {
-		// TODO frozen margin
-		return 0.0D;
-	}
-	
-	private double frozenCash() {
-		// TODO frozen cash
-		return 0.0D;
-	}
-	
-	private double frozenCommission() {
-		// TODO frozen commission
-		return 0.0D;
-	}
-	
-	private double currentMargin() {
-		// TODO current margin
-		return 0.0D;
-	}
-	
-	private double commission() {
-		// TODO commission
-		return 0.0D;
-	}
-	
-	private double closeProfit() {
-		// TODO close profit
-		return 0.0D;
-	}
-	
-	private double positionProfit() {
-		// TODO position profit
-		return 0.0D;
-	}
-	
-	private double balance() {
-		// TODO balance
-		return 0.0D;
-	}
-	
-	private double available() {
-		// TODO calculate available
-		return 0.0;
-	}
-	
-	private double withdrawQuota() {
-		// TODO withdraw quota
-		return 0.0D;
+	// Assume available >= amount.
+	private void lockCash(double amount, int volume, String sid) throws KerError {
+		this.locked.add(new RuntimeLockMoney(amount, volume, sid));
 	}
 }
