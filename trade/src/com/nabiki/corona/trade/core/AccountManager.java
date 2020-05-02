@@ -5,8 +5,8 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class AccountManager {
 
-	public AccountManager(RuntimeInfo runtime, DataFactory factory) {
-		// TODO account manager constructor
+	public AccountManager(RuntimeInfo runtime, PositionManager pos, DataFactory factory) {
+		// TODO initialize account
 	}
 
 	public AccountEngine account() {

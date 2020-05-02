@@ -1,6 +1,5 @@
 package com.nabiki.corona.trade.core;
 
-import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;
@@ -26,10 +25,11 @@ public class InvestorAccount {
 		this.info = info;
 		this.factory = factory;
 		
-		// Account manager initializes account.
-		this.accountManager = new AccountManager(this.info, this.factory);
-		this.positionManager = new PositionManager(this.info, this.factory);
+		// Create instances of data.
 		this.sessionManager = new SessionManager();
+		this.positionManager = new PositionManager(this.info, this.factory);
+		this.accountManager = new AccountManager(this.info, this.positionManager, this.factory);
+		
 		// Get account engine from account manager.
 		this.account = this.accountManager.account();
 	}
@@ -41,6 +41,10 @@ public class InvestorAccount {
 	public void trade(KerTradeReport rep) throws KerError {
 		if (rep == null)
 			throw new KerError("Can't process trade report of null pointer.");
+		
+		// Set session ID.
+		var sid = this.sessionManager.querySessionId(rep.orderId());
+		rep.sessionId(sid);
 		
 		var positionEngine = this.positionManager.getPositon(rep.symbol());
 		if (positionEngine == null)
@@ -96,6 +100,10 @@ public class InvestorAccount {
 		}
 
 		KerOrderEvalue r = null;
+		// Create session ID.
+		var sid = this.sessionManager.createSessionId(order.orderId());
+		order.sessionId(sid);
+		
 		if (order.offsetFlag() == State.OFFSET_OPEN) {
 			r = validateOpen(order);
 		} else {
@@ -106,9 +114,9 @@ public class InvestorAccount {
 		if (r.error() == null)
 			r.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
 		
-		// Create trade session ID for verified order.
+		// Return trade session ID for verified order.
 		if (r.error().code() == ErrorCode.NONE)
-			r.tradeSessionId(this.sessionManager.createSessionId(order.orderId()));
+			r.tradeSessionId(sid);
 		
 		return r;
 	}
@@ -131,28 +139,9 @@ public class InvestorAccount {
 	}
 
 	private KerOrderEvalue validateOpen(KerOrder order) throws KerError {
-		double byVol = 0.0, byMny = 0.0;
-
-		// Has checked the availability of runtime info, so query won't return null.
-		var margin = this.info.margin(order.symbol());
-		if (order.direction() == State.DIRECTION_BUY) {
-			byVol = margin.longMarginRatioByVolume();
-			byMny = margin.longMarginRatioByMoney();
-		} else {
-			byVol = margin.shortMarginRatioByVolume();
-			byMny = margin.shortMarginRatioByMoney();
-		}
-
-		int multi = this.info.instrument(order.symbol()).volumeMultiple();
-		double lockAmount = Utils.margin(order.price(), order.volume(), multi, byMny, byVol);
-		
-		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockAmount > this.account.current().available()) {
-			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
-		} else {
-			this.account.lock(lockAmount);
-		}
-		
+		var eval = this.account.lock(order);
+		if (eval.error() == null)
+			eval.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
 		return eval;
 	}
 }

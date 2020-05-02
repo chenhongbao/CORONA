@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade.core;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,14 +13,18 @@ public class PositionManager {
 	private final RuntimeInfo runtime;
 	private final DataFactory factory;
 	
-	PositionManager(RuntimeInfo runtime, DataFactory factory) {
+	public PositionManager(RuntimeInfo runtime, DataFactory factory) {
 		this.runtime = runtime;
 		this.factory = factory;
 		
 		// TODO try initialize positions
 	}
 	
-	PositionEngine getPositon(String symbol) {
+	public PositionEngine getPositon(String symbol) {
 		return this.positions.get(symbol);
+	}
+	
+	public Collection<PositionEngine> positions() {
+		return this.positions.values();
 	}
 }

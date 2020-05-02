@@ -1,25 +1,25 @@
 package com.nabiki.corona.kernel.api;
 
 public interface DataFactory {
-	KerAccount kerAccount(Object... args);
+	KerAccount kerAccount(KerAccount... args);
 	
-	KerCommission kerCommission(Object... args);
+	KerCommission kerCommission(KerCommission... args);
 	
-	KerInstrument kerInstrument(Object... args);
+	KerInstrument kerInstrument(KerInstrument... args);
 	
-	KerMargin kerMargin(Object... args);
+	KerMargin kerMargin(KerMargin... args);
 	
-	KerOrder kerOrder(Object... args);
+	KerOrder kerOrder(KerOrder... args);
 	
-	KerOrderEvalue kerOrderEvalue(Object... args);
+	KerOrderEvalue kerOrderEvalue(KerOrderEvalue... args);
 	
-	KerOrderStatus kerOrderStatus(Object... args);
+	KerOrderStatus kerOrderStatus(KerOrderStatus... args);
 	
-	KerPositionDetail kerPositionDetail(Object... args);
+	KerPositionDetail kerPositionDetail(KerPositionDetail... args);
 	
-	KerTrade kerTrade(Object... args);
+	KerTrade kerTrade(KerTrade... args);
 	
-	KerTradeReport kerTradeReport(Object... args);
+	KerTradeReport kerTradeReport(KerTradeReport... args);
 	
-	KerTradeSession kerTradeSession(Object... args);
+	KerTradeSession kerTradeSession(KerTradeSession... args);
 }
