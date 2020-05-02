@@ -4,16 +4,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.data.DefaultDataFactory;
-import com.nabiki.corona.kernel.data.KerOrderImpl;
-import com.nabiki.corona.kernel.data.KerPositionDetailImpl;
-import com.nabiki.corona.kernel.data.KerTradeReportImpl;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class RuntimePositionDetail {
@@ -125,15 +122,14 @@ public class RuntimePositionDetail {
 	}
 
 	private double getMargin(String symbol, double price, int volume, double byMny, double byVol) throws KerError {
-		if (byVol != 0)
-			return volume * byVol;
-		else {
-			var inst = this.info.instrument(symbol);
-			if (inst == null)
-				throw new KerError("Instrument not found: " + symbol);
-			
-			return inst.volumeMultiple() * volume * price * byMny;
-		}
+		if (byMny != 0.0 && byVol != 0.0)
+			throw new KerError("Ambiguity of margin rates and both by-volume and by-money are non-zero.");
+		
+		var inst = this.info.instrument(symbol);
+		if (inst == null)
+			throw new KerError("Instrument not found: " + symbol);
+		
+		return Utils.margin(price, volume, inst.volumeMultiple(), byMny, byVol);
 	}
 	
 	private double lastSettle(String symbol) throws KerError {

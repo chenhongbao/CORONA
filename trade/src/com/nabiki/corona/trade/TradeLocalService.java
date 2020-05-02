@@ -53,6 +53,7 @@ public class TradeLocalService implements TradeLocal {
 		// TODO name
 		return null;
 	}
+	// TODO need validate given order/trade before executing.
 
 	@Override
 	public void orderStatus(KerOrderStatus o) {

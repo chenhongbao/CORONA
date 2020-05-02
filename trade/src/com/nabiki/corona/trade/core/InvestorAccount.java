@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade.core;
 
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;
@@ -31,8 +32,6 @@ public class InvestorAccount {
 		this.sessionManager = new SessionManager();
 		// Get account engine from account manager.
 		this.account = this.accountManager.account();
-		
-		// TODO total engine for both account and position
 	}
 	
 	public String accountId() {
@@ -40,12 +39,42 @@ public class InvestorAccount {
 	}
 
 	public void trade(KerTradeReport rep) throws KerError {
-		// TODO Set the trade session ID and update position.
-		// TODO trade
+		if (rep == null)
+			throw new KerError("Can't process trade report of null pointer.");
+		
+		var positionEngine = this.positionManager.getPositon(rep.symbol());
+		if (positionEngine == null)
+			throw new KerError(ErrorCode.INSTRUMENT_NOT_FOUND, ErrorMessage.INSTRUMENT_NOT_FOUND);
+		
+		if (rep.offsetFlag() == State.OFFSET_OPEN) {
+			// Add new position, then unlocked the margin.
+			// What happens in real is to move the money from account's available to used margin of position.
+			positionEngine.trade(rep);
+			this.account.trade(rep);
+		} else {
+			// Remove locked position to closed position.
+			// What happens in real is to reduce the used margin, then account's available is increased thereby.
+			positionEngine.trade(rep);
+		}
 	}
 	
 	public void cancel(KerOrder order) throws KerError {
-		// TODO cancel an existing but not completed order.
+		if (order == null)
+			throw new KerError("Can't cancel order of null pointer.");
+		
+		var sid = this.sessionManager.querySessionId(order.orderId());
+		
+		if (order.offsetFlag() == State.OFFSET_OPEN) {
+			this.account.cancel(sid);
+		} else {
+			// Other flags are closing order.
+			var positionEngine = this.positionManager.getPositon(order.symbol());
+			if (positionEngine == null) {
+				throw new KerError(ErrorCode.INSTRUMENT_NOT_FOUND, ErrorMessage.INSTRUMENT_NOT_FOUND);
+			} else {
+				positionEngine.cancel(sid);
+			}
+		}
 	}
 	
 	/**
@@ -57,7 +86,7 @@ public class InvestorAccount {
 	 */
 	public KerOrderEvalue allocateOrder(KerOrder order) throws KerError {
 		if (order == null) {
-			throw new KerError("KerOrder null pointer.");
+			throw new KerError("Can't allocate for order of null pointer.");
 		}
 		// Don't insert order if the information for the denoted instrument is not ready.
 		if (!this.info.ready(order.symbol)) {
@@ -103,7 +132,6 @@ public class InvestorAccount {
 
 	private KerOrderEvalue validateOpen(KerOrder order) throws KerError {
 		double byVol = 0.0, byMny = 0.0;
-		double lockedAmount = 0.0;
 
 		// Has checked the availability of runtime info, so query won't return null.
 		var margin = this.info.margin(order.symbol());
@@ -115,18 +143,14 @@ public class InvestorAccount {
 			byMny = margin.shortMarginRatioByMoney();
 		}
 
-		if (byVol > 0) {
-			lockedAmount = order.volume() * byVol;
-		} else {
-			int multi = this.info.instrument(order.symbol()).volumeMultiple();
-			lockedAmount = multi * order.volume() * order.price()* byMny;
-		}
+		int multi = this.info.instrument(order.symbol()).volumeMultiple();
+		double lockAmount = Utils.margin(order.price(), order.volume(), multi, byMny, byVol);
 		
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockedAmount > this.account.current().available()) {
+		if (lockAmount > this.account.current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
-			this.account.lock(lockedAmount);
+			this.account.lock(lockAmount);
 		}
 		
 		return eval;
