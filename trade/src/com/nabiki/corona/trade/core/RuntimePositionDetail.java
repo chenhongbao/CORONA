@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade.core;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class RuntimePositionDetail {
 	private final KerPositionDetail origin;
 	private final List<KerPositionDetail> locked = new LinkedList<>();
 	private final List<KerPositionDetail> closed = new LinkedList<>();
-	
+
 	// Data factory.
 	private final DataFactory factory;
 
@@ -34,7 +35,7 @@ public class RuntimePositionDetail {
 			Collection<KerPositionDetail> closed, RuntimeInfo info, DataFactory factory) {
 		this.symbol = origin.symbol();
 		this.info = info;
-		this.factory= factory;
+		this.factory = factory;
 		this.origin = origin;
 		if (locked != null)
 			this.locked.addAll(locked);
@@ -46,17 +47,21 @@ public class RuntimePositionDetail {
 	private KerPositionDetail ensure(KerTradeReport rep) throws KerError {
 		if (rep.offsetFlag() != State.OFFSET_OPEN)
 			throw new KerError("Position detail must be initialized by an open trade.");
-		
+
+		// Compute margin.
 		double byMny = getMarginRateMoney(rep.symbol(), rep.direction());
 		double byVol = getMarginRateVolume(rep.symbol(), rep.direction());
 		double lastSettle = lastSettle(rep.symbol());
 		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), byMny, byVol);
-		
+
 		// TODO Exchange margin rate needs a new query to remote counter. Trade-off too big.
 		double exMargin = margin;
-		
+
+		// Compute open commission.
+		double comm = getOpenCommission(rep.symbol(), rep.price(), rep.volume());
+
 		var p = this.factory.kerPositionDetail();
-		
+
 		p.brokerId(rep.brokerId());
 		p.closeAmount(0.0);
 		p.closeProfitByDate(0.0);
@@ -77,27 +82,66 @@ public class RuntimePositionDetail {
 		p.openPrice(rep.price());
 		p.positionProfitByDate(0.0);
 		p.positionProfitByTrade(0.0);
+		p.openCommission(comm);
 		p.settlementId(rep.settlementId());
 		p.settlementPrice(0.0);
 		p.symbol(rep.symbol());
-		
+
 		// TODO The field, time first volume, is especially for DCE, but useless.
 		p.timeFirstVolume(0);
-		
+
 		p.tradeId(rep.tradeId());
 		p.tradeSessionId(rep.sessionId());
 		p.tradeType(rep.tradeType());
 		p.tradingDay(rep.tradingDay());
 		p.volume(rep.volume());
-		
+
 		return p;
 	}
-	
+
+	private double getOpenCommission(String s, double price, int volume) throws KerError {
+		var inst = this.info.instrument(s);
+		if (inst == null)
+			throw new KerError("Instrument not found: " + s);
+
+		var commRate = this.info.commission(s);
+		if (commRate == null)
+			throw new KerError("Commission rate not found: " + s);
+
+		return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.openRatioByMoney(),
+				commRate.openRatioByVolume());
+	}
+
+	private double getCloseCommission(String s, double price, int volume, LocalDate positionTradingDay)
+			throws KerError {
+		var inst = this.info.instrument(s);
+		if (inst == null)
+			throw new KerError("Instrument not found: " + s);
+
+		var commRate = this.info.commission(s);
+		if (commRate == null)
+			throw new KerError("Commission rate not found: " + s);
+
+		if (compareDate(this.info.tradingDay(), positionTradingDay)) {
+			// Close today position.
+			return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.closeTodayRatioByMoney(),
+					commRate.closeTodayRatioByVolume());
+		} else {
+			// Close yesterday position.
+			return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.closeRatioByMoney(),
+					commRate.closeRatioByVolume());
+		}
+	}
+
+	private boolean compareDate(LocalDate d1, LocalDate d2) {
+		return d1.getYear() == d2.getYear() && d1.getDayOfYear() == d2.getDayOfYear();
+	}
+
 	private double getMarginRateVolume(String s, char direction) throws KerError {
 		var m = this.info.margin(s);
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
-		
+
 		if (direction == State.DIRECTION_BUY) {
 			return m.longMarginRatioByVolume();
 		} else if (direction == State.DIRECTION_SELL) {
@@ -111,7 +155,7 @@ public class RuntimePositionDetail {
 		var m = this.info.margin(s);
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
-		
+
 		if (direction == State.DIRECTION_BUY) {
 			return m.longMarginRatioByMoney();
 		} else if (direction == State.DIRECTION_SELL) {
@@ -124,20 +168,20 @@ public class RuntimePositionDetail {
 	private double getMargin(String symbol, double price, int volume, double byMny, double byVol) throws KerError {
 		if (byMny != 0.0 && byVol != 0.0)
 			throw new KerError("Ambiguity of margin rates and both by-volume and by-money are non-zero.");
-		
+
 		var inst = this.info.instrument(symbol);
 		if (inst == null)
 			throw new KerError("Instrument not found: " + symbol);
-		
-		return Utils.margin(price, volume, inst.volumeMultiple(), byMny, byVol);
+
+		return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), byMny, byVol);
 	}
-	
+
 	private double lastSettle(String symbol) throws KerError {
 		var t = this.info.lastTick(symbol);
 		if (t == null)
 			throw new KerError("Tick not found: " + symbol);
-		
-		return t.lastPrice();
+
+		return t.preSettlementPrice();
 	}
 
 	// Get the locked position.
@@ -145,16 +189,18 @@ public class RuntimePositionDetail {
 		var a = this.factory.kerPositionDetail(origin());
 
 		int volume = 0;
-		double margin = 0.0, exMargin = 0.0;
+		double margin = 0.0, exMargin = 0.0, openComm = 0.0;
 		for (var p : locked()) {
 			volume += p.volume();
 			margin += p.margin();
 			exMargin += p.exchangeMargin();
+			openComm += p.openCommission();
 		}
 
 		a.volume(volume);
 		a.margin(margin);
 		a.exchangeMargin(exMargin);
+		a.openCommission(openComm);
 
 		return a;
 	}
@@ -165,7 +211,8 @@ public class RuntimePositionDetail {
 
 		// Sum up.
 		int volume = 0, closeVolume = 0;
-		double closeAmount = 0.0, closeProfitByDate = 0.F, closeProfitByTrade = 0.0, margin = 0.0, exMargin = 0.0;
+		double closeAmount = 0.0, closeProfitByDate = 0.F, closeProfitByTrade = 0.0, margin = 0.0, exMargin = 0.0,
+				openComm = 0.0, closeComm = 0.0;
 		for (var c : closed()) {
 			volume += c.volume();
 			closeVolume += c.closeVolume();
@@ -174,6 +221,8 @@ public class RuntimePositionDetail {
 			closeProfitByTrade += c.closeProfitByTrade();
 			margin += c.margin();
 			exMargin += c.exchangeMargin();
+			openComm += c.openCommission();
+			closeComm += c.closeCommission();
 		}
 
 		// Reset some fields.
@@ -184,12 +233,18 @@ public class RuntimePositionDetail {
 		a.closeProfitByTrade(closeProfitByTrade);
 		a.margin(margin);
 		a.exchangeMargin(exMargin);
+		a.openCommission(openComm);
+		a.closeCommission(closeComm);
 
 		return a;
 	}
 
 	public String symbol() {
 		return this.symbol;
+	}
+
+	public double lockedCommission() {
+		return 0.0D;
 	}
 
 	/**
@@ -220,8 +275,8 @@ public class RuntimePositionDetail {
 	}
 
 	/**
-	 * Get own position that are not closed yet. The return instance is newly allocated and any change
-	 * to it will not affect the original data.
+	 * Get own position that are not closed yet. The return instance is newly allocated and any change to it will not
+	 * affect the original data.
 	 * 
 	 * @return own position detail
 	 * @throws KerError throw exception on failure calculating internal data
@@ -258,7 +313,7 @@ public class RuntimePositionDetail {
 	}
 
 	/**
-	 * Get the locked position details. The return reference is the internal data. Don't change it if you don't want to 
+	 * Get the locked position details. The return reference is the internal data. Don't change it if you don't want to
 	 * modify the internal states.
 	 * 
 	 * @return locked position details
@@ -291,7 +346,7 @@ public class RuntimePositionDetail {
 		if (a.volume() == 0) {
 			return a;
 		}
-		
+
 		if (a.volume() < 0)
 			throw new KerError("[FATAL]Negative position volume.");
 
@@ -316,16 +371,17 @@ public class RuntimePositionDetail {
 	 */
 	private KerPositionDetail copyPart(KerPositionDetail origin, int splitVol) throws KerError {
 		if (origin.closeVolume() > 0 || origin.closeAmount() > 0 || origin.closeProfitByDate() > 0
-				|| origin.closeProfitByTrade() > 0)
+				|| origin.closeProfitByTrade() > 0 || origin.closeCommission() > 0)
 			throw new KerError("Can't split a closed position.");
 
 		if (splitVol < 0)
 			throw new KerError("Can't split a negative volume position.");
 
 		var r = this.factory.kerPositionDetail(origin);
-		
+
 		r.margin(r.margin() * splitVol / r.volume());
 		r.exchangeMargin(r.exchangeMargin() * splitVol / r.volume());
+		r.openCommission(r.openCommission() * splitVol / r.volume());
 		r.volume(splitVol);
 		return r;
 	}
@@ -381,7 +437,7 @@ public class RuntimePositionDetail {
 				// Replace the original locked position with new one, of less volume.
 				var cp2 = copyPart(n, n.volume() - rep.volume());
 				iter.set(cp2);
-				
+
 				// Add closed position to closed.
 				closed().add(cp);
 
@@ -405,22 +461,26 @@ public class RuntimePositionDetail {
 	 * @throws KerError throws if failing to get instrument info
 	 */
 	private void calculateCloseInfo(KerPositionDetail toClose, double closePrice) throws KerError {
-		var inst = this.info.instrument(origin.symbol());
+		var inst = this.info.instrument(toClose.symbol());
 		if (inst == null)
-			throw new KerError("Instrument not found: " + origin.symbol());
+			throw new KerError("Instrument not found: " + toClose.symbol());
 
+		// Close volume.
 		toClose.closeVolume(toClose.volume());
-
+		// Close amount.
 		double ca = toClose.closeVolume() * inst.volumeMultiple() * closePrice;
 		toClose.closeAmount(ca);
-
+		// Close profit by date.
 		double pd = profit(toClose.lastSettlementPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByDate(pd);
-
+		// Close profit by trade.
 		double pt = profit(toClose.openPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByTrade(pt);
+		// Close commission.
+		toClose.closeCommission(
+				getCloseCommission(toClose.symbol(), closePrice, toClose.closeVolume(), toClose.tradingDay()));
 	}
 
 	private void calculatePositionInfo(KerPositionDetail pos) throws KerError {

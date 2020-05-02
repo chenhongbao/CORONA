@@ -11,6 +11,7 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 
 	public String brokerId;
 	public double closeAmount;
+	public double closeCommission;
 	public double closeProfitByDate;
 	public double closeProfitByTrade;
 	public int closeVolume;
@@ -25,6 +26,9 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public double margin;
 	public double marginRateByMoney;
 	public double marginRateByVolume;
+	public double openCommission;
+	@JsonbDateFormat("yyyyMMdd")
+	public LocalDate openDate;
 	public double openPrice;
 	public double positionProfitByDate;
 	public double positionProfitByTrade;
@@ -33,15 +37,13 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public String symbol;
 	public int timeFirstVolume;
 	public String tradeId;
-	public char tradeType;
-	public int volume;
 	public String tradeSessionId;
-	
-	@JsonbDateFormat("yyyyMMdd")
-	public LocalDate openDate;
+	public char tradeType;
 	
 	@JsonbDateFormat("yyyyMMdd")
 	public LocalDate tradingDay;
+	
+	public int volume;
 
 	public KerPositionDetailImpl() {
 	}
@@ -68,6 +70,16 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	@Override
 	public void closeAmount(double d) {
 		this.closeAmount = d;
+	}
+
+	@Override
+	public double closeCommission() {
+		return this.closeCommission;
+	}
+
+	@Override
+	public void closeCommission(double d) {
+		this.closeCommission = d;
 	}
 
 	@Override
@@ -211,6 +223,16 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	}
 
 	@Override
+	public double openCommission() {
+		return this.openCommission;
+	}
+
+	@Override
+	public void openCommission(double d) {
+		this.openCommission = d;
+	}
+
+	@Override
 	public LocalDate openDate() {
 		return this.openDate;
 	}
@@ -301,6 +323,16 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	}
 
 	@Override
+	public String tradeSessionId() {
+		return this.tradeSessionId;
+	}
+
+	@Override
+	public void tradeSessionId(String s) {
+		this.tradeSessionId = s;
+	}
+
+	@Override
 	public char tradeType() {
 		return this.tradeType;
 	}
@@ -330,7 +362,7 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 		this.volume = i;
 	}
 
-	public void deepCopy(KerPositionDetail old) {	
+	private void deepCopy(KerPositionDetail old) {	
 		symbol(old.symbol());
 		brokerId(old.brokerId());
 		investorId(old.investorId());
@@ -359,16 +391,6 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 		closeAmount(old.closeAmount());
 		timeFirstVolume(old.timeFirstVolume());
 		investUnitId(old.investUnitId());
-	}
-
-	@Override
-	public String tradeSessionId() {
-		return this.tradeSessionId;
-	}
-
-	@Override
-	public void tradeSessionId(String s) {
-		this.tradeSessionId = s;
 	}
 
 }

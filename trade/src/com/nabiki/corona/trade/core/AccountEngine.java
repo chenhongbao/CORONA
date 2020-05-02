@@ -77,7 +77,7 @@ public class AccountEngine {
 		}
 
 		int multi = this.info.instrument(order.symbol()).volumeMultiple();
-		double lockAmount = Utils.margin(order.price(), order.volume(), multi, byMny, byVol);
+		double lockAmount = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
 		
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
 		if (lockAmount > available()) {

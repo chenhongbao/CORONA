@@ -54,6 +54,10 @@ public interface KerPositionDetail extends PositionDetail {
 	void positionProfitByDate(double d);
 
 	void positionProfitByTrade(double d);
+	
+	void openCommission(double d);
+	
+	void closeCommission(double d);
 
 	void margin(double d);
 

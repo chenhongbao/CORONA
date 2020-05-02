@@ -36,6 +36,10 @@ public interface PositionDetail {
 	double positionProfitByDate();
 
 	double positionProfitByTrade();
+	
+	double openCommission();
+	
+	double closeCommission();
 
 	double margin();
 
