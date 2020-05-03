@@ -2,6 +2,9 @@ package com.nabiki.corona.kernel.data;
 
 import java.time.LocalDate;
 
+import javax.json.bind.annotation.JsonbDateFormat;
+
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.api.KerOrder;
 
 public class KerOrderImpl extends KerOrder {
@@ -10,7 +13,6 @@ public class KerOrderImpl extends KerOrder {
 	public String investorId;
 	public String orderId;
 	public String userId;
-	public LocalDate gtdDate;
 	public char forceCloseReason;
 	public boolean isAutoSuspend;
 	public String businessUnit;
@@ -23,6 +25,9 @@ public class KerOrderImpl extends KerOrder {
 	public String clientId;
 	public String ipAddress;
 	public String macAddress;
+	
+	@JsonbDateFormat("yyyyMMdd")
+	public LocalDate gtdDate;
 
 	public KerOrderImpl() {
 	}
@@ -38,7 +43,7 @@ public class KerOrderImpl extends KerOrder {
 		currencyId(o.currencyId());
 		exchangeId(o.exchangeId());
 		forceCloseReason(o.forceCloseReason());
-		gtdDate(o.gtdDate());
+		gtdDate(Utils.deepCopy(o.gtdDate()));
 		investorId(o.investorId());
 		investUnitId(o.investUnitId());
 		ipAddress(o.ipAddress());

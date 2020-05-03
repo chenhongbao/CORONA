@@ -3,6 +3,7 @@ Export-Package: \
 	com.nabiki.corona.kernel.api,\
 	com.nabiki.corona.kernel.settings.api,\
 	com.nabiki.corona.kernel.biz.api,\
-	com.nabiki.corona
+	com.nabiki.corona,\
+	com.nabiki.corona.mgr.api
 Bundle-Version: 0.0.1
 -buildpath: osgi.cmpn

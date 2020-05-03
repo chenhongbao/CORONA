@@ -27,8 +27,6 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public double marginRateByMoney;
 	public double marginRateByVolume;
 	public double openCommission;
-	@JsonbDateFormat("yyyyMMdd")
-	public LocalDate openDate;
 	public double openPrice;
 	public double positionProfitByDate;
 	public double positionProfitByTrade;
@@ -39,6 +37,9 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public String tradeId;
 	public String tradeSessionId;
 	public char tradeType;
+	
+	@JsonbDateFormat("yyyyMMdd")
+	public LocalDate openDate;
 	
 	@JsonbDateFormat("yyyyMMdd")
 	public LocalDate tradingDay;

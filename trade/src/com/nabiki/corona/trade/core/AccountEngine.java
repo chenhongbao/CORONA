@@ -14,23 +14,24 @@ import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.mgr.api.CashMoveCommand;
 
 public class AccountEngine {
 	private class RuntimeLockMoney {
-		private double amount;
+		private double margin;
 		private double commission;
 		private int volume;
 		private String sessionId;
 
 		RuntimeLockMoney(double amount, double commission, int volume, String sessionId) {
-			this.amount = amount;
+			this.margin = amount;
 			this.commission = commission;
 			this.volume = volume;
 			this.sessionId = sessionId;
 		}
 
-		double amount() {
-			return this.amount;
+		double margin() {
+			return this.margin;
 		}
 
 		int volume() {
@@ -38,7 +39,7 @@ public class AccountEngine {
 		}
 
 		void amount(double d) {
-			this.amount = d;
+			this.margin = d;
 		}
 
 		void volume(int v) {
@@ -67,7 +68,12 @@ public class AccountEngine {
 	private final PositionManager position;
 	private final DataFactory factory;
 
+	// Locking money.
 	private final List<RuntimeLockMoney> locked = new LinkedList<>();
+
+	// Deposit/withdraw(management).
+	private final List<CashMoveCommand> deposits = new LinkedList<>();
+	private final List<CashMoveCommand> withdraws = new LinkedList<>();
 
 	public AccountEngine(KerAccount init, RuntimeInfo info, PositionManager pos, DataFactory factory) {
 		this.info = info;
@@ -78,6 +84,18 @@ public class AccountEngine {
 			this.origin = init;
 		else
 			this.origin = this.factory.kerAccount();
+	}
+
+	public KerAccount origin() {
+		return this.origin;
+	}
+
+	public void deposit(CashMoveCommand cmd) {
+		// TODO deposit
+	}
+
+	public void withdraw(CashMoveCommand cmd) {
+		// TODO withdraw
 	}
 
 	public KerOrderEvalue lock(KerOrder order) throws KerError {
@@ -137,7 +155,7 @@ public class AccountEngine {
 
 			if (s.volume() < rep.volume())
 				throw new KerError("Lock cash less than trade.");
-			
+
 			if (s.volume() == rep.volume()) {
 				iter.remove();
 				break;
@@ -146,28 +164,77 @@ public class AccountEngine {
 			// Unlock part of the cash and wait for next trade.
 			// Cash in this trade is all unlocked.
 			int remain = s.volume() - rep.volume();
-			
+
 			// Decrease amount/commission.
-			s.amount(s.amount() * remain / s.volume());
+			s.amount(s.margin() * remain / s.volume());
 			s.commission(s.commission() * remain / s.volume());
 			s.volume(remain);
 			break;
 		}
 	}
 
-	public KerAccount current() {
+	// Algorithm: mark-to-market.
+	public KerAccount current() throws KerError {
+		double frozenMargin = 0.0, frozenCash = 0.0, frozenCommission = 0.0, currentMargin = 0.0, commission = 0.0,
+				closeProfit = 0.0, positionProfit = 0.0, balance = 0.0, available = 0.0;
+
+		// Frozen margin is the margin of locked position.
+		// Frozen commission is the commission of locked position.
+		// Current margin is total margin in balance, including locked and available.
+		// Commission is the total paid commission.
+		// Close profit is by-date profit of closed position.
+		// Position profit is by-date profit of at-hand position.
 		for (var pe : this.position.positions()) {
 			for (var p : pe.locked()) {
-
+				frozenMargin += p.margin();
+				currentMargin += p.margin();
+				frozenCommission += p.closeCommission();
+				commission += p.openCommission();
 			}
 
 			for (var p : pe.closed()) {
+				closeProfit = p.closeProfitByDate();
+				positionProfit += p.positionProfitByDate();
+				commission += p.openCommission() + p.closeCommission();
+			}
 
+			for (var p : pe.available()) {
+				commission += p.openCommission();
+				currentMargin += p.margin();
 			}
 		}
 
-		// TODO get current account
-		return null;
+		// Frozen cash is total locked money, including margin and commission.
+		for (var c : this.locked)
+			frozenCash += c.margin() + c.commission();
+
+		// Cash move.
+		var deposit = deposit();
+		var withdraw = withdraw();
+
+		// Refernce: https://www.wenhua.com.cn/popwin/zhuridingshi.htm
+		balance = origin().preBalance() + deposit - withdraw + closeProfit + positionProfit - commission;
+		available = balance - frozenMargin - frozenCommission - frozenCash - currentMargin;
+
+		// Exclude the unsettled money.
+		var withdrawQuota = available - (positionProfit > 0 ? positionProfit : 0) - (closeProfit > 0 ? closeProfit : 0);
+
+		var a = this.factory.kerAccount(origin());
+
+		a.deposit(deposit);
+		a.withdraw(withdraw);
+		a.frozenMargin(frozenMargin);
+		a.frozenCash(frozenCash);
+		a.frozenCommission(frozenCommission);
+		a.currentMargin(currentMargin);
+		a.commission(commission);
+		a.closeProfit(closeProfit);
+		a.positionProfit(positionProfit);
+		a.balance(balance);
+		a.available(available);
+		a.withdraw(withdrawQuota);
+
+		return a;
 	}
 
 	public void settle() {
@@ -177,5 +244,21 @@ public class AccountEngine {
 	// Assume available >= amount.
 	private void lockCash(double amount, double commission, int volume, String sid) throws KerError {
 		this.locked.add(new RuntimeLockMoney(amount, commission, volume, sid));
+	}
+
+	private double deposit() {
+		double r = 0.0;
+		for (var d : this.deposits)
+			r += d.amount();
+
+		return r;
+	}
+
+	private double withdraw() {
+		double r = 0.0;
+		for (var w : this.withdraws)
+			r += w.amount();
+
+		return r;
 	}
 }
