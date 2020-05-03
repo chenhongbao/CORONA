@@ -82,6 +82,9 @@ public class PositionEngine {
 		// Update position profit and margin.
 		for (var p : this.details) {
 			var n = this.fatory.kerPositionDetail(p.own());
+			if (n.volume() == 0)
+				continue;
+			
 			n.settlementPrice(settlementPrice);
 			
 			// Calculate previous price according to position type.

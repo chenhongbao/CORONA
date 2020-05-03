@@ -355,11 +355,14 @@ public class RuntimePositionDetail {
 
 		if (a.volume() <= o.volume()) {
 			locked.add(a);
+			// Calculate close info when locking to provide position in early time.
+			calculateCloseInfo(a, o.price());
 			return a;
 		} else {
-			var l = copyPart(a, o.volume());
-			locked.add(l);
-			return l;
+			var n = copyPart(a, o.volume());
+			calculateCloseInfo(n, o.price());
+			locked.add(n);
+			return n;
 		}
 	}
 
@@ -373,18 +376,24 @@ public class RuntimePositionDetail {
 	 * @throws KerError throw exception if the original position has been closed(or partly)
 	 */
 	private KerPositionDetail copyPart(KerPositionDetail origin, int splitVol) throws KerError {
-		if (origin.closeVolume() > 0 || origin.closeAmount() > 0 || origin.closeProfitByDate() > 0
-				|| origin.closeProfitByTrade() > 0 || origin.closeCommission() > 0)
-			throw new KerError("Can't split a closed position.");
-
 		if (splitVol < 0)
 			throw new KerError("Can't split a negative volume position.");
 
 		var r = this.factory.kerPositionDetail(origin);
 
+		// Margin.
 		r.margin(r.margin() * splitVol / r.volume());
 		r.exchangeMargin(r.exchangeMargin() * splitVol / r.volume());
+		// Commission.
 		r.openCommission(r.openCommission() * splitVol / r.volume());
+		r.closeCommission(r.closeCommission() * splitVol / r.volume());
+		// Close profit.
+		r.closeProfitByDate(r.closeProfitByDate() * splitVol / r.volume());
+		r.closeProfitByTrade(r.closeProfitByTrade() * splitVol / r.volume());
+		// Amount.
+		r.closeAmount(r.closeAmount() * splitVol / r.volume());
+		// Volume.
+		r.closeVolume(splitVol);
 		r.volume(splitVol);
 		return r;
 	}
@@ -423,9 +432,6 @@ public class RuntimePositionDetail {
 
 			if (n.volume() <= rep.volume()) {
 				// Close all volume of the current locked position.
-				// Calculate other close info.
-				calculateCloseInfo(n, rep.price());
-
 				// Move the closed position from locked to closed.
 				iter.remove();
 				closed().add(n);
@@ -433,16 +439,12 @@ public class RuntimePositionDetail {
 				closeVol += n.closeVolume();
 			} else {
 				var cp = copyPart(n, rep.volume());
-
-				// Close a part of the current locked position.
-				calculateCloseInfo(cp, rep.price());
-
+				// Add closed position to closed.
+				closed().add(cp);
+				
 				// Replace the original locked position with new one, of less volume.
 				var cp2 = copyPart(n, n.volume() - rep.volume());
 				iter.set(cp2);
-
-				// Add closed position to closed.
-				closed().add(cp);
 
 				closeVol += cp.closeVolume();
 			}
