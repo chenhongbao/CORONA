@@ -52,6 +52,9 @@ public class RuntimePositionDetail {
 		double byMny = getMarginRateMoney(rep.symbol(), rep.direction());
 		double byVol = getMarginRateVolume(rep.symbol(), rep.direction());
 		double lastSettle = lastSettle(rep.symbol());
+
+		// For today's newly open position, position price is open price. So as margin.
+		// After today's settlement, it is today's settlement price.
 		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), byMny, byVol);
 
 		// TODO Exchange margin rate needs a new query to remote counter. Trade-off too big.
@@ -470,12 +473,24 @@ public class RuntimePositionDetail {
 		// Close amount.
 		double ca = toClose.closeVolume() * inst.volumeMultiple() * closePrice;
 		toClose.closeAmount(ca);
+
 		// Close profit by date.
-		double pd = profit(toClose.lastSettlementPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
+		// If it is today's position, the previous price is today's open price.
+		// If it is yesterday's position, it is yesterday's settlement price.
+		double previousPrice = 0.0;
+		if (toClose.tradingDay().compareTo(this.info.tradingDay()) == 0)
+			// today's position
+			previousPrice = toClose.openPrice();
+		else
+			// yesterday's position
+			previousPrice = toClose.lastSettlementPrice();
+
+		double pd = Utils.profit(previousPrice, closePrice, toClose.closeVolume(), inst.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByDate(pd);
+
 		// Close profit by trade.
-		double pt = profit(toClose.openPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
+		double pt = Utils.profit(toClose.openPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByTrade(pt);
 		// Close commission.
@@ -492,27 +507,31 @@ public class RuntimePositionDetail {
 		if (tick == null)
 			throw new KerError("Tick not found: " + origin.symbol());
 
-		double pd = profit(pos.lastSettlementPrice(), tick.lastPrice(), pos.volume(), inst.volumeMultiple(),
-				pos.direction());
+		// Position at hand.
+		int volume = pos.volume() - pos.closeVolume();
+
+		// Position profit by date.
+		// If it is today's position, today's open price is previous price, otherwise yesterday's settlement price.
+		double previousPrice = 0.0, currentPrice = 0.0;
+		if (pos.tradingDay().compareTo(this.info.tradingDay()) == 0)
+			// today's position
+			previousPrice = pos.openPrice();
+		else
+			// yesterday's position
+			previousPrice = pos.lastSettlementPrice();
+
+		// If we have settlement price, use it as current price.
+		// Or use last price as a estimated settlement price, but will change after settling market.
+		if (pos.settlementPrice() > 0)
+			currentPrice = pos.settlementPrice();
+		else
+			currentPrice = tick.lastPrice();
+
+		double pd = Utils.profit(previousPrice, currentPrice, volume, inst.volumeMultiple(), pos.direction());
 		pos.positionProfitByDate(pd);
 
-		double pt = profit(pos.openPrice(), tick.lastPrice(), pos.volume(), inst.volumeMultiple(), pos.direction());
+		// Position profit by trade.
+		double pt = Utils.profit(pos.openPrice(), tick.lastPrice(), volume, inst.volumeMultiple(), pos.direction());
 		pos.positionProfitByTrade(pt);
-	}
-
-	private double profit(double open, double close, int volume, int multi, char direction) throws KerError {
-		double ret = 0.0;
-		switch (direction) {
-		case State.DIRECTION_BUY:
-			ret = (close - open) * volume * multi;
-			break;
-		case State.DIRECTION_SELL:
-			ret = (open - close) * volume * multi;
-			break;
-		default:
-			throw new KerError("Unhandled unknown direction: " + String.valueOf(direction));
-		}
-
-		return ret;
 	}
 }

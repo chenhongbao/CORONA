@@ -7,6 +7,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+import com.nabiki.corona.api.State;
+import com.nabiki.corona.kernel.api.KerError;
+
 public class Utils {
 	public static LocalDate deepCopy(LocalDate source) {
 		return LocalDate.of(source.getYear(), source.getMonthValue(), source.getDayOfMonth());
@@ -36,4 +39,20 @@ public class Utils {
 		else
 			return multiple * volume * price * byMny;
     }
+    
+	public static double profit(double open, double close, int volume, int multi, char direction) throws KerError {
+		double ret = 0.0;
+		switch (direction) {
+		case State.DIRECTION_BUY:
+			ret = (close - open) * volume * multi;
+			break;
+		case State.DIRECTION_SELL:
+			ret = (open - close) * volume * multi;
+			break;
+		default:
+			throw new KerError("Unhandled unknown direction: " + String.valueOf(direction));
+		}
+
+		return ret;
+	}
 }

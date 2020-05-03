@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -18,7 +19,8 @@ public class PositionEngine {
 	private final DataFactory fatory;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
 
-	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init, DataFactory factory) throws KerError {
+	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init,
+			DataFactory factory) throws KerError {
 		this.symbol = symbol;
 		this.runtime = runtime;
 		this.fatory = factory;
@@ -47,7 +49,7 @@ public class PositionEngine {
 	 * @throws KerError Throw exception upon failure of initialization position detail for open order, or closing all
 	 *                  locked position for close order, or unknown offset flag.
 	 */
-	public synchronized void trade(KerTradeReport rep) throws KerError {
+	public void trade(KerTradeReport rep) throws KerError {
 		switch (rep.offsetFlag()) {
 		case State.OFFSET_OPEN:
 			openPosition(rep);
@@ -60,6 +62,46 @@ public class PositionEngine {
 		default:
 			throw new KerError("Unhandled unknown trade offset: " + String.valueOf(rep.offsetFlag()));
 		}
+	}
+
+	/**
+	 * Mark-to-market settle positions and set the settlement price. Then return the settled position details.
+	 * 
+	 * @param settlementPrice settlement price
+	 * @return settled position details
+	 * @throws KerError throw exception if instrument information not found.
+	 */
+	public List<KerPositionDetail> settle(double settlementPrice) throws KerError {
+		var inst = this.runtime.instrument(symbol());
+		if (inst == null)
+			throw new KerError("Instrument info not found: " + symbol());
+
+		List<KerPositionDetail> ret = new LinkedList<>();
+
+		// We only need to settle the at-hand positions.
+		for (var p : this.details) {
+			var n = this.fatory.kerPositionDetail(p.own());
+			n.settlementPrice(settlementPrice);
+			
+			// Calculate previous price according to position type.
+			double previousPrice = 0.0;
+			if (n.tradingDay().compareTo(this.runtime.tradingDay()) == 0)
+				// today's position
+				previousPrice = n.openPrice();
+			else
+				// yesterday's position
+				previousPrice = n.lastSettlementPrice();
+
+			// Calculate position profits.
+			var positionProfit = Utils.profit(previousPrice, n.settlementPrice(), n.volume(), inst.volumeMultiple(),
+					n.direction());
+			n.positionProfitByDate(positionProfit);
+			
+			// Return the settled position details.
+			ret.add(n);
+		}
+
+		return ret;
 	}
 
 	public String symbol() {
@@ -86,7 +128,7 @@ public class PositionEngine {
 		if (toLock.volume() > 0)
 			throw new KerError(
 					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
-		
+
 		return ret;
 	}
 
@@ -96,7 +138,7 @@ public class PositionEngine {
 	 * @return locked positions
 	 */
 	public Collection<KerPositionDetail> locked() {
-		var ret = new LinkedList<KerPositionDetail>();	
+		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.addAll(rt.locked());
 		}
@@ -109,33 +151,33 @@ public class PositionEngine {
 	 * @return closed positions
 	 */
 	public Collection<KerPositionDetail> closed() {
-		var ret = new LinkedList<KerPositionDetail>();	
+		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.addAll(rt.closed());
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Get own position of this position engine.
 	 * 
 	 * @return own position
 	 */
 	public Collection<KerPositionDetail> own() throws KerError {
-		var ret = new LinkedList<KerPositionDetail>();	
+		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.add(rt.own());
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Get available position of this position engine.
 	 * 
 	 * @return available position
 	 */
 	public Collection<KerPositionDetail> available() throws KerError {
-		var ret = new LinkedList<KerPositionDetail>();	
+		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.add(rt.available());
 		}
