@@ -28,7 +28,19 @@ public class PositionManager {
 		return this.positions.values();
 	}
 	
-	public void settle(String symbol, double settlementPrice) {
+	public void settle() {
 		// TODO settle positions.
+		//      after settlement, the positions are in settled status with valid settlement price and updated
+		//      margin/profits.
+	}
+	
+	public void init() {
+		// TODO before calling init, positions are in settled state.
+		//      the method prepare data for a new trading day, includes setting preXxx fields, clear settlement data...
+	}
+	
+	public boolean isSettled() {
+		// TODO check settlement state
+		return false;
 	}
 }

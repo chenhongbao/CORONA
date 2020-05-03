@@ -14,6 +14,8 @@ import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class PositionEngine {
+	private boolean isSettled = false;
+	
 	private final RuntimeInfo runtime;
 	private final String symbol;
 	private final DataFactory fatory;
@@ -31,6 +33,10 @@ public class PositionEngine {
 				this.details.add(d);
 			}
 		}
+	}
+	
+	public boolean isSettled() {
+		return this.isSettled;
 	}
 
 	public void cancel(String sessionId) throws KerError {
@@ -110,6 +116,7 @@ public class PositionEngine {
 			ret.add(n);
 		}
 
+		this.isSettled = true;
 		return ret;
 	}
 

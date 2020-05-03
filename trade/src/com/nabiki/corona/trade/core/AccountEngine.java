@@ -237,8 +237,9 @@ public class AccountEngine {
 		return a;
 	}
 
-	public void settle() {
-		// TODO settle account
+	public KerAccount settle() throws KerError {
+		this.position.settle();
+		return current();
 	}
 
 	// Assume available >= amount.

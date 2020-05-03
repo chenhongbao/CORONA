@@ -7,6 +7,7 @@ import java.util.List;
 
 import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.State;
+import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
@@ -86,6 +87,7 @@ public class RuntimePositionDetail {
 		p.positionProfitByDate(0.0);
 		p.positionProfitByTrade(0.0);
 		p.openCommission(comm);
+		p.closeCommission(0.0);
 		p.settlementId(rep.settlementId());
 		p.settlementPrice(0.0);
 		p.symbol(rep.symbol());
@@ -250,6 +252,20 @@ public class RuntimePositionDetail {
 		return 0.0D;
 	}
 
+	public void settle(double settlementPrice) throws KerError {
+		// Clear all locked positions if there are.
+		if (this.locked.size() > 0)
+			this.locked.clear();
+
+		// Update original position detail.
+		origin().settlementPrice(settlementPrice);
+		
+		var m = getMargin(symbol(), origin().settlementPrice(), origin.volume(), origin().marginRateByMoney(),
+				origin().marginRateByVolume());
+		origin().margin(m);
+		origin().exchangeMargin(m);
+	}
+
 	/**
 	 * Get the original position detail that initializes this instance. The original piece of information will not be
 	 * changed.
@@ -309,6 +325,7 @@ public class RuntimePositionDetail {
 		a.closeProfitByTrade(c.closeProfitByTrade());
 		a.closeAmount(c.closeAmount());
 		a.closeVolume(c.closeVolume());
+		a.closeCommission(c.closeCommission());
 
 		// Profit info.
 		calculatePositionInfo(a);
@@ -441,7 +458,7 @@ public class RuntimePositionDetail {
 				var cp = copyPart(n, rep.volume());
 				// Add closed position to closed.
 				closed().add(cp);
-				
+
 				// Replace the original locked position with new one, of less volume.
 				var cp2 = copyPart(n, n.volume() - rep.volume());
 				iter.set(cp2);
@@ -477,16 +494,7 @@ public class RuntimePositionDetail {
 		toClose.closeAmount(ca);
 
 		// Close profit by date.
-		// If it is today's position, the previous price is today's open price.
-		// If it is yesterday's position, it is yesterday's settlement price.
-		double previousPrice = 0.0;
-		if (toClose.tradingDay().compareTo(this.info.tradingDay()) == 0)
-			// today's position
-			previousPrice = toClose.openPrice();
-		else
-			// yesterday's position
-			previousPrice = toClose.lastSettlementPrice();
-
+		double previousPrice = previousPrice(toClose);
 		double pd = Utils.profit(previousPrice, closePrice, toClose.closeVolume(), inst.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByDate(pd);
@@ -512,22 +520,9 @@ public class RuntimePositionDetail {
 		// Position at hand.
 		int volume = pos.volume() - pos.closeVolume();
 
-		// Position profit by date.
-		// If it is today's position, today's open price is previous price, otherwise yesterday's settlement price.
-		double previousPrice = 0.0, currentPrice = 0.0;
-		if (pos.tradingDay().compareTo(this.info.tradingDay()) == 0)
-			// today's position
-			previousPrice = pos.openPrice();
-		else
-			// yesterday's position
-			previousPrice = pos.lastSettlementPrice();
-
-		// If we have settlement price, use it as current price.
-		// Or use last price as a estimated settlement price, but will change after settling market.
-		if (pos.settlementPrice() > 0)
-			currentPrice = pos.settlementPrice();
-		else
-			currentPrice = tick.lastPrice();
+		// Mark-to-market rules to decide the prices to compute profit by date.
+		double previousPrice = previousPrice(pos);
+		double currentPrice = currentPrice(pos, tick);
 
 		double pd = Utils.profit(previousPrice, currentPrice, volume, inst.volumeMultiple(), pos.direction());
 		pos.positionProfitByDate(pd);
@@ -535,5 +530,25 @@ public class RuntimePositionDetail {
 		// Position profit by trade.
 		double pt = Utils.profit(pos.openPrice(), tick.lastPrice(), volume, inst.volumeMultiple(), pos.direction());
 		pos.positionProfitByTrade(pt);
+	}
+
+	private double previousPrice(KerPositionDetail pos) {
+		// Position profit by date.
+		// If it is today's position, today's open price is previous price, otherwise yesterday's settlement price.
+		if (pos.tradingDay().compareTo(this.info.tradingDay()) == 0)
+			// today's position
+			return pos.openPrice();
+		else
+			// yesterday's position
+			return pos.lastSettlementPrice();
+	}
+
+	private double currentPrice(KerPositionDetail pos, Tick tick) {
+		// If we have settlement price, use it as current price.
+		// Or use last price as a estimated settlement price, but will change after settling market.
+		if (0 < pos.settlementPrice() && pos.settlementPrice() < Double.MAX_VALUE)
+			return pos.settlementPrice();
+		else
+			return tick.lastPrice();
 	}
 }
