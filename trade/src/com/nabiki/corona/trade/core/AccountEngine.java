@@ -105,7 +105,7 @@ public class AccountEngine {
 		double commission = Utils.marginOrCommission(order.price, order.volume(), multi, byMny, byVol);
 
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockAmount > current().available()) {
+		if (lockAmount + commission > current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
 			lockCash(lockAmount, commission, order.volume(), order.sessionId());
