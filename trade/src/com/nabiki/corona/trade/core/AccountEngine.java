@@ -95,20 +95,20 @@ public class AccountEngine {
 		}
 
 		int multi = this.info.instrument(order.symbol()).volumeMultiple();
-		double lockAmount = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
+		double lockMargin = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
 
 		// Commission.
 		var commRate = this.info.commission(order.symbol());
 		byVol = commRate.openRatioByVolume();
 		byMny = commRate.openRatioByMoney();
 
-		double commission = Utils.marginOrCommission(order.price, order.volume(), multi, byMny, byVol);
+		double lockCommission = Utils.marginOrCommission(order.price, order.volume(), multi, byMny, byVol);
 
 		KerOrderEvalue eval = this.factory.kerOrderEvalue();
-		if (lockAmount + commission > current().available()) {
+		if (lockMargin + lockCommission > current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
-			lockCash(lockAmount, commission, order.volume(), order.sessionId());
+			lockCash(lockMargin, lockCommission, order.volume(), order.sessionId());
 		}
 
 		return eval;
