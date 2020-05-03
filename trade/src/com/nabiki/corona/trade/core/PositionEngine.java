@@ -78,7 +78,8 @@ public class PositionEngine {
 
 		List<KerPositionDetail> ret = new LinkedList<>();
 
-		// We only need to settle the at-hand positions.
+		// We need to settle the at-hand positions.
+		// Update position profit and margin.
 		for (var p : this.details) {
 			var n = this.fatory.kerPositionDetail(p.own());
 			n.settlementPrice(settlementPrice);
@@ -96,6 +97,11 @@ public class PositionEngine {
 			var positionProfit = Utils.profit(previousPrice, n.settlementPrice(), n.volume(), inst.volumeMultiple(),
 					n.direction());
 			n.positionProfitByDate(positionProfit);
+			
+			// Update margin.
+			double m = Utils.marginOrCommission(n.settlementPrice(), n.volume(), inst.volumeMultiple(),
+					n.marginRateByMoney(),n.marginRateByVolume());
+			n.margin(m);
 			
 			// Return the settled position details.
 			ret.add(n);
