@@ -27,4 +27,8 @@ public class PositionManager {
 	public Collection<PositionEngine> positions() {
 		return this.positions.values();
 	}
+	
+	public void settle(String symbol, double settlementPrice) {
+		// TODO settle positions.
+	}
 }

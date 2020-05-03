@@ -354,9 +354,9 @@ public class RuntimePositionDetail {
 			throw new KerError("[FATAL]Negative position volume.");
 
 		if (a.volume() <= o.volume()) {
-			locked.add(a);
 			// Calculate close info when locking to provide position in early time.
 			calculateCloseInfo(a, o.price());
+			locked.add(a);
 			return a;
 		} else {
 			var n = copyPart(a, o.volume());
