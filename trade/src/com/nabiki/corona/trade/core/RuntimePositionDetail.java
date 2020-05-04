@@ -194,43 +194,31 @@ public class RuntimePositionDetail {
 
 	// Get the locked position.
 	private KerPositionDetail sumLocked() throws KerError {
-		var a = this.factory.kerPositionDetail(origin());
-
-		int volume = 0;
-		double margin = 0.0, exMargin = 0.0, openComm = 0.0;
-		for (var p : locked()) {
-			volume += p.volume();
-			margin += p.margin();
-			exMargin += p.exchangeMargin();
-			openComm += p.openCommission();
-		}
-
-		a.volume(volume);
-		a.margin(margin);
-		a.exchangeMargin(exMargin);
-		a.openCommission(openComm);
-
-		return a;
+		return sumPositionDetails(this.locked);
+	}
+	
+	private KerPositionDetail sumClosed() throws KerError {
+		return sumPositionDetails(this.closed);
 	}
 
 	// Get the closed position.
-	private KerPositionDetail sumClosed() throws KerError {
+	private KerPositionDetail sumPositionDetails(List<KerPositionDetail> ps) throws KerError {
 		var a = this.factory.kerPositionDetail(origin());
 
 		// Sum up.
 		int volume = 0, closeVolume = 0;
 		double closeAmount = 0.0, closeProfitByDate = 0.F, closeProfitByTrade = 0.0, margin = 0.0, exMargin = 0.0,
 				openComm = 0.0, closeComm = 0.0;
-		for (var c : closed()) {
-			volume += c.volume();
-			closeVolume += c.closeVolume();
-			closeAmount += c.closeAmount();
-			closeProfitByDate += c.closeProfitByDate();
-			closeProfitByTrade += c.closeProfitByTrade();
-			margin += c.margin();
-			exMargin += c.exchangeMargin();
-			openComm += c.openCommission();
-			closeComm += c.closeCommission();
+		for (var p : ps) {
+			volume += p.volume();
+			closeVolume += p.closeVolume();
+			closeAmount += p.closeAmount();
+			closeProfitByDate += p.closeProfitByDate();
+			closeProfitByTrade += p.closeProfitByTrade();
+			margin += p.margin();
+			exMargin += p.exchangeMargin();
+			openComm += p.openCommission();
+			closeComm += p.closeCommission();
 		}
 
 		// Reset some fields.
@@ -251,8 +239,8 @@ public class RuntimePositionDetail {
 		return this.symbol;
 	}
 
-	public double lockedCommission() {
-		return 0.0D;
+	public double lockedCommission() throws KerError {
+		return sumLocked().closeCommission();
 	}
 
 	public void settle(double settlementPrice) throws KerError {
