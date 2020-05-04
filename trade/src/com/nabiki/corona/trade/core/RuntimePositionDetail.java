@@ -49,6 +49,10 @@ public class RuntimePositionDetail {
 		if (rep.offsetFlag() != State.OFFSET_OPEN)
 			throw new KerError("Position detail must be initialized by an open trade.");
 
+		var inst = this.info.instrument(symbol);
+		if (inst == null)
+			throw new KerError("Instrument not found: " + symbol);
+
 		// Compute margin.
 		double byMny = getMarginRateMoney(rep.symbol(), rep.direction());
 		double byVol = getMarginRateVolume(rep.symbol(), rep.direction());
@@ -56,7 +60,7 @@ public class RuntimePositionDetail {
 
 		// For today's newly open position, position price is open price. So as margin.
 		// After today's settlement, it is today's settlement price.
-		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), byMny, byVol);
+		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), inst.volumeMultiple(), byMny, byVol);
 
 		// TODO Exchange margin rate needs a new query to remote counter. Trade-off too big.
 		double exMargin = margin;
@@ -170,15 +174,12 @@ public class RuntimePositionDetail {
 		}
 	}
 
-	private double getMargin(String symbol, double price, int volume, double byMny, double byVol) throws KerError {
+	private double getMargin(String symbol, double price, int volume, int multi, double byMny, double byVol)
+			throws KerError {
 		if (byMny != 0.0 && byVol != 0.0)
 			throw new KerError("Ambiguity of margin rates and both by-volume and by-money are non-zero.");
 
-		var inst = this.info.instrument(symbol);
-		if (inst == null)
-			throw new KerError("Instrument not found: " + symbol);
-
-		return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), byMny, byVol);
+		return Utils.marginOrCommission(price, volume, multi, byMny, byVol);
 	}
 
 	private double lastSettle(String symbol) throws KerError {
@@ -190,7 +191,7 @@ public class RuntimePositionDetail {
 	}
 
 	// Get the locked position.
-	private KerPositionDetail sumLocked() {
+	private KerPositionDetail sumLocked() throws KerError {
 		var a = this.factory.kerPositionDetail(origin());
 
 		int volume = 0;
@@ -211,7 +212,7 @@ public class RuntimePositionDetail {
 	}
 
 	// Get the closed position.
-	private KerPositionDetail sumClosed() {
+	private KerPositionDetail sumClosed() throws KerError {
 		var a = this.factory.kerPositionDetail(origin());
 
 		// Sum up.
@@ -259,9 +260,9 @@ public class RuntimePositionDetail {
 
 		// Update original position detail.
 		origin().settlementPrice(settlementPrice);
-		
-		var m = getMargin(symbol(), origin().settlementPrice(), origin.volume(), origin().marginRateByMoney(),
-				origin().marginRateByVolume());
+
+		var m = getMargin(symbol(), origin().settlementPrice(), origin().volume(), origin().volumeMultiple(),
+				origin().marginRateByMoney(), origin().marginRateByVolume());
 		origin().margin(m);
 		origin().exchangeMargin(m);
 	}
@@ -333,22 +334,35 @@ public class RuntimePositionDetail {
 	}
 
 	/**
-	 * Get the locked position details. The return reference is the internal data. Don't change it if you don't want to
-	 * modify the internal states.
+	 * Get the locked position details. The elements are new created.
 	 * 
 	 * @return locked position details
+	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	protected List<KerPositionDetail> locked() {
-		return this.locked;
+	protected List<KerPositionDetail> locked() throws KerError {
+		List<KerPositionDetail> ret = new LinkedList<>();
+		for (var p : this.locked) {
+			var n = this.factory.kerPositionDetail(p);
+			calculateCloseInfo2(n);
+			ret.add(n);
+		}
+		return ret;
 	}
 
 	/**
-	 * Get the closed position details. Like locked(), it return the reference of internal data.
+	 * Get the closed position details. The elements are new created.
 	 * 
 	 * @return closed position details
+	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	protected List<KerPositionDetail> closed() {
-		return this.closed;
+	protected List<KerPositionDetail> closed() throws KerError {
+		List<KerPositionDetail> ret = new LinkedList<>();
+		for (var p : this.closed) {
+			var n = this.factory.kerPositionDetail(p);
+			calculateCloseInfo2(n);
+			ret.add(n);
+		}
+		return ret;
 	}
 
 	/**
@@ -372,12 +386,12 @@ public class RuntimePositionDetail {
 
 		if (a.volume() <= o.volume()) {
 			// Calculate close info when locking to provide position in early time.
-			calculateCloseInfo(a, o.price());
+			calculateCloseInfo1(a, o.price());
 			locked.add(a);
 			return a;
 		} else {
 			var n = copyPart(a, o.volume());
-			calculateCloseInfo(n, o.price());
+			calculateCloseInfo1(n, o.price());
 			locked.add(n);
 			return n;
 		}
@@ -420,8 +434,9 @@ public class RuntimePositionDetail {
 	 * 
 	 * @param sessionId session ID
 	 */
-	public void cancel(String sessionId) {
-		var iter = locked().iterator();
+	public void cancel(String sessionId) throws KerError {
+		// Don't use locked() here because it create new instances and the underlying data is not changed.
+		var iter = this.locked.iterator();
 		while (iter.hasNext()) {
 			if (iter.next().tradeSessionId().compareTo(sessionId) == 0) {
 				iter.remove();
@@ -482,7 +497,7 @@ public class RuntimePositionDetail {
 	 * @param closePrice close price
 	 * @throws KerError throws if failing to get instrument info
 	 */
-	private void calculateCloseInfo(KerPositionDetail toClose, double closePrice) throws KerError {
+	private void calculateCloseInfo1(KerPositionDetail toClose, double closePrice) throws KerError {
 		var inst = this.info.instrument(toClose.symbol());
 		if (inst == null)
 			throw new KerError("Instrument not found: " + toClose.symbol());
@@ -492,20 +507,24 @@ public class RuntimePositionDetail {
 		// Close amount.
 		double ca = toClose.closeVolume() * inst.volumeMultiple() * closePrice;
 		toClose.closeAmount(ca);
-
-		// Close profit by date.
-		double previousPrice = previousPrice(toClose);
-		double pd = Utils.profit(previousPrice, closePrice, toClose.closeVolume(), inst.volumeMultiple(),
-				origin.direction());
-		toClose.closeProfitByDate(pd);
-
 		// Close profit by trade.
-		double pt = Utils.profit(toClose.openPrice(), closePrice, toClose.closeVolume(), inst.volumeMultiple(),
+		double pt = Utils.profit(toClose.openPrice(), closePrice, toClose.closeVolume(), toClose.volumeMultiple(),
 				origin.direction());
 		toClose.closeProfitByTrade(pt);
 		// Close commission.
 		toClose.closeCommission(
 				getCloseCommission(toClose.symbol(), closePrice, toClose.closeVolume(), toClose.tradingDay()));
+	}
+
+	private void calculateCloseInfo2(KerPositionDetail toClose) throws KerError {
+		// Get close price from close amount.
+		var closePrice = toClose.closeAmount() / toClose.closeVolume() / toClose.volumeMultiple();
+		
+		// Close profit by date.
+		double previousPrice = previousPrice(toClose);
+		double pd = Utils.profit(previousPrice, closePrice, toClose.closeVolume(), toClose.volumeMultiple(),
+				origin().direction());
+		toClose.closeProfitByDate(pd);
 	}
 
 	private void calculatePositionInfo(KerPositionDetail pos) throws KerError {

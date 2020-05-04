@@ -27,6 +27,8 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public double marginRateByMoney;
 	public double marginRateByVolume;
 	public double openCommission;
+	@JsonbDateFormat("yyyyMMdd")
+	public LocalDate openDate;
 	public double openPrice;
 	public double positionProfitByDate;
 	public double positionProfitByTrade;
@@ -39,12 +41,11 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	public char tradeType;
 	
 	@JsonbDateFormat("yyyyMMdd")
-	public LocalDate openDate;
-	
-	@JsonbDateFormat("yyyyMMdd")
 	public LocalDate tradingDay;
 	
 	public int volume;
+	
+	public int volumeMultiple;
 
 	public KerPositionDetailImpl() {
 	}
@@ -361,6 +362,17 @@ public class KerPositionDetailImpl implements KerPositionDetail {
 	@Override
 	public void volume(int i) {
 		this.volume = i;
+	}
+
+	@Override
+	public int volumeMultiple() {
+		return this.volumeMultiple;
+	}
+
+	@Override
+	public void volumeMultiple(int i) {
+		this.volumeMultiple = i;
+		
 	}
 
 	private void deepCopy(KerPositionDetail old) {	

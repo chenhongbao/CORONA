@@ -77,47 +77,11 @@ public class PositionEngine {
 	 * @return settled position details
 	 * @throws KerError throw exception if instrument information not found.
 	 */
-	public List<KerPositionDetail> settle(double settlementPrice) throws KerError {
-		var inst = this.runtime.instrument(symbol());
-		if (inst == null)
-			throw new KerError("Instrument info not found: " + symbol());
-
-		List<KerPositionDetail> ret = new LinkedList<>();
-
-		// We need to settle the at-hand positions.
-		// Update position profit and margin.
-		for (var p : this.details) {
-			var n = this.fatory.kerPositionDetail(p.own());
-			if (n.volume() == 0)
-				continue;
-			
-			n.settlementPrice(settlementPrice);
-			
-			// Calculate previous price according to position type.
-			double previousPrice = 0.0;
-			if (n.tradingDay().compareTo(this.runtime.tradingDay()) == 0)
-				// today's position
-				previousPrice = n.openPrice();
-			else
-				// yesterday's position
-				previousPrice = n.lastSettlementPrice();
-
-			// Calculate position profits.
-			var positionProfit = Utils.profit(previousPrice, n.settlementPrice(), n.volume(), inst.volumeMultiple(),
-					n.direction());
-			n.positionProfitByDate(positionProfit);
-			
-			// Update margin.
-			double m = Utils.marginOrCommission(n.settlementPrice(), n.volume(), inst.volumeMultiple(),
-					n.marginRateByMoney(),n.marginRateByVolume());
-			n.margin(m);
-			
-			// Return the settled position details.
-			ret.add(n);
-		}
+	public void settle(double settlementPrice) throws KerError {
+		for (var r : this.details)
+			r.settle(settlementPrice);
 
 		this.isSettled = true;
-		return ret;
 	}
 
 	public String symbol() {
@@ -152,8 +116,9 @@ public class PositionEngine {
 	 * Get all locked position of this position engine.
 	 * 
 	 * @return locked positions
+	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	public Collection<KerPositionDetail> locked() {
+	public Collection<KerPositionDetail> locked() throws KerError {
 		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.addAll(rt.locked());
@@ -165,8 +130,9 @@ public class PositionEngine {
 	 * Get all closed position of this position engine.
 	 * 
 	 * @return closed positions
+	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	public Collection<KerPositionDetail> closed() {
+	public Collection<KerPositionDetail> closed() throws KerError {
 		var ret = new LinkedList<KerPositionDetail>();
 		for (var rt : this.details) {
 			ret.addAll(rt.closed());

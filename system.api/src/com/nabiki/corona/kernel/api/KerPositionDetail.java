@@ -46,6 +46,10 @@ public interface KerPositionDetail extends PositionDetail {
 	String exchangeId();
 
 	void exchangeId(String s);
+	
+	int volumeMultiple();
+	
+	void volumeMultiple(int i);
 
 	void closeProfitByDate(double d);
 
