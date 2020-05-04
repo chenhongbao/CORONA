@@ -1,5 +1,7 @@
 -buildpath: \
 	system.api;version=latest,\
 	jsonb;version=latest
-Export-Package: com.nabiki.corona.kernel.data
+Export-Package: \
+	com.nabiki.corona.kernel.data,\
+	com.nabiki.corona.kernel.file
 -runrequires: bnd.identity;id='jsonb'

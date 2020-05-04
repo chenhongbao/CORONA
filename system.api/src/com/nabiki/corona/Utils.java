@@ -1,5 +1,8 @@
 package com.nabiki.corona;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -54,5 +57,19 @@ public class Utils {
 		}
 
 		return ret;
+	}
+	
+	public static boolean validPrice(double price) {
+		return 0 < price && price < Double.MAX_VALUE;
+	}
+	
+	public static void ensureDir(Path p) throws KerError {
+		try {
+		// Build paths.
+		if (!p.toFile().exists() || !p.toFile().isDirectory())
+			Files.createDirectories(p);
+		} catch (IOException e) {
+			throw new KerError("Fail creating non-existing directory: " + p.toAbsolutePath());
+		}
 	}
 }

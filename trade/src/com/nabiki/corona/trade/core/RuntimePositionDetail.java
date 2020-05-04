@@ -21,6 +21,8 @@ public class RuntimePositionDetail {
 	private final KerPositionDetail origin;
 	private final List<KerPositionDetail> locked = new LinkedList<>();
 	private final List<KerPositionDetail> closed = new LinkedList<>();
+	
+	private boolean isSettled = false;
 
 	// Data factory.
 	private final DataFactory factory;
@@ -203,7 +205,7 @@ public class RuntimePositionDetail {
 
 	// Get the closed position.
 	private KerPositionDetail sumPositionDetails(List<KerPositionDetail> ps) throws KerError {
-		var a = this.factory.kerPositionDetail(origin());
+		var a = origin();
 
 		// Sum up.
 		int volume = 0, closeVolume = 0;
@@ -238,23 +240,50 @@ public class RuntimePositionDetail {
 	public String symbol() {
 		return this.symbol;
 	}
+	
+	/**
+	 * Initialize a settled position for a new day trading.
+	 * @throws KerError initialize an unsettled position throws exception.
+	 */
+	public void init() throws KerError {
+		if (!isSettled())
+			throw new KerError("Can't initialize a unsettled position.");
+		
+		// Settlement price.
+		origin.lastSettlementPrice(origin.settlementPrice());
+		origin.settlementPrice(0.0);
+		// Commission.
+		origin.openCommission(0.0);
+	}
+	
+	public boolean isSettled() {
+		return this.isSettled;
+	}
 
 	public double lockedCommission() throws KerError {
 		return sumLocked().closeCommission();
 	}
 
+	/**
+	 * Settle this position detail.
+	 * 
+	 * @param settlementPrice settlement price
+	 * @throws KerError throw exception when fail getting margin
+	 */
 	public void settle(double settlementPrice) throws KerError {
 		// Clear all locked positions if there are.
 		if (this.locked.size() > 0)
 			this.locked.clear();
 
 		// Update original position detail.
-		origin().settlementPrice(settlementPrice);
+		origin.settlementPrice(settlementPrice);
 
-		var m = getMargin(symbol(), origin().settlementPrice(), origin().volume(), origin().volumeMultiple(),
-				origin().marginRateByMoney(), origin().marginRateByVolume());
-		origin().margin(m);
-		origin().exchangeMargin(m);
+		var m = getMargin(symbol(), origin.settlementPrice(), origin.volume(), origin.volumeMultiple(),
+				origin.marginRateByMoney(), origin.marginRateByVolume());
+		origin.margin(m);
+		origin.exchangeMargin(m);
+		
+		this.isSettled = true;
 	}
 
 	/**
@@ -264,7 +293,7 @@ public class RuntimePositionDetail {
 	 * @return original position detail
 	 */
 	public KerPositionDetail origin() {
-		return this.origin;
+		return this.factory.kerPositionDetail(this.origin);
 	}
 
 	/**
@@ -277,7 +306,7 @@ public class RuntimePositionDetail {
 	public KerPositionDetail available() throws KerError {
 		var l = sumLocked();
 		var c = sumClosed();
-		var a = copyPart(origin(), origin().volume() - l.volume() - c.closeVolume());
+		var a = copyPart(this.origin, origin.volume() - l.volume() - c.closeVolume());
 
 		// Profit info.
 		calculatePositionInfo(a);
@@ -293,7 +322,7 @@ public class RuntimePositionDetail {
 	 */
 	public KerPositionDetail own() throws KerError {
 		var c = sumClosed();
-		var a = copyPart(origin(), origin().volume() - c.closeVolume());
+		var a = copyPart(origin, origin.volume() - c.closeVolume());
 
 		// Profit info.
 		calculatePositionInfo(a);
@@ -309,7 +338,7 @@ public class RuntimePositionDetail {
 	 */
 	public KerPositionDetail current() throws KerError {
 		var c = sumClosed();
-		var a = this.factory.kerPositionDetail(origin());
+		var a = origin();
 
 		// Set close info.
 		a.closeProfitByDate(c.closeProfitByDate());
@@ -329,7 +358,7 @@ public class RuntimePositionDetail {
 	 * @return locked position details
 	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	protected List<KerPositionDetail> locked() throws KerError {
+	public List<KerPositionDetail> locked() throws KerError {
 		List<KerPositionDetail> ret = new LinkedList<>();
 		for (var p : this.locked) {
 			var n = this.factory.kerPositionDetail(p);
@@ -345,7 +374,7 @@ public class RuntimePositionDetail {
 	 * @return closed position details
 	 * @throws KerError throw exception on failure calculating close profit by date.
 	 */
-	protected List<KerPositionDetail> closed() throws KerError {
+	public List<KerPositionDetail> closed() throws KerError {
 		List<KerPositionDetail> ret = new LinkedList<>();
 		for (var p : this.closed) {
 			var n = this.factory.kerPositionDetail(p);
@@ -513,7 +542,7 @@ public class RuntimePositionDetail {
 		// Close profit by date.
 		double previousPrice = previousPrice(toClose);
 		double pd = Utils.profit(previousPrice, closePrice, toClose.closeVolume(), toClose.volumeMultiple(),
-				origin().direction());
+				origin.direction());
 		toClose.closeProfitByDate(pd);
 	}
 
@@ -555,7 +584,7 @@ public class RuntimePositionDetail {
 	private double currentPrice(KerPositionDetail pos, Tick tick) {
 		// If we have settlement price, use it as current price.
 		// Or use last price as a estimated settlement price, but will change after settling market.
-		if (0 < pos.settlementPrice() && pos.settlementPrice() < Double.MAX_VALUE)
+		if (Utils.validPrice(pos.settlementPrice()))
 			return pos.settlementPrice();
 		else
 			return tick.lastPrice();

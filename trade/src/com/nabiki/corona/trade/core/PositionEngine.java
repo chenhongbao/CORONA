@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -15,7 +14,7 @@ import com.nabiki.corona.kernel.api.KerError;
 
 public class PositionEngine {
 	private boolean isSettled = false;
-	
+
 	private final RuntimeInfo runtime;
 	private final String symbol;
 	private final DataFactory fatory;
@@ -28,15 +27,40 @@ public class PositionEngine {
 		this.fatory = factory;
 		if (init != null) {
 			for (var d : init) {
-				if (d.origin().symbol().compareTo(this.symbol) != 0)
-					throw new KerError("Wrong symbol. Want " + this.symbol + " but found " + d.origin().symbol());
+				var o = d.origin();
+				if (o.symbol().compareTo(this.symbol) != 0)
+					throw new KerError("Wrong symbol. Want " + this.symbol + " but found " + o.symbol());
 				this.details.add(d);
 			}
 		}
 	}
-	
+
 	public boolean isSettled() {
 		return this.isSettled;
+	}
+	
+	public void init() throws KerError {
+		for (var p : this.details)
+			p.init();
+	}
+
+	public void read(PositionFile f) throws KerError {
+		if (f.symbol().compareTo(symbol()) != 0)
+			throw new KerError(
+					"Symbols of position engine(" + symbol() + ") and file(" + f.symbol() + ") not matched.");
+
+		var ps = f.read();
+		// Make sure read successfully, then clear the old data and set new.
+		this.details.clear();
+		this.details.addAll(ps);
+	}
+
+	public void write(PositionFile f) throws KerError {
+		if (f.symbol().compareTo(symbol()) != 0)
+			throw new KerError(
+					"Symbols of position engine(" + symbol() + ") and file(" + f.symbol() + ") not matched.");
+
+		f.write(this.details);
 	}
 
 	public void cancel(String sessionId) throws KerError {

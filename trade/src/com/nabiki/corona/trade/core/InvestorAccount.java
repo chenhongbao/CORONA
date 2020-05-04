@@ -1,5 +1,8 @@
 package com.nabiki.corona.trade.core;
 
+import java.nio.file.Path;
+
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;
@@ -17,17 +20,23 @@ public class InvestorAccount {
 	private final SessionManager sessionManager;
 
 	private final String accountId;
+	private final Path directory;
 	private final RuntimeInfo info;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, RuntimeInfo info, DataFactory factory) {
+	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory) throws KerError {
 		this.accountId = accountId;
 		this.info = info;
+		this.directory= dir;
 		this.factory = factory;
+		
+		// Build directory to keep data files.
+		var positionDir = Path.of(this.directory.toAbsolutePath().toString(), "/position/");
+		Utils.ensureDir(positionDir);
 		
 		// Create instances of data.
 		this.sessionManager = new SessionManager();
-		this.positionManager = new PositionManager(this.info, this.factory);
+		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
 		this.accountManager = new AccountManager(this.info, this.positionManager, this.factory);
 		
 		// Get account engine from account manager.
