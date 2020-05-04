@@ -57,10 +57,11 @@ public class RuntimePositionDetail {
 		double byMny = getMarginRateMoney(rep.symbol(), rep.direction());
 		double byVol = getMarginRateVolume(rep.symbol(), rep.direction());
 		double lastSettle = lastSettle(rep.symbol());
+		int multi = inst.volumeMultiple();
 
 		// For today's newly open position, position price is open price. So as margin.
 		// After today's settlement, it is today's settlement price.
-		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), inst.volumeMultiple(), byMny, byVol);
+		double margin = getMargin(rep.symbol(), rep.price(), rep.volume(), multi, byMny, byVol);
 
 		// TODO Exchange margin rate needs a new query to remote counter. Trade-off too big.
 		double exMargin = margin;
@@ -95,6 +96,7 @@ public class RuntimePositionDetail {
 		p.settlementId(rep.settlementId());
 		p.settlementPrice(0.0);
 		p.symbol(rep.symbol());
+		p.volumeMultiple(multi);
 
 		// TODO The field, time first volume, is especially for DCE, but useless.
 		p.timeFirstVolume(0);
