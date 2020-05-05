@@ -1,6 +1,6 @@
 package com.nabiki.corona.kernel.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import com.nabiki.corona.api.Account;
 
@@ -61,7 +61,7 @@ public interface KerAccount extends Account {
 
 	void reserve(double d);
 
-	void tradingDay(Date d);
+	void tradingDay(LocalDate d);
 
 	void settlementId(String s);
 

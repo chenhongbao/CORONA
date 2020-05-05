@@ -93,4 +93,10 @@ public class Utils {
 			throw new KerError("Fail inputing file: " + p.toAbsolutePath().toString(), e);
 		}
 	}
+	
+	public static boolean same(LocalDate d1, LocalDate d2) {
+		if (d1 == null || d2 == null)
+			return false;
+		return d1.getYear() == d2.getYear() && d1.getDayOfYear() == d2.getDayOfYear();
+	}
 }

@@ -67,7 +67,7 @@ public class AccountEngine {
 	private final RuntimeInfo info;
 	private final PositionManager position;
 	private final DataFactory factory;
-
+	
 	// Locking money.
 	private final List<RuntimeLockMoney> locked = new LinkedList<>();
 
@@ -206,17 +206,18 @@ public class AccountEngine {
 			for (var p : pe.locked()) {
 				frozenMargin += p.margin();
 				currentMargin += p.margin();
+				positionProfit += p.positionProfitByDate();
 				frozenCommission += p.closeCommission();
 				commission += p.openCommission();
 			}
 
 			for (var p : pe.closed()) {
 				closeProfit = p.closeProfitByDate();
-				positionProfit += p.positionProfitByDate();
 				commission += p.openCommission() + p.closeCommission();
 			}
 
 			for (var p : pe.available()) {
+				positionProfit += p.positionProfitByDate();
 				commission += p.openCommission();
 				currentMargin += p.margin();
 			}
@@ -255,20 +256,34 @@ public class AccountEngine {
 		return a;
 	}
 
+	/**
+	 * The method will set pre-like fields with non-pre fields. Make sure the non-pre fields have valid values and only
+	 * call once per trading day.
+	 */
 	public void init() throws KerError {
-		if (!this.position.isSettled())
-			throw new KerError("Can't initialize account before positions are settled.");
+		if (Utils.same(this.info.tradingDay(), this.origin.tradingDay()))
+			throw new KerError("Can't init an account for more than once per trading day.");
 		
-		var c = current();
+		// Trading day.
+		this.origin.tradingDay(this.info.tradingDay());
 		
 		// Set fields to preXxx.
-		this.origin.preBalance(c.balance());
-		this.origin.preCredit(c.credit());
-		this.origin.preDeposit(c.deposit());
-		this.origin.preFundMortgageIn(c.fundMortgageIn());
-		this.origin.preFundMortgageOut(c.fundMortgageOut());
-		this.origin.preMargin(c.currentMargin());
-		this.origin.preMortgage(c.mortgage());
+		this.origin.preBalance(this.origin.balance());
+		this.origin.preCredit(this.origin.credit());
+		this.origin.preDeposit(this.origin.deposit());
+		this.origin.preFundMortgageIn(this.origin.fundMortgageIn());
+		this.origin.preFundMortgageOut(this.origin.fundMortgageOut());
+		this.origin.preMargin(this.origin.currentMargin());
+		this.origin.preMortgage(this.origin.mortgage());
+		
+		// Reset fields to zeros for new day trading.
+		this.origin.balance(0.0);
+		this.origin.credit(0.0);
+		this.origin.deposit(0.0);
+		this.origin.fundMortgageIn(0.0);
+		this.origin.fundMortgageOut(0.0);
+		this.origin.currentMargin(0.0);
+		this.origin.mortgage(0.0);
 	}
 
 	// Assume available >= amount.

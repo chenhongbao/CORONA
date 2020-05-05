@@ -25,10 +25,13 @@ public class PositionManager {
 	// Settlement mark.
 	private boolean isSettled = false;
 	
-	public PositionManager(Path dir, RuntimeInfo runtime, DataFactory factory) {
+	public PositionManager(Path dir, RuntimeInfo runtime, DataFactory factory) throws KerError {
 		this.directory = dir;
 		this.runtime = runtime;
 		this.factory = factory;
+		
+		// Load settled position manager in constructor.
+		loadSettledPosition();
 	}
 	
 	public PositionEngine getPositon(String symbol) {
@@ -82,12 +85,12 @@ public class PositionManager {
 		this.isSettled = true;
 	}
 	
-	
-	
-	public void init() throws KerError {
-		var dir = findLastPosDir(this.directory);
+	public void init() throws KerError {	
+		// Call init().
 		for (var p : this.positions.values()) {
-			p.read(new PositionFile(p.symbol(), subDirBySymbol(dir, p.symbol()), this.runtime, this.factory));
+			if (!p.isSettled())
+				throw new KerError("Can't initialized unsettled position.");
+			
 			p.init();
 		}
 		
@@ -107,6 +110,29 @@ public class PositionManager {
 		this.isSettled = false;
 	}
 	
+	private void loadSettledPosition() throws KerError {
+		var dir = findLastPosDir(this.directory);
+		
+		// No position to load, just return.
+		if (dir == null) {
+			this.isSettled = false;
+			return;
+		}
+		
+		// Get sub dirs under root, their names are symbols.
+		var symbols = Utils.getFileNames(dir, false);	
+		for (var m : symbols) {
+			// Read settled positions.
+			var file = new PositionFile(m, subDirBySymbol(dir, m), this.runtime, this.factory);
+			var init = file.read();
+			
+			// Save position engines.
+			this.positions.put(m, new PositionEngine(m, this.runtime, init, this.factory));
+		}
+		
+		this.isSettled = true;
+	}
+	
 	public boolean isSettled() {
 		return this.isSettled;
 	}
@@ -114,8 +140,14 @@ public class PositionManager {
 	// Find the last, also biggest date directory.
 	private Path findLastPosDir(Path root) throws KerError {
 		var dirNames = Utils.getFileNames(root, false);
-		if (dirNames == null || dirNames.length == 0)
-			throw new KerError("Can't find directory under root: " + root);
+		// No such dir.
+		if (dirNames == null) {
+			Utils.ensureDir(root);
+			return null;
+		}
+		// No sub dirs.
+		if (dirNames.length == 0)
+			return null;
 		
 		var dirs = new LinkedList<String>();
 		for (var n : dirNames)

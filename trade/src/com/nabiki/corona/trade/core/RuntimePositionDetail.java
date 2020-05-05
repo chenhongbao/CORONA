@@ -18,27 +18,46 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 public class RuntimePositionDetail {
 	private final String symbol;
 	private final RuntimeInfo info;
-	private final KerPositionDetail origin;
 	private final List<KerPositionDetail> locked = new LinkedList<>();
 	private final List<KerPositionDetail> closed = new LinkedList<>();
 	
-	private boolean isSettled = false;
+	private boolean isSettled;
+	private KerPositionDetail origin;
 
 	// Data factory.
 	private final DataFactory factory;
 
+	/**
+	 * Constructor for a new trade position. The settlement mark is false.
+	 * 
+	 * @param rep trade report
+	 * @param info runtime info
+	 * @param factory data factory
+	 * @throws KerError throw exception when fail to create position detail for new trade.
+	 */
 	public RuntimePositionDetail(KerTradeReport rep, RuntimeInfo info, DataFactory factory) throws KerError {
 		this.symbol = rep.symbol();
 		this.info = info;
 		this.factory = factory;
+		this.isSettled = false;
 		this.origin = ensure(rep);
 	}
 
+	/**
+	 * Constructor for loading a settled position data into the object. The settlement mark is set to true.
+	 * 
+	 * @param origin origin position
+	 * @param locked locked position
+	 * @param closed closed position
+	 * @param info  runtime info
+	 * @param factory data factory
+	 */
 	public RuntimePositionDetail(KerPositionDetail origin, Collection<KerPositionDetail> locked,
 			Collection<KerPositionDetail> closed, RuntimeInfo info, DataFactory factory) {
 		this.symbol = origin.symbol();
 		this.info = info;
 		this.factory = factory;
+		this.isSettled = true;
 		this.origin = origin;
 		if (locked != null)
 			this.locked.addAll(locked);
@@ -135,7 +154,7 @@ public class RuntimePositionDetail {
 		if (commRate == null)
 			throw new KerError("Commission rate not found: " + s);
 
-		if (compareDate(this.info.tradingDay(), positionTradingDay)) {
+		if (Utils.same(this.info.tradingDay(), positionTradingDay)) {
 			// Close today position.
 			return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.closeTodayRatioByMoney(),
 					commRate.closeTodayRatioByVolume());
@@ -144,10 +163,6 @@ public class RuntimePositionDetail {
 			return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.closeRatioByMoney(),
 					commRate.closeRatioByVolume());
 		}
-	}
-
-	private boolean compareDate(LocalDate d1, LocalDate d2) {
-		return d1.getYear() == d2.getYear() && d1.getDayOfYear() == d2.getDayOfYear();
 	}
 
 	private double getMarginRateVolume(String s, char direction) throws KerError {
@@ -242,18 +257,32 @@ public class RuntimePositionDetail {
 	}
 	
 	/**
-	 * Initialize a settled position for a new day trading.
+	 * Initialize a settled position for a new day trading. It will set pre-like fields, clear old fields and records.
+	 * 
 	 * @throws KerError initialize an unsettled position throws exception.
 	 */
 	public void init() throws KerError {
 		if (!isSettled())
-			throw new KerError("Can't initialize a unsettled position.");
+			throw new KerError("Can't initialize a unsettled runtime position.");
 		
 		// Settlement price.
 		origin.lastSettlementPrice(origin.settlementPrice());
 		origin.settlementPrice(0.0);
 		// Commission.
 		origin.openCommission(0.0);
+		
+		// Decrease the origin position by the number of closed position and remove closed position.
+		var c = sumClosed();
+		this.origin = copyPart(this.origin, this.origin.volume() - c.volume());
+		if (this.closed.size() > 0)
+			this.closed.clear();
+		
+		// Check if locked has position, if it is, error.
+		if (this.locked.size() > 0)
+			throw new KerError("Locked position not cleared in settlement: " + symbol());
+		
+		// Mark.
+		this.isSettled = false;
 	}
 	
 	public boolean isSettled() {

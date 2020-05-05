@@ -1,6 +1,6 @@
 package com.nabiki.corona.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 /**
  * Client's account.
@@ -60,7 +60,7 @@ public interface Account {
 
 	double reserve();
 
-	Date tradingDay();
+	LocalDate tradingDay();
 
 	String settlementId();
 

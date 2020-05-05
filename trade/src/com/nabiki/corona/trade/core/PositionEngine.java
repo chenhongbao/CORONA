@@ -13,13 +13,23 @@ import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class PositionEngine {
-	private boolean isSettled = false;
+	private boolean isSettled;
 
 	private final RuntimeInfo runtime;
 	private final String symbol;
 	private final DataFactory fatory;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
 
+	/**
+	 * If init is null, create an empty position engine and settlement market is set to false, otherwise the position
+	 * engine is settled, and the mark is set to true.
+	 * 
+	 * @param symbol
+	 * @param runtime
+	 * @param init
+	 * @param factory
+	 * @throws KerError
+	 */
 	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init,
 			DataFactory factory) throws KerError {
 		this.symbol = symbol;
@@ -30,9 +40,13 @@ public class PositionEngine {
 				var o = d.origin();
 				if (o.symbol().compareTo(this.symbol) != 0)
 					throw new KerError("Wrong symbol. Want " + this.symbol + " but found " + o.symbol());
+				
 				this.details.add(d);
 			}
-		}
+			
+			this.isSettled = true;
+		} else
+			this.isSettled = false;
 	}
 
 	public boolean isSettled() {
@@ -40,8 +54,14 @@ public class PositionEngine {
 	}
 	
 	public void init() throws KerError {
-		for (var p : this.details)
+		for (var p : this.details) {
+			if (!p.isSettled())
+				throw new KerError("Can't initializa unsettled runtime position.");
+			
 			p.init();
+		}
+		
+		this.isSettled = false;
 	}
 
 	/**

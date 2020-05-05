@@ -21,12 +21,15 @@ public class AccountManager {
 	private final DataFactory factory;
 	private final DataCodec codec = DefaultDataCodec.create();
 
-	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataFactory factory) {
+	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataFactory factory) throws KerError {
 		this.root = path;
 		this.runtime = runtime;
 		this.positions = pos;
 		this.factory = factory;
-		this.account = new AccountEngine(null, this.runtime, this.positions, this.factory);
+		
+		// Try loading account from disk.
+		var a = readAccount(this.root);
+		this.account = new AccountEngine(a, this.runtime, this.positions, this.factory);
 	}
 
 	public AccountEngine account() {
@@ -45,22 +48,15 @@ public class AccountManager {
 	}
 
 	// Currently no need to read account from file.
-	@SuppressWarnings("unused")
 	private KerAccount readAccount(Path p) throws KerError {
-		String[] fs = Utils.getFileNames(p, true);
-		if (fs == null)
-			throw new KerError("No account data file found.");
-		if (fs.length > 1)
-			throw new KerError("Ambiguious account data files.");
-
-		var path = Path.of(p.toAbsolutePath().toString(), fs[0]);
-		if (!path.toFile().canWrite())
-			throw new KerError("Account data file not readable: " + path.toAbsolutePath().toString());
+		var path = Path.of(root.toAbsolutePath().toString(), "0");
+		if (!path.toFile().exists() || !path.toFile().canRead())
+			return null;
 
 		var bytes = Utils.readFile(path);
 		return this.codec.decode(bytes, KerAccount.class);
 	}
-
+	
 	private void writeAccount(Path p, KerAccount a) throws KerError {
 		var bytes = this.codec.encode(a);
 		var path = Path.of(p.toAbsolutePath().toString(), "0");
