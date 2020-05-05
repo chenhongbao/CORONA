@@ -44,6 +44,13 @@ public class PositionEngine {
 			p.init();
 	}
 
+	/**
+	 * Read position detail from given position file and reset internal data to newly read-in data.
+	 * 
+	 * @param f position file to read from
+	 * @throws KerError throw exception when symbols of current position engine and given position file not matched,
+	 *         or can't read from the file
+	 */
 	public void read(PositionFile f) throws KerError {
 		if (f.symbol().compareTo(symbol()) != 0)
 			throw new KerError(

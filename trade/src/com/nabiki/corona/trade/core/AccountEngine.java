@@ -86,16 +86,34 @@ public class AccountEngine {
 			this.origin = this.factory.kerAccount();
 	}
 
+	/**
+	 * Get a new instance copy of original account.
+	 * 
+	 * @return new instance of account
+	 */
 	public KerAccount origin() {
-		return this.origin;
+		return this.factory.kerAccount(this.origin);
 	}
 
-	public void deposit(CashMoveCommand cmd) {
-		// TODO deposit
+	public void deposit(CashMoveCommand cmd) throws KerError {
+		if (cmd == null)
+			throw new KerError("Cash command null pointer.");
+		if (cmd.amount() <= 0)
+			throw new KerError("Cash command amount zero or negative.");
+		
+		this.deposits.add(cmd);
 	}
 
-	public void withdraw(CashMoveCommand cmd) {
-		// TODO withdraw
+	public void withdraw(CashMoveCommand cmd) throws KerError {
+		if (cmd == null)
+			throw new KerError("Cash command null pointer.");
+		if (cmd.amount() <= 0)
+			throw new KerError("Cash command amount zero or negative.");
+		
+		if (cmd.amount() > current().withdrawQuota())
+			throw new KerError("Withdraw quota not enough.");
+		
+		this.withdraws.add(cmd);
 	}
 
 	public KerOrderEvalue lock(KerOrder order) throws KerError {
@@ -213,13 +231,13 @@ public class AccountEngine {
 		var withdraw = withdraw();
 
 		// Refernce: https://www.wenhua.com.cn/popwin/zhuridingshi.htm
-		balance = origin().preBalance() + deposit - withdraw + closeProfit + positionProfit - commission;
+		balance = origin.preBalance() + deposit - withdraw + closeProfit + positionProfit - commission;
 		available = balance - frozenMargin - frozenCommission - frozenCash - currentMargin;
 
 		// Exclude the unsettled money.
 		var withdrawQuota = available - (positionProfit > 0 ? positionProfit : 0) - (closeProfit > 0 ? closeProfit : 0);
 
-		var a = this.factory.kerAccount(origin());
+		var a = origin();
 
 		a.deposit(deposit);
 		a.withdraw(withdraw);

@@ -1,5 +1,7 @@
 package com.nabiki.corona;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,5 +73,14 @@ public class Utils {
 		} catch (IOException e) {
 			throw new KerError("Fail creating non-existing directory: " + p.toAbsolutePath());
 		}
+	}
+	
+	public static String[] getFileNames(Path p, boolean isFile) {
+		return p.toFile().list(new FilenameFilter() {
+			  @Override
+			  public boolean accept(File current, String name) {
+			    return new File(current, name).isFile() == isFile;
+			  }
+			});
 	}
 }

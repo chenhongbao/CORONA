@@ -31,13 +31,15 @@ public class InvestorAccount {
 		this.factory = factory;
 		
 		// Build directory to keep data files.
-		var positionDir = Path.of(this.directory.toAbsolutePath().toString(), "/position/");
+		var positionDir = Path.of(this.directory.toAbsolutePath().toString(), "position");
 		Utils.ensureDir(positionDir);
+		var accountDir = Path.of(this.directory.toAbsolutePath().toString(), "account");
+		Utils.ensureDir(accountDir);
 		
 		// Create instances of data.
 		this.sessionManager = new SessionManager();
 		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
-		this.accountManager = new AccountManager(this.info, this.positionManager, this.factory);
+		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
 		
 		// Get account engine from account manager.
 		this.account = this.accountManager.account();

@@ -39,7 +39,7 @@ public class PositionFile {
 
 	public List<RuntimePositionDetail> read() throws KerError {
 		// Get sub-directories.
-		var directories = getFiles(this.directory, false);
+		var directories = Utils.getFileNames(this.directory, false);
 		
 		if (directories == null)
 			throw new KerError("Directory not exists: " + this.directory.toAbsolutePath());
@@ -50,7 +50,7 @@ public class PositionFile {
 			return ret;
 		
 		for (String d : directories) {
-			var path = Path.of(this.directory.toAbsolutePath().toString(), "/" + d + "/");
+			var path = Path.of(this.directory.toAbsolutePath().toString(), d);
 			RuntimePositionDetail r = readRuntime(path);
 			
 			// Filter the runtime. Don't load empty position detail.
@@ -59,16 +59,6 @@ public class PositionFile {
 		}
 		
 		return ret;
-	}
-
-	
-	private String[] getFiles(Path p, boolean isFile) {
-		return p.toFile().list(new FilenameFilter() {
-			  @Override
-			  public boolean accept(File current, String name) {
-			    return new File(current, name).isFile() == isFile;
-			  }
-			});
 	}
 
 	private RuntimePositionDetail readRuntime(Path path) throws KerError {
@@ -80,17 +70,17 @@ public class PositionFile {
 			throw new KerError("Ambiguious details: " + path.toAbsolutePath().toString());
 		
 		// Read locked.
-		var locked = readDetails(Path.of(path.toAbsolutePath().toString(), "/locked/"));
+		var locked = readDetails(Path.of(path.toAbsolutePath().toString(), "locked"));
 		// Read closed.
-		var closed = readDetails(Path.of(path.toAbsolutePath().toString(), "/closed/"));
+		var closed = readDetails(Path.of(path.toAbsolutePath().toString(), "closed"));
 		
 		return new RuntimePositionDetail(origin.get(0), locked, closed, this.runtime, this.factory);
 	}
 	
 	private List<KerPositionDetail> readDetails(Path p) throws KerError {
 		List<KerPositionDetail> ret = new LinkedList<>();
-		for (var f: getFiles(p, true)) {
-			var fp =Path.of(p.toAbsolutePath().toString(), "/" + f);
+		for (var f: Utils.getFileNames(p, true)) {
+			var fp =Path.of(p.toAbsolutePath().toString(), f);
 			ret.add(readDetail(fp));
 		}
 		
@@ -113,7 +103,7 @@ public class PositionFile {
 	public void write(List<RuntimePositionDetail> ps) throws KerError {
 		if (ps.size() == 0)
 			return;
-
+		
 		int idx = 0;
 		for (var p : ps)
 			writeRuntime(p, idx++);
@@ -123,9 +113,10 @@ public class PositionFile {
 		var origin = p.origin();
 		var locked = p.locked();
 		var closed = p.closed();
-		// Create root for this runtime position detail data.
-		var root = getDetailDir(p, idx);
 
+		// Root by idx.
+		var root =getDetailRootByIdx(idx);
+		
 		// Write origin.
 		writeDetail(root, origin, 0);
 		// Locked position details.
@@ -133,11 +124,9 @@ public class PositionFile {
 		// Closed position details.
 		writeDetails(root, "/closed", closed);
 	}
-
-	private Path getDetailDir(RuntimePositionDetail p, int idx) throws KerError {
-		var origin = p.origin();
-		var dirName = "/" + origin.tradingDay() + "_" + origin.openDate() + "_" + idx + "/";
-		var path = Path.of(this.directory.toAbsolutePath().toString(), dirName);
+	
+	private Path getDetailRootByIdx(int idx) throws KerError {
+		var path = Path.of(this.directory.toAbsolutePath().toString(), Integer.toString(idx));
 		Utils.ensureDir(path);
 		return path;
 	}
@@ -162,7 +151,7 @@ public class PositionFile {
 
 	private void writeDetail(Path dir, KerPositionDetail d, int idx) throws KerError {
 		byte[] bytes = this.codec.encode(d);
-		var file = Path.of(dir.toAbsolutePath().toString(), "/" + Integer.toString(idx)).toFile();
+		var file = Path.of(dir.toAbsolutePath().toString(), Integer.toString(idx)).toFile();
 		try {
 			if (!file.exists() || !file.isFile())
 				file.createNewFile();

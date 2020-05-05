@@ -1,11 +1,15 @@
 package com.nabiki.corona.trade.core;
 
+import java.nio.file.Path;
+
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class AccountManager {
+	private final Path path;
 
-	public AccountManager(RuntimeInfo runtime, PositionManager pos, DataFactory factory) {
+	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataFactory factory) {
+		this.path = path;
 		// TODO initialize account
 	}
 
