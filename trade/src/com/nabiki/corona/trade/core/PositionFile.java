@@ -88,16 +88,7 @@ public class PositionFile {
 	}
 	
 	private KerPositionDetail readDetail(Path p) throws KerError {
-		return this.codec.decode(readFile(p), KerPositionDetail.class);
-	}
-	
-	private byte[] readFile(Path p) throws KerError {
-		try {
-			var is = new FileInputStream(p.toFile());
-			return is.readAllBytes();
-		} catch (IOException e) {
-			throw new KerError("Fail inputing file: " + p.toAbsolutePath().toString(), e);
-		}
+		return this.codec.decode(Utils.readFile(p), KerPositionDetail.class);
 	}
 
 	public void write(List<RuntimePositionDetail> ps) throws KerError {

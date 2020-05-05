@@ -29,8 +29,6 @@ public class PositionManager {
 		this.directory = dir;
 		this.runtime = runtime;
 		this.factory = factory;
-		
-		// TODO try initialize positions
 	}
 	
 	public PositionEngine getPositon(String symbol) {
@@ -93,7 +91,18 @@ public class PositionManager {
 			p.init();
 		}
 		
-		// TODO Remove zero volume position.
+		// Remove zero volume position.
+		var iter = this.positions.keySet().iterator();
+		while (iter.hasNext()) {
+			int vol = 0;
+			var k = iter.next();
+			var p = this.positions.get(k);
+			for (var a : p.available())
+				vol += a.volume();
+					
+			if (vol == 0)
+				this.positions.remove(k);
+		}
 		
 		this.isSettled = false;
 	}

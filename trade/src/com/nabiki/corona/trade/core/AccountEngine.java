@@ -255,9 +255,20 @@ public class AccountEngine {
 		return a;
 	}
 
-	public KerAccount settle() throws KerError {
-		this.position.settle();
-		return current();
+	public void init() throws KerError {
+		if (!this.position.isSettled())
+			throw new KerError("Can't initialize account before positions are settled.");
+		
+		var c = current();
+		
+		// Set fields to preXxx.
+		this.origin.preBalance(c.balance());
+		this.origin.preCredit(c.credit());
+		this.origin.preDeposit(c.deposit());
+		this.origin.preFundMortgageIn(c.fundMortgageIn());
+		this.origin.preFundMortgageOut(c.fundMortgageOut());
+		this.origin.preMargin(c.currentMargin());
+		this.origin.preMortgage(c.mortgage());
 	}
 
 	// Assume available >= amount.

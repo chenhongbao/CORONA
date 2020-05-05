@@ -1,6 +1,7 @@
 package com.nabiki.corona;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,5 +83,14 @@ public class Utils {
 			    return new File(current, name).isFile() == isFile;
 			  }
 			});
+	}
+	
+	public static byte[] readFile(Path p) throws KerError {
+		try {
+			var is = new FileInputStream(p.toFile());
+			return is.readAllBytes();
+		} catch (IOException e) {
+			throw new KerError("Fail inputing file: " + p.toAbsolutePath().toString(), e);
+		}
 	}
 }

@@ -8,7 +8,7 @@ public interface DataCodec {
 	 * @param a instance
 	 * @return encoded bytes
 	 */
-	<T> byte[] encode(T a);
+	<T> byte[] encode(T a) throws KerError;
 	
 	/**
 	 * Decode the given type of class with given bytes.
@@ -18,5 +18,5 @@ public interface DataCodec {
 	 * @param clz class of type
 	 * @return instance of decoded class of type
 	 */
-	<T>T decode(byte[] b, Class<T> clz);
+	<T>T decode(byte[] b, Class<T> clz) throws KerError;
 }
