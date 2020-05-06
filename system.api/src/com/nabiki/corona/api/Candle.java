@@ -1,7 +1,7 @@
 package com.nabiki.corona.api;
 
-import java.util.Date;
 import java.time.Instant;
+import java.time.LocalDate;
 
 /**
  * Candle generated from ticks.
@@ -34,7 +34,7 @@ public interface Candle {
 
 	Instant updateTime();
 
-	Date tradingDay();
+	LocalDate tradingDay();
 
-	Date actionDay();
+	LocalDate actionDay();
 }

@@ -1,6 +1,6 @@
 package com.nabiki.corona.api;
 
-public class CandleMinutePeriods {
+public class CandleMinute {
 	public static final int MINUTE = 1;
 	public static final int FIVE_MINUTE = 5;
 	public static final int QUARTER = 15;

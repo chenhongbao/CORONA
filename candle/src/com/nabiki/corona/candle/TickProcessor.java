@@ -18,6 +18,7 @@ import com.nabiki.corona.api.Candle;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
+import com.nabiki.corona.kernel.api.KerCandle;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.biz.api.TickCandleForwarder;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
@@ -40,16 +41,17 @@ public class TickProcessor implements TickLocal {
 
 	// Instant query has a set of time points when a candle of specific mins
 	// is generated. This function is built into bundle and injected.
-	@Reference(bind = "bindQuery", updated = "updatedQuery", unbind = "unbindQuery",
-			cardinality = ReferenceCardinality.AT_LEAST_ONE)
-	volatile Collection<SymbolQuery> queries = new ConcurrentSkipListSet<>();
+	volatile Map<String, SymbolQuery> queries = new ConcurrentHashMap<>();
 
+	@Reference(cardinality = ReferenceCardinality.AT_LEAST_ONE, policy = ReferencePolicy.DYNAMIC)
 	public void bindQuery(SymbolQuery query) {
-		if (query == null)
+		if (query == null || query.name() == null) {
+			this.log.warn("Can't bind symbol query, invalid symbol query.");
 			return;
+		}
 
 		try {
-			this.queries.add(query);
+			this.queries.put(query.name(), query);
 			this.log.info("Bind candle instant query: {}.", query.name());
 		} catch (ClassCastException e) {
 			this.log.warn("Fail adding query: {}.", query.name());
@@ -57,19 +59,23 @@ public class TickProcessor implements TickLocal {
 	}
 
 	public void updatedQuery(SymbolQuery query) {
-		if (query == null)
+		if (query == null || query.name() == null) {
+			this.log.warn("Can't update symbol query, invalid symbol query.");
 			return;
+		}
 
 		this.log.info("Update candle instant query: {}.", query.name());
 		bindQuery(query);
 	}
 
 	public void unbindQuery(SymbolQuery query) {
-		if (query == null)
+		if (query == null || query.name() == null) {
+			this.log.warn("Can't unbind symbol query, invalid symbol query.");
 			return;
+		}
 
 		try {
-			this.queries.remove(query);
+			this.queries.remove(query.name());
 			this.log.info("Unbind candle instant query: {}.", query.name());
 		} catch (ClassCastException e) {
 			this.log.warn("Fail removing query: {}.", query.name());
@@ -128,7 +134,13 @@ public class TickProcessor implements TickLocal {
 
 	@Activate
 	public void start(ComponentContext ctx) {
-		this.engine = new CandleEngine(new CandlePostListener(), this.queries);
+		try {
+			this.engine = new CandleEngine(new CandlePostListener(), this.queries.values());
+		} catch (KerError e) {
+			this.log.error("Fail creating candle engine. {}", e.getMessage(), e);
+			return;
+		}
+		
 		this.executor = new ScheduledThreadPoolExecutor(4);
 
 		// Delayed until next minute
@@ -188,7 +200,7 @@ public class TickProcessor implements TickLocal {
 		}
 
 		@Override
-		public void candle(Candle candle) {
+		public void candle(KerCandle candle) {
 			// Forward candles
 			var iter = forwarders.iterator();
 			while (iter.hasNext()) {
