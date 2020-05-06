@@ -7,6 +7,7 @@ import com.nabiki.corona.api.ErrorCode;
 import com.nabiki.corona.api.ErrorMessage;
 import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.DataFactory;
+import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
@@ -24,7 +25,7 @@ public class InvestorAccount {
 	private final RuntimeInfo info;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory) throws KerError {
+	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, SessionManager sm) throws KerError {
 		this.accountId = accountId;
 		this.info = info;
 		this.directory= dir;
@@ -37,7 +38,7 @@ public class InvestorAccount {
 		Utils.ensureDir(accountDir);
 		
 		// Create instances of data.
-		this.sessionManager = new SessionManager();
+		this.sessionManager = sm;
 		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
 		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
 		
@@ -47,6 +48,24 @@ public class InvestorAccount {
 	
 	public String accountId() {
 		return this.accountId;
+	}
+	
+	public AccountManager account() {
+		return this.accountManager;
+	}
+	
+	public PositionManager position() {
+		return this.positionManager;
+	}
+	
+	public void settle() throws KerError {
+		this.positionManager.settle();
+		this.accountManager.settle();
+	}
+	
+	public void init() throws KerError {
+		this.positionManager.init();
+		this.accountManager.init();
 	}
 
 	public void trade(KerTradeReport rep) throws KerError {
@@ -112,7 +131,7 @@ public class InvestorAccount {
 
 		KerOrderEvalue r = null;
 		// Create session ID.
-		var sid = this.sessionManager.createSessionId(order.orderId());
+		var sid = this.sessionManager.createSessionId(order.orderId(), order.accountId());
 		order.sessionId(sid);
 		
 		if (order.offsetFlag() == State.OFFSET_OPEN) {

@@ -13,15 +13,18 @@ public class SessionManager {
 	private Map<String, String> sessionIds = new ConcurrentHashMap<>();
 	// Session ID -> Order ID.
 	private Map<String, String> orderIds = new ConcurrentHashMap<>();
+	// Order ID -> Account ID.
+	private Map<String, String> accountIds = new ConcurrentHashMap<>();
 	
-	SessionManager() {}
+	public SessionManager() {}
 	
-	public String createSessionId(String orderId) throws KerError {
+	public String createSessionId(String orderId, String accountId) throws KerError {
 		if (!this.sessionIds.containsKey(orderId))
 			throw new KerError(ErrorCode.DUPLICATE_ORDER_REF, ErrorMessage.DUPLICATE_ORDER_REF);
 		
 		var sid = Utils.sessionId();
 		this.sessionIds.put(orderId, sid);
+		this.accountIds.put(orderId, accountId);
 		return sid;
 	}
 	
@@ -39,5 +42,9 @@ public class SessionManager {
 		}
 		
 		return this.orderIds.get(sessionId);
+	}
+	
+	public String getAccountId(String orderId) {
+		return this.accountIds.get(orderId);
 	}
 }

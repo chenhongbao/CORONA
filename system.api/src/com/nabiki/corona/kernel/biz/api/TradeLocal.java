@@ -17,7 +17,7 @@ public interface TradeLocal {
 
 	void tradeReport(KerTradeReport r);
 
-	void positionDetail(KerPositionDetail p);
+	void positionDetail(KerPositionDetail p, boolean last);
 
 	/**
 	 * Set the global account info. The account is the remote broker account.
@@ -36,25 +36,31 @@ public interface TradeLocal {
 	/**
 	 * Query account with given account id.
 	 * 
-	 * @param id account id
+	 * @param accountId account id
 	 * @return account info
 	 */
-	KerAccount account(String id);
+	KerAccount account(String accountId);
+	
+	/**
+	 * Get remote counter account.
+	 * 
+	 * @return remote counter account
+	 */
+	KerAccount remoteAccount();
 
 	/**
 	 * Query position detail of given symbol under given account.
 	 * 
-	 * @param id     account id
+	 * @param accountId     account id
 	 * @param symbol symbol of the query detail
 	 * @return collection of position detail
 	 */
-	Collection<KerPositionDetail> positionDetails(String id, String symbol);
-
+	Collection<KerPositionDetail> positionDetails(String accountId, String symbol);
+	
 	/**
-	 * Query trade session with given reference. The trade returned from the method can be either ongoing or completed.
+	 * Query all position details.
 	 * 
-	 * @param id trade session identifier
-	 * @return trade session
+	 * @return collection of position details.
 	 */
-	KerTrade trade(String sid);
+	Collection<KerPositionDetail> remotePositionDetails();
 }

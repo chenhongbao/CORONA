@@ -216,6 +216,14 @@ public class PositionEngine {
 		}
 		return ret;
 	}
+	
+	public Collection<KerPositionDetail> current() throws KerError {
+		var ret = new LinkedList<KerPositionDetail>();
+		for (var rt : this.details) {
+			ret.add(rt.current());
+		}
+		return ret;
+	}
 
 	private boolean canLock(KerOrder o) throws KerError {
 		if (o == null || o.volume() == 0)
