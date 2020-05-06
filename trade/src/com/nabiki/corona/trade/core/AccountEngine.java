@@ -50,10 +50,6 @@ public class AccountEngine {
 			return this.sessionId;
 		}
 
-		void sessionId(String s) {
-			this.sessionId = s;
-		}
-
 		double commission() {
 			return this.commission;
 		}

@@ -50,7 +50,7 @@ public class InvestorManager {
 	}
 	
 	public void setInvestor(String accountId) throws KerError {
-		var np = Path.of(this.root.toAbsolutePath().toString(), accountId);
+		var np = Path.of(InvestorManager.root.toAbsolutePath().toString(), accountId);
 		this.investors.put(accountId, new InvestorAccount(accountId, np, this.runtime, this.factory, this.sm));
 	}
 }

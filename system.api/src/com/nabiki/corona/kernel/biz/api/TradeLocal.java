@@ -7,7 +7,6 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
-import com.nabiki.corona.kernel.api.KerTrade;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public interface TradeLocal {
