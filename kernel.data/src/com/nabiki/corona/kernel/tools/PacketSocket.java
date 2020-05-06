@@ -39,11 +39,23 @@ public class PacketSocket {
         return this.socket;
     }
 
-    public byte[] receive() throws KerError {
+    public Packet receive() throws KerError {
         if (socket().isInputShutdown())
             throw new KerError("Can't receive packet from an input shutdown socket.");
 
+        short type;
         int length;
+        try {
+            type = this.input.readShort();
+        } catch (IOException e) {
+            throw new KerError("Fail reading packet type.");
+        }
+
+        if (type == Packet.Type.CLOSE) {
+            passiveClose();
+            return new Packet(Packet.Type.CLOSE, null);
+        }
+
         try {
             length = this.input.readInt();
         } catch (IOException e) {
@@ -51,31 +63,29 @@ public class PacketSocket {
         }
 
         if (length == 0) {
-            // Normal close.
-            passiveClose(length);
-            return new byte[0];
+            return new Packet(Packet.Type.EMPTY, null);
         } else if (length < 0) {
             // Abnormal close.
-            passiveClose(length);
+            passiveClose();
             throw new KerError("Peer abnormal close.");
         }
 
         int actual = 0;
-        byte[] ret;
+        byte[] payload;
         try {
-            ret = new byte[length];
+            payload = new byte[length];
             while (actual < length) {
-                var r = this.input.read(ret, actual, length - actual);
+                var r = this.input.read(payload, actual, length - actual);
                 actual += r;
             }
         } catch (IOException e) {
             throw new KerError("Fail reading packet body.");
         }
 
-        return ret;
+        return new Packet(type, payload);
     }
 
-    public void send(byte[] bytes, int offset, int length) throws KerError {
+    public void send(short type, byte[] bytes, int offset, int length) throws KerError {
         if (bytes == null)
             throw new KerError("Bytes' array null pointer.");
         if (offset < 0 || length <= 0)
@@ -84,6 +94,7 @@ public class PacketSocket {
             throw new KerError("Given bytes' array insufficient data.");
 
         try {
+            this.output.writeShort(type);
             this.output.writeInt(length);
             this.output.write(bytes, offset, length);
             this.output.flush();
@@ -92,11 +103,11 @@ public class PacketSocket {
         }
     }
 
-    public void close(int errorCode) {
+    public void close() {
         try {
-            // Ensure negative or zero code.
-            var sndError = Math.min(0, errorCode);
-            this.output.writeInt(sndError);
+            // Write type and zero length.
+            this.output.writeShort(Packet.Type.CLOSE);
+            this.output.writeInt(0);
             // Wait for peer's response and then close.
             this.input.readInt();
             this.socket.close();
@@ -104,12 +115,13 @@ public class PacketSocket {
         }
     }
 
-    private void passiveClose(int errorCode) {
+    private void passiveClose() {
         if (this.socket.isClosed())
             return;
 
         try {
-            this.output.writeInt(Math.min(0, errorCode));
+            this.output.writeShort(Packet.Type.CLOSE);
+            this.output.writeInt(0);
             this.socket.close();
         } catch (IOException e) {
         }
