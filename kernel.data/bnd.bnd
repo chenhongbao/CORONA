@@ -3,5 +3,5 @@
 	jsonb;version=latest
 Export-Package: \
 	com.nabiki.corona.kernel.data,\
-	com.nabiki.corona.kernel.file
+	com.nabiki.corona.kernel.tools
 -runrequires: bnd.identity;id='jsonb'

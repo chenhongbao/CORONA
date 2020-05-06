@@ -9,7 +9,7 @@ public interface TickLocal {
 	
 	LocalDate tradingDay();
 
-	void state(boolean working);
+	void isWorking(boolean working);
 
 	void tick(Tick tick);
 	

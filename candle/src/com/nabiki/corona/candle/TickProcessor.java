@@ -204,7 +204,7 @@ public class TickProcessor implements TickLocal {
 	}
 
 	@Override
-	public void state(boolean working) {
+	public void isWorking(boolean working) {
 		if (this.engine != null)
 			this.engine.state(working);
 	}
