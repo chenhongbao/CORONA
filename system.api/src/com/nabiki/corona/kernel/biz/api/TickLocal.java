@@ -2,7 +2,7 @@ package com.nabiki.corona.kernel.biz.api;
 
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.kernel.api.KerTick;
 
 public interface TickLocal {
 	String name();
@@ -11,7 +11,7 @@ public interface TickLocal {
 
 	void isWorking(boolean working);
 
-	void tick(Tick tick);
+	void tick(KerTick tick);
 	
-	Tick last(String symbol);
+	KerTick last(String symbol);
 }

@@ -18,13 +18,13 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.EngineAction;
 import com.nabiki.corona.candle.core.EngineState;
 import com.nabiki.corona.candle.core.TickEngine;
 import com.nabiki.corona.candle.core.TickEngineListener;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
@@ -185,7 +185,7 @@ public class TickLauncher implements Runnable {
 		}
 
 		@Override
-		public void tick(Tick tick) {
+		public void tick(KerTick tick) {
 			for (var local : tickLocals) {
 				local.tick(tick);
 			}

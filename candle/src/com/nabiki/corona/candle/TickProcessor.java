@@ -20,6 +20,7 @@ import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
 import com.nabiki.corona.kernel.api.KerCandle;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.biz.api.TickCandleForwarder;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
@@ -98,7 +99,7 @@ public class TickProcessor implements TickLocal {
 	private CandleEngine engine;
 
 	// Last tick preserve.
-	private Map<String, Tick> lastTicks = new ConcurrentHashMap<>();
+	private Map<String, KerTick> lastTicks = new ConcurrentHashMap<>();
 	
 	private LocalDate tradingDay;
 	
@@ -146,7 +147,7 @@ public class TickProcessor implements TickLocal {
 	}
 
 	@Override
-	public void tick(Tick tick) {
+	public void tick(KerTick tick) {
 		// Forward ticks.
 		var iter = this.forwarders.iterator();
 		while (iter.hasNext()) {
@@ -203,7 +204,7 @@ public class TickProcessor implements TickLocal {
 	}
 
 	@Override
-	public Tick last(String symbol) {
+	public KerTick last(String symbol) {
 		if (symbol == null)
 			return null;
 		
