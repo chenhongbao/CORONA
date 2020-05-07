@@ -7,11 +7,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.nabiki.corona.Utils;
+import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.DataCodec;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
-import com.nabiki.corona.kernel.data.DefaultDataCodec;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class PositionFile {

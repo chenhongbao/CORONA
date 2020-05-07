@@ -1,4 +1,4 @@
-package com.nabiki.corona.kernel.data;
+package com.nabiki.corona.kernel.biz;
 
 import java.time.LocalDate;
 

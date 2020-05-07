@@ -1,7 +1,8 @@
 package com.nabiki.corona.info.data;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -11,10 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 
-import javax.json.bind.JsonbBuilder;
-import javax.json.bind.JsonbException;
-
+import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.settings.ProductTradingTimeSet;
 
 public class CandleInstants {
 	// Global setting.
@@ -36,10 +36,9 @@ public class CandleInstants {
 	private void loadProductTradingTime(Path root) throws KerError {
 		var fp = Path.of(root.toAbsolutePath().toString(), CandleInstants.timeFile);
 
-		try {
+		try (InputStream is = new FileInputStream(fp.toFile())) {
 			// Load JSON.
-			var builder = JsonbBuilder.create();
-			var timeSet = builder.fromJson(new FileInputStream(fp.toFile()), ProductTradingTimeSet.class);
+			var timeSet = DefaultDataCodec.create().decode(is.readAllBytes(), ProductTradingTimeSet.class);
 
 			// Process time to candle instants.
 			for (var set : timeSet.productTimes) {
@@ -49,7 +48,7 @@ public class CandleInstants {
 			}
 
 			this.instantUpdateTime = timeSet.updateTime;
-		} catch (JsonbException | FileNotFoundException e) {
+		} catch (IOException e) {
 			throw new KerError("Fail loading product trading time from file: " + fp.toAbsolutePath().toString());
 		}
 	}
@@ -73,19 +72,31 @@ public class CandleInstants {
 	public LocalDateTime timeStamp() {
 		return this.instantUpdateTime;
 	}
+	
+	private InstantList getInstantList(String symbol) throws KerError {
+		var l = this.candleInstants.get(symbol);
+		if (l == null)
+			throw new KerError("Candle instant for symbol not found: " + symbol);
+		
+		return l;
+	}
 
 	public boolean hitSymbolCandle(String s, int minPeriod, Instant now, int margin, TimeUnit unit) throws KerError {
 		if (s == null)
 			return false;
-
-		var l = this.candleInstants.get(s);
-		if (l == null)
-			throw new KerError("Candle instant for symbol not found: " + s);
-
-		return l.hit(minPeriod, now, margin, unit);
+		
+		return getInstantList(s).hit(minPeriod, now, margin, unit);
 	}
 
 	public Set<String> symbols() {
 		return this.symbols;
+	}
+	
+	public Instant firstCandleInstant(String symbol, int min) throws KerError {
+		return getInstantList(symbol).firstInstant(min);
+	}
+	
+	public Instant lastCandleInstant(String symbol, int min) throws KerError {
+		return getInstantList(symbol).lastInstant(min);
 	}
 }

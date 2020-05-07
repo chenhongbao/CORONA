@@ -1,26 +1,15 @@
-package com.nabiki.corona.info.data;
+package com.nabiki.corona.kernel.settings;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.json.bind.annotation.JsonbDateFormat;
 
 public class ProductTradingTimeSet {
-	public class TradingTime {
-		public int rank;
-		@JsonbDateFormat("HH:mm:ss")
-		public LocalTime from;
-		@JsonbDateFormat("HH:mm:ss")
-		public LocalTime to;
-		
-		public TradingTime() {}
-	}
-	
 	public class ProductTradingTime {
 		public List<String> products = new LinkedList<>();
-		public List<TradingTime> times = new LinkedList<>();
+		public List<TimeRange> times = new LinkedList<>();
 		
 		public ProductTradingTime() {}
 	}

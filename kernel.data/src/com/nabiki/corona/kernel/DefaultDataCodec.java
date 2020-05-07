@@ -1,4 +1,4 @@
-package com.nabiki.corona.kernel.data;
+package com.nabiki.corona.kernel;
 
 import com.nabiki.corona.kernel.api.DataCodec;
 

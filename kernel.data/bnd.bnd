@@ -2,6 +2,8 @@
 	system.api;version=latest,\
 	jsonb;version=latest
 Export-Package: \
-	com.nabiki.corona.kernel.data,\
-	com.nabiki.corona.kernel.tools
+	com.nabiki.corona.kernel,\
+	com.nabiki.corona.kernel.tools,\
+	com.nabiki.corona.kernel.biz,\
+	com.nabiki.corona.kernel.settings
 -runrequires: bnd.identity;id='jsonb'

@@ -1,9 +1,17 @@
 package com.nabiki.corona.info;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -16,14 +24,18 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ProductClass;
+import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.info.data.CandleInstants;
+import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
+import com.nabiki.corona.kernel.settings.MarketTimeSet;
+import com.nabiki.corona.kernel.settings.TimeRange;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
@@ -100,9 +112,13 @@ public class RuntimeInfoService implements RuntimeInfo {
 	
 	// Glocal setting.
 	private final static Path configRoot = Path.of(".", "configuration");
+	private final static String mktTimeFile = "market_time.json";
 	
 	// Candle instants.
 	private CandleInstants candleInstants;
+	
+	// Market time.
+	private MarketTimeSet marketTime;
 
 	public RuntimeInfoService() {
 		try {
@@ -218,22 +234,55 @@ public class RuntimeInfoService implements RuntimeInfo {
 	public Collection<String> symbols() {
 		return this.candleInstants.symbols();
 	}
+	
+	private void loadMarketTime(Path root) {
+		var fp = Path.of(RuntimeInfoService.configRoot.toAbsolutePath().toString(), RuntimeInfoService.mktTimeFile);
+		 try (InputStream is = new FileInputStream(fp.toFile())) {
+			 this.marketTime = DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
+		 } catch (KerError | IOException e) {
+			this.log.warn("Fail loading market time config: {}. {}", fp.toAbsolutePath().toString(), e.getMessage(), e);
+		}
+	}
 
 	@Override
-	public boolean marketOpen(Instant now) {
-		// TODO market open
+	public boolean isMarketOpen(Instant now) {
+		if (this.marketTime == null)
+			loadMarketTime(RuntimeInfoService.configRoot);
+		
+		for(var t : this.marketTime.marketTimes) {
+			var from = t.from.toSecondOfDay();
+			var to = t.to.toSecondOfDay();
+			var ns = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
+			
+			if (to <= ns && ns < from)
+				return true;
+		}
+		
 		return false;
 	}
 
 	@Override
-	public boolean marketClosed(Instant now) {
-		// TODO market closed
-		return false;
-	}
-
-	@Override
-	public boolean endOfDay(Instant now) {
-		// TODO end of day
-		return false;
+	public boolean endOfDay(Instant now, String symbol) {
+		Instant first, last;
+		
+		try {
+			first = this.candleInstants.firstCandleInstant(symbol, CandleMinute.MINUTE);
+			last = this.candleInstants.lastCandleInstant(symbol, CandleMinute.MINUTE);
+		} catch (KerError e) {
+			this.log.warn("Fail getting instant for symbol {}. {}", symbol, e.getMessage(), e);
+			return false;
+		}
+		
+		var firSec = LocalTime.ofInstant(first, ZoneId.systemDefault()).toSecondOfDay() - 60;
+		var lstSec = LocalTime.ofInstant(last, ZoneId.systemDefault()).toSecondOfDay();
+		var nowSec = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
+		
+		if (firSec > lstSec) {
+			// Start trade at night and extends to next day.
+			return lstSec <= nowSec && nowSec < firSec;
+		} else {
+			// Day trade only.
+			return lstSec <= nowSec;
+		}
 	}
 }

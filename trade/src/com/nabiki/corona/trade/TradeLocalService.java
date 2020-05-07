@@ -11,6 +11,7 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ErrorCode;
+import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerError;
@@ -20,7 +21,6 @@ import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
-import com.nabiki.corona.kernel.data.DefaultDataFactory;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.trade.core.InvestorManager;
 import com.nabiki.corona.trade.core.OrderStatusKeeper;
@@ -122,7 +122,7 @@ public class TradeLocalService implements TradeLocal {
 	public String name() {
 		return "trade_account";
 	}
-	// TODO need validate given order/trade before executing.
+	// TODO Need validate given order/trade before executing.
 
 	@Override
 	public void orderStatus(KerOrderStatus o) {
