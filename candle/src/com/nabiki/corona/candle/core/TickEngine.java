@@ -28,6 +28,8 @@ public class TickEngine implements Runnable {
 
 	public void tellStopping() {
 		this.state = EngineState.STOPPING;
+		
+		// TODO tell remote daemon to stop.
 	}
 
 	public EngineState state() {

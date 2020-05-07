@@ -117,6 +117,8 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private MarketTimeSet marketTime;
 
 	public RuntimeInfoService() {
+		// TODO load cached info from files.
+		// TODO review code and make them as thread safe as possible.
 	}
 	
 	private void createCandleInstants() {

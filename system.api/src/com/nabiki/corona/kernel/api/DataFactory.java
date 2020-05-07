@@ -22,4 +22,6 @@ public interface DataFactory {
 	KerTradeReport kerTradeReport(KerTradeReport... args);
 	
 	KerTradeSession kerTradeSession(KerTradeSession... args);
+	
+	KerCandle kerCandle(KerCandle... args);
 }

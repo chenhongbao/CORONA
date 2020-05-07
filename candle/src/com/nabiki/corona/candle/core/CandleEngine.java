@@ -7,9 +7,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCandle;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class CandleEngine implements Runnable {
@@ -94,7 +94,7 @@ public class CandleEngine implements Runnable {
 		}	
 	}
 
-	public void tick(Tick t) throws KerError {
+	public void tick(KerTick t) throws KerError {
 		if (t == null || t.symbol() == null)
 			throw new KerError("Tick or symbol null pointer.");
 		
