@@ -1,7 +1,6 @@
 package com.nabiki.corona.info;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -10,8 +9,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -35,7 +32,6 @@ import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
 import com.nabiki.corona.kernel.settings.MarketTimeSet;
-import com.nabiki.corona.kernel.settings.TimeRange;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
