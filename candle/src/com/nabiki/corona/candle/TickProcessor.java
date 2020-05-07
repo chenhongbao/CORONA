@@ -14,6 +14,7 @@ import org.osgi.service.component.annotations.*;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
@@ -182,7 +183,10 @@ public class TickProcessor implements TickLocal {
 
 		@Override
 		public void error(KerError e) {
-			log.warn("Fail processing candle. {}", e.getMessage());
+			if (e.code() == ErrorCode.NONE)
+				log.info(e.getMessage());
+			else
+				log.warn("Fail processing candle. {}", e.getMessage());
 		}
 
 	}

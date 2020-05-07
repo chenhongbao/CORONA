@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.TimeUnit;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -23,7 +22,7 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.ProductClass;
 import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.api.Tick;
-import com.nabiki.corona.info.data.CandleInstants;
+import com.nabiki.corona.info.data.CandleTime;
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
@@ -102,6 +101,7 @@ public class RuntimeInfoService implements RuntimeInfo {
 	}
 
 	// Information keepers.
+	private boolean instLast = true;
 	private final Map<String, KerInstrument> instruments = new ConcurrentHashMap<>();
 	private final Map<String, KerMargin> margins = new ConcurrentHashMap<>();
 	private final Map<String, KerCommission> commissions = new ConcurrentHashMap<>();
@@ -111,14 +111,19 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private final static String mktTimeFile = "market_time.json";
 	
 	// Candle instants.
-	private CandleInstants candleInstants;
+	private CandleTime candleInstants;
 	
 	// Market time.
 	private MarketTimeSet marketTime;
 
 	public RuntimeInfoService() {
+	}
+	
+	private void createCandleInstants() {
 		try {
-			this.candleInstants = new CandleInstants(RuntimeInfoService.configRoot);
+			this.candleInstants = null;
+			this.candleInstants = new CandleTime(RuntimeInfoService.configRoot);
+			this.log.info("Create candle instants.");
 		} catch (KerError e) {
 			this.log.error("Fail initializing candle instants. {}", e.getMessage(), e);
 		}
@@ -136,15 +141,22 @@ public class RuntimeInfoService implements RuntimeInfo {
 	}
 
 	@Override
-	public void instrument(KerInstrument in) {
+	public void instrument(KerInstrument in, boolean last) {
 		// Filter non-future instruments.
 		if (in.productClass() != ProductClass.Futures)
 			return;
 		
 		if (in == null || in.symbol() == null)
 			this.log.warn("kernel instrument null pointer.");
+		
+		// Clear old data when new data arrives.
+		if (this.instLast) {
+			this.instruments.clear();
+			createCandleInstants();
+		}
 
 		this.instruments.put(in.symbol(), in);
+		this.instLast = last;
 		
 		// Update symbol into candle instants.
 		try {
@@ -152,13 +164,17 @@ public class RuntimeInfoService implements RuntimeInfo {
 		} catch (KerError e) {
 			this.log.warn("Fail updating symbol {} into candle instants. {}", in.symbol(), e.getMessage(), e);
 		}
+		
+		// Print message.
+		if (last)
+			this.log.info("Complete instrument configuration.");
 	}
 
 	@Override
 	public void margin(KerMargin margin) {
 		if (margin == null || margin.symbol() == null)
 			this.log.warn("Kenerl margin null pointer.");
-
+			
 		this.margins.put(margin.symbol(), margin);
 	}
 
@@ -166,7 +182,7 @@ public class RuntimeInfoService implements RuntimeInfo {
 	public void commission(KerCommission comm) {
 		if (comm == null || comm.symbol() == null)
 			this.log.warn("Kenerl commission null pointer.");
-
+		
 		this.commissions.put(comm.symbol(), comm);
 	}
 
@@ -217,9 +233,9 @@ public class RuntimeInfoService implements RuntimeInfo {
 	}
 
 	@Override
-	public boolean candleNow(String symbol, int min, Instant now, int margin, TimeUnit marginUnit) {
+	public boolean candleNow(String symbol, int min, Instant now) {
 		try {
-			return this.candleInstants.hitSymbolCandle(symbol, min, now, margin, marginUnit);
+			return this.candleInstants.hitSymbolCandle(symbol, min, now);
 		} catch (KerError e) {
 			this.log.error("Fail checking candle instants for symbol {} and minute period {}.", symbol, min);
 			return false;
@@ -259,26 +275,25 @@ public class RuntimeInfoService implements RuntimeInfo {
 
 	@Override
 	public boolean endOfDay(Instant now, String symbol) {
-		Instant first, last;
+		LocalTime first, last;
 		
 		try {
-			first = this.candleInstants.firstCandleInstant(symbol, CandleMinute.MINUTE);
-			last = this.candleInstants.lastCandleInstant(symbol, CandleMinute.MINUTE);
+			first = this.candleInstants.firstCandleTime(symbol, CandleMinute.MINUTE);
+			last = this.candleInstants.lastCandleTime(symbol, CandleMinute.MINUTE);
 		} catch (KerError e) {
 			this.log.warn("Fail getting instant for symbol {}. {}", symbol, e.getMessage(), e);
 			return false;
 		}
 		
-		var firSec = LocalTime.ofInstant(first, ZoneId.systemDefault()).toSecondOfDay() - 60;
-		var lstSec = LocalTime.ofInstant(last, ZoneId.systemDefault()).toSecondOfDay();
-		var nowSec = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
+		first = first.minusMinutes(1);
+		var nowTime = LocalTime.ofInstant(now, ZoneId.systemDefault());
 		
-		if (firSec > lstSec) {
+		if (first.isAfter(last)) {
 			// Start trade at night and extends to next day.
-			return lstSec <= nowSec && nowSec < firSec;
+			return nowTime.isAfter(last) && nowTime.isBefore(first);
 		} else {
 			// Day trade only.
-			return lstSec <= nowSec;
+			return nowTime.isAfter(last);
 		}
 	}
 }

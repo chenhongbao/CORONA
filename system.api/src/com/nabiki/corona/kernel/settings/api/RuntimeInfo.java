@@ -3,7 +3,6 @@ package com.nabiki.corona.kernel.settings.api;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
 
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;
@@ -17,7 +16,7 @@ public interface RuntimeInfo {
 	
 	boolean ready(String symbol);
 	
-	void instrument(KerInstrument in);
+	void instrument(KerInstrument in, boolean last);
 	
 	void margin(KerMargin margin);
 	
@@ -31,7 +30,7 @@ public interface RuntimeInfo {
 	
 	Tick lastTick(String symbol);
 	
-	boolean candleNow(String symbol, int min, Instant now, int margin, TimeUnit marginUnit);
+	boolean candleNow(String symbol, int min, Instant now);
 
 	Collection<String> symbols();
 	

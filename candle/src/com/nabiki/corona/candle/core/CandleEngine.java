@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCandle;
@@ -35,7 +36,6 @@ public class CandleEngine implements Runnable {
 
 		this.listener = l;
 		this.runtime = info;
-		initCandleGen();
 	}
 
 	private void initCandleGen() {
@@ -44,6 +44,10 @@ public class CandleEngine implements Runnable {
 			this.candles.put(s, new CandleGenerator(s, this.runtime));
 		}
 	}
+	
+	private void destroyCandleGen() {
+		this.candles.clear();
+	}
 
 	public void state(boolean working) {
 		this.working.set(working);
@@ -51,16 +55,32 @@ public class CandleEngine implements Runnable {
 
 	@Override
 	public void run() {
+		// Don't generate candles when market is not working.
+		if (!this.working.get())
+			return;
+		
 		// Get time and use it across this run().
 		Instant now = Instant.now();
+		
+		// Initialize candle generators when market open.
+		if (this.runtime.isMarketOpen(now) && this.candles.isEmpty()) {
+			this.listener.error(new KerError(ErrorCode.NONE, "Initialize candle generators."));
+			initCandleGen();
+		}
 
 		// Try generating candles.
-		for (int period : this.periods) {
+		for (int period : CandleEngine.periods) {
 			for (var g : this.candles.values()) {
 				KerCandle c = g.get(period, now);
 				if (c != null)
 					callListener(c);
 			}
+		}
+		
+		// Destroy candle generators when market closes.
+		if (!this.runtime.isMarketOpen(now) && !this.candles.isEmpty()) {
+			destroyCandleGen();
+			this.listener.error(new KerError(ErrorCode.NONE, "Destroy candle generators."));
 		}
 	}
 
