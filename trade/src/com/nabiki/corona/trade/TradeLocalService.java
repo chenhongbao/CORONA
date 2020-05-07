@@ -10,7 +10,7 @@ import org.osgi.service.component.annotations.*;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.api.ErrorCode;
+import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerError;

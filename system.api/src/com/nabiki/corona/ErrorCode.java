@@ -1,4 +1,4 @@
-package com.nabiki.corona.api;
+package com.nabiki.corona;
 
 public class ErrorCode {
 	final public static int NONE = 0;

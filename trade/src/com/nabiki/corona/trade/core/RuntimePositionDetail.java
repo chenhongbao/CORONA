@@ -5,8 +5,9 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.nabiki.corona.DirectionFlag;
+import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.Utils;
-import com.nabiki.corona.api.State;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -67,7 +68,7 @@ public class RuntimePositionDetail {
 
 	// If rep is null, return an empty position.
 	private KerPositionDetail ensure(KerTradeReport rep) throws KerError {
-		if (rep.offsetFlag() != State.OFFSET_OPEN)
+		if (rep.offsetFlag() != OffsetFlag.OFFSET_OPEN)
 			throw new KerError("Position detail must be initialized by an open trade.");
 
 		var inst = this.info.instrument(symbol);
@@ -170,9 +171,9 @@ public class RuntimePositionDetail {
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
 
-		if (direction == State.DIRECTION_BUY) {
+		if (direction == DirectionFlag.DIRECTION_BUY) {
 			return m.longMarginRatioByVolume();
-		} else if (direction == State.DIRECTION_SELL) {
+		} else if (direction == DirectionFlag.DIRECTION_SELL) {
 			return m.shortMarginRatioByVolume();
 		} else {
 			throw new KerError("Unknown direction: " + String.valueOf(direction));
@@ -184,9 +185,9 @@ public class RuntimePositionDetail {
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
 
-		if (direction == State.DIRECTION_BUY) {
+		if (direction == DirectionFlag.DIRECTION_BUY) {
 			return m.longMarginRatioByMoney();
-		} else if (direction == State.DIRECTION_SELL) {
+		} else if (direction == DirectionFlag.DIRECTION_SELL) {
 			return m.shortMarginRatioByMoney();
 		} else {
 			throw new KerError("Unknown direction: " + String.valueOf(direction));
@@ -421,7 +422,7 @@ public class RuntimePositionDetail {
 	 * @throws KerError throw exception if the order has wrong state
 	 */
 	public KerPositionDetail lock(KerOrder o) throws KerError {
-		if (o.offsetFlag() == State.OFFSET_OPEN)
+		if (o.offsetFlag() == OffsetFlag.OFFSET_OPEN)
 			throw new KerError("Can't lock position for an open order.");
 
 		var a = available();

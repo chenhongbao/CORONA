@@ -1,5 +1,6 @@
 package com.nabiki.corona.info;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -14,8 +15,11 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.ProductClass;
 import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.info.data.CandleInstants;
 import com.nabiki.corona.kernel.api.KerCommission;
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
@@ -93,8 +97,19 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private final Map<String, KerInstrument> instruments = new ConcurrentHashMap<>();
 	private final Map<String, KerMargin> margins = new ConcurrentHashMap<>();
 	private final Map<String, KerCommission> commissions = new ConcurrentHashMap<>();
+	
+	// Glocal setting.
+	private final static Path configRoot = Path.of(".", "configuration");
+	
+	// Candle instants.
+	private CandleInstants candleInstants;
 
 	public RuntimeInfoService() {
+		try {
+			this.candleInstants = new CandleInstants(RuntimeInfoService.configRoot);
+		} catch (KerError e) {
+			this.log.error("Fail initializing candle instants. {}", e.getMessage(), e);
+		}
 	}
 
 	/**
@@ -110,10 +125,21 @@ public class RuntimeInfoService implements RuntimeInfo {
 
 	@Override
 	public void instrument(KerInstrument in) {
+		// Filter non-future instruments.
+		if (in.productClass() != ProductClass.Futures)
+			return;
+		
 		if (in == null || in.symbol() == null)
 			this.log.warn("kernel instrument null pointer.");
 
 		this.instruments.put(in.symbol(), in);
+		
+		// Update symbol into candle instants.
+		try {
+			this.candleInstants.denoteSymbol(in.productId(), in.symbol());
+		} catch (KerError e) {
+			this.log.warn("Fail updating symbol {} into candle instants. {}", in.symbol(), e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -180,14 +206,17 @@ public class RuntimeInfoService implements RuntimeInfo {
 
 	@Override
 	public boolean candleNow(String symbol, int min, Instant now, int margin, TimeUnit marginUnit) {
-		// TODO candle now
-		return false;
+		try {
+			return this.candleInstants.hitSymbolCandle(symbol, min, now, margin, marginUnit);
+		} catch (KerError e) {
+			this.log.error("Fail checking candle instants for symbol {} and minute period {}.", symbol, min);
+			return false;
+		}
 	}
 
 	@Override
 	public Collection<String> symbols() {
-		// TODO symbols
-		return null;
+		return this.candleInstants.symbols();
 	}
 
 	@Override

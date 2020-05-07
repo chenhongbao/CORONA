@@ -1,4 +1,4 @@
-package com.nabiki.corona.api;
+package com.nabiki.corona;
 
 public class ErrorMessage {
 	final public static String NONE = "NONE";

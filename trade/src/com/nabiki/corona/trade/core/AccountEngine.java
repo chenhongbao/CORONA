@@ -3,10 +3,11 @@ package com.nabiki.corona.trade.core;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.nabiki.corona.DirectionFlag;
+import com.nabiki.corona.ErrorCode;
+import com.nabiki.corona.ErrorMessage;
+import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.Utils;
-import com.nabiki.corona.api.ErrorCode;
-import com.nabiki.corona.api.ErrorMessage;
-import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerError;
@@ -118,7 +119,7 @@ public class AccountEngine {
 		// Has checked the availability of runtime info, so query won't return null.
 		// Margin.
 		var margin = this.info.margin(order.symbol());
-		if (order.direction() == State.DIRECTION_BUY) {
+		if (order.direction() == DirectionFlag.DIRECTION_BUY) {
 			byVol = margin.longMarginRatioByVolume();
 			byMny = margin.longMarginRatioByMoney();
 		} else {
@@ -157,7 +158,7 @@ public class AccountEngine {
 	}
 
 	public void trade(KerTradeReport rep) throws KerError {
-		if (rep.offsetFlag() != State.OFFSET_OPEN)
+		if (rep.offsetFlag() != OffsetFlag.OFFSET_OPEN)
 			throw new KerError("Can't unlock cash for a close order.");
 
 		// There is noly one cash lock per trade session.

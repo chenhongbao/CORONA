@@ -2,10 +2,10 @@ package com.nabiki.corona.trade.core;
 
 import java.nio.file.Path;
 
+import com.nabiki.corona.ErrorCode;
+import com.nabiki.corona.ErrorMessage;
+import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.Utils;
-import com.nabiki.corona.api.ErrorCode;
-import com.nabiki.corona.api.ErrorMessage;
-import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
@@ -79,7 +79,7 @@ public class InvestorAccount {
 		if (positionEngine == null)
 			throw new KerError(ErrorCode.INSTRUMENT_NOT_FOUND, ErrorMessage.INSTRUMENT_NOT_FOUND);
 		
-		if (rep.offsetFlag() == State.OFFSET_OPEN) {
+		if (rep.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 			// Add new position, then unlocked the margin.
 			// What happens in real is to move the money from account's available to used margin of position.
 			positionEngine.trade(rep);
@@ -97,7 +97,7 @@ public class InvestorAccount {
 		
 		var sid = this.sessionManager.querySessionId(order.orderId());
 		
-		if (order.offsetFlag() == State.OFFSET_OPEN) {
+		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 			this.account.cancel(sid);
 		} else {
 			// Other flags are closing order.
@@ -133,7 +133,7 @@ public class InvestorAccount {
 		var sid = this.sessionManager.createSessionId(order.orderId(), order.accountId());
 		order.sessionId(sid);
 		
-		if (order.offsetFlag() == State.OFFSET_OPEN) {
+		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 			r = validateOpen(order);
 		} else {
 			r = validateClose(order);

@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 
@@ -108,12 +108,12 @@ public class PositionEngine {
 	 */
 	public void trade(KerTradeReport rep) throws KerError {
 		switch (rep.offsetFlag()) {
-		case State.OFFSET_OPEN:
+		case OffsetFlag.OFFSET_OPEN:
 			openPosition(rep);
 			break;
-		case State.OFFSET_CLOSE:
-		case State.OFFSET_CLOSE_TODAY:
-		case State.OFFSET_CLOSE_YESTERDAY:
+		case OffsetFlag.OFFSET_CLOSE:
+		case OffsetFlag.OFFSET_CLOSE_TODAY:
+		case OffsetFlag.OFFSET_CLOSE_YESTERDAY:
 			closePosition(rep);
 			break;
 		default:

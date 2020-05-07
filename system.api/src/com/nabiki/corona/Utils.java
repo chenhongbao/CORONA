@@ -13,7 +13,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
-import com.nabiki.corona.api.State;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class Utils {
@@ -49,10 +48,10 @@ public class Utils {
 	public static double profit(double open, double close, int volume, int multi, char direction) throws KerError {
 		double ret = 0.0;
 		switch (direction) {
-		case State.DIRECTION_BUY:
+		case DirectionFlag.DIRECTION_BUY:
 			ret = (close - open) * volume * multi;
 			break;
-		case State.DIRECTION_SELL:
+		case DirectionFlag.DIRECTION_SELL:
 			ret = (open - close) * volume * multi;
 			break;
 		default:
