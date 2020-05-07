@@ -15,7 +15,6 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ErrorCode;
-import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
 import com.nabiki.corona.kernel.api.KerCandle;
