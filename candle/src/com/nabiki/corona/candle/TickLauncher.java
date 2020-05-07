@@ -160,11 +160,11 @@ public class TickLauncher implements Runnable {
 		if (this.runtime != null) {
 			switch (this.engine.state()) {
 			case STARTED:
-				if (this.runtime.marketClosed(Instant.now()))
+				if (!this.runtime.isMarketOpen(Instant.now()))
 					next = EngineAction.STOP;
 				break;
 			case STOPPED:
-				if (this.runtime.marketOpen(Instant.now()))
+				if (this.runtime.isMarketOpen(Instant.now()))
 					next = EngineAction.START;
 				break;
 			case STARTING:
