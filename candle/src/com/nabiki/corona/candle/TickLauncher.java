@@ -26,10 +26,7 @@ import com.nabiki.corona.candle.core.TickEngine;
 import com.nabiki.corona.candle.core.TickEngineListener;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
-import com.nabiki.corona.kernel.settings.api.BrokerAccount;
-import com.nabiki.corona.kernel.settings.api.MarketTimeQuery;
-import com.nabiki.corona.kernel.settings.api.NativeExecutableInfo;
-import com.nabiki.corona.kernel.settings.api.SymbolQuery;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component(service = {})
 public class TickLauncher implements Runnable {
@@ -39,62 +36,6 @@ public class TickLauncher implements Runnable {
 
 	// User's note for different accounts.
 	public final static String MD_USER_NOTE = "marketdata";
-
-	// Broker-end user accounts.
-	private BrokerAccount user;
-
-	@Reference(cardinality = ReferenceCardinality.AT_LEAST_ONE, policy = ReferencePolicy.DYNAMIC)
-	public void addUser(BrokerAccount user) {
-		if (user.note().compareToIgnoreCase(TickLauncher.MD_USER_NOTE) != 0) {
-			return;
-		}
-
-		this.user = user;
-		this.log.info("Add broker({}) {} account: {}.", user.broker(), user.note(), user.user());
-	}
-
-	public void removeUser(BrokerAccount user) {
-		if (this.user != user)
-			return;
-
-		this.log.info("Remove broker({}) {} account: {}.", user.broker(), user.note(), user.user());
-	}
-
-	// Market time query.
-	private MarketTimeQuery mktQuery;
-
-	@Reference(policy = ReferencePolicy.DYNAMIC)
-	public void bindMktQuery(MarketTimeQuery query) {
-		this.mktQuery = query;
-		this.log.info("Bind market time query: {}.", query.name());
-	}
-
-	public void unbindMktQuery(MarketTimeQuery query) {
-		if (this.mktQuery == query) {
-			this.mktQuery = null;
-			this.log.info("Unbind market time query: {}.", query.name());
-		}
-	}
-
-	// Native executable launch info.
-	private NativeExecutableInfo execInfo;
-
-	@Reference(policy = ReferencePolicy.DYNAMIC)
-	public void bindExecInfo(NativeExecutableInfo info) {
-		if (info.title().compareToIgnoreCase(TickEngine.NATIVE_TITLE) != 0) {
-			return;
-		}
-
-		this.execInfo = info;
-		this.log.info("Bind native executable info: {}.", info.title());
-	}
-
-	public void unbindExecInfo(NativeExecutableInfo info) {
-		if (this.execInfo == info) {
-			this.execInfo = null;
-			this.log.info("Unbind native executable info: {}.", info.title());
-		}
-	}
 
 	// Local tick processor service.
 	@Reference(bind = "bindTickLocal", updated = "updatedTickLocal", unbind = "unbindTickLocal",
@@ -116,20 +57,19 @@ public class TickLauncher implements Runnable {
 			this.log.info("Unbind tick local processor: {}.", local.name());
 	}
 
-	// Need to know all available symbols to subscribe.
-	// Don't extract symbols from the interface until tick engined is initiated because the data behind the interface
-	// could change without notice. It is good to let the interface to handle the change.
-	volatile Collection<SymbolQuery> symbols = new ConcurrentSkipListSet<>();
+	// Runtime info.
+	private volatile RuntimeInfo runtime;
 
-	@Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
-	public void addSymbol(SymbolQuery s) {
-		this.symbols.add(s);
-		this.log.info("Add symbols to tick engine: {}.", s.name());
+	@Reference(policy = ReferencePolicy.DYNAMIC)
+	public void bindRuntimeInfo(RuntimeInfo info) {
+		this.runtime = info;
+		this.log.info("Bind runtime info: {}.", info.name());
 	}
 
-	public void removeSymbol(SymbolQuery s) {
-		if (this.symbols.remove(s))
-			this.log.info("Remove symbol from tick engine: {}.", s.name());
+	public void unbindRuntimeInfo(RuntimeInfo info) {
+		if (this.runtime == info)
+			this.runtime = null;
+			this.log.info("Remove runtime info: {}.", info.name());
 	}
 
 	// Scheduled executor as timer.
@@ -181,7 +121,7 @@ public class TickLauncher implements Runnable {
 			}
 
 			try {
-				this.engine = new TickEngine(new TickPostListener(), this.user, this.execInfo, extractSymbols());
+				this.engine = new TickEngine(new TickPostListener(), this.runtime);
 				this.tickFuture = this.executor.submit(this.engine);
 				this.log.info("Launche tick engine.");
 			} catch (RejectedExecutionException e) {
@@ -209,30 +149,22 @@ public class TickLauncher implements Runnable {
 			break;
 		}
 	}
-	
-	private Collection<String> extractSymbols() {
-		Collection<String> ret = new ConcurrentSkipListSet<>();
-		for (var symbol : this.symbols)
-			ret.addAll(symbol.symbols());
-		
-		return ret;
-	}
 
 	private boolean userReady() {
-		return this.user != null && this.execInfo != null;
+		return this.runtime != null;
 	}
 
 	private EngineAction nextAction() {
 		EngineAction next = EngineAction.NONE;
 
-		if (this.mktQuery != null) {
+		if (this.runtime != null) {
 			switch (this.engine.state()) {
 			case STARTED:
-				if (this.mktQuery.closed(Instant.now()))
+				if (this.runtime.marketClosed(Instant.now()))
 					next = EngineAction.STOP;
 				break;
 			case STOPPED:
-				if (this.mktQuery.open(Instant.now()))
+				if (this.runtime.marketOpen(Instant.now()))
 					next = EngineAction.START;
 				break;
 			case STARTING:

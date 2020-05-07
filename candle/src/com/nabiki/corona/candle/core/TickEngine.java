@@ -1,9 +1,6 @@
 package com.nabiki.corona.candle.core;
 
-import java.util.Collection;
-
-import com.nabiki.corona.kernel.settings.api.BrokerAccount;
-import com.nabiki.corona.kernel.settings.api.NativeExecutableInfo;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class TickEngine implements Runnable {
 	public final static String NATIVE_TITLE = "marketdata";
@@ -19,7 +16,7 @@ public class TickEngine implements Runnable {
 	 * @param exec    local executable info
 	 * @param symbols symbols to subscribe after login
 	 */
-	public TickEngine(TickEngineListener l, BrokerAccount md, NativeExecutableInfo exec, Collection<String> symbols) {
+	public TickEngine(TickEngineListener l, RuntimeInfo info) {
 		// TODO constructor
 	}
 

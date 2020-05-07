@@ -1,9 +1,6 @@
 package com.nabiki.corona.candle.core;
 
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,13 +9,13 @@ import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCandle;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.settings.api.SymbolQuery;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class CandleEngine implements Runnable {
 
 	public final static int DEFAULT_PERIOD_MILLIS = 60 * 1000;
 
-	private final Collection<SymbolQuery> queries;
+	private final RuntimeInfo runtime;
 	private final CandleEngineListener listener;
 
 	// Candle periods.
@@ -32,30 +29,19 @@ public class CandleEngine implements Runnable {
 	// Working mark
 	private AtomicBoolean working = new AtomicBoolean(false);
 
-	public CandleEngine(CandleEngineListener l, Collection<SymbolQuery> queries) throws KerError {
-		if (l == null || queries == null || queries.size() == 0)
+	public CandleEngine(CandleEngineListener l, RuntimeInfo info) throws KerError {
+		if (l == null || info == null)
 			throw new KerError("Invalid parameters.");
 
 		this.listener = l;
-		this.queries = queries;
+		this.runtime = info;
 		initCandleGen();
 	}
 
 	private void initCandleGen() {
-		// Get all unique symbols.
-		var symbols = new HashSet<String>();
-		var symbolQuery = new HashMap<String, SymbolQuery>();
-
-		for (var q : this.queries) {
-			symbols.addAll(q.symbols());
-
-			for (var s : q.symbols())
-				symbolQuery.put(s, q);
-		}
-
 		// Create candle generators.
-		for (var s : symbols) {
-			this.candles.put(s, new CandleGenerator(s, symbolQuery.get(s)));
+		for (var s : this.runtime.symbols()) {
+			this.candles.put(s, new CandleGenerator(s, this.runtime));
 		}
 	}
 

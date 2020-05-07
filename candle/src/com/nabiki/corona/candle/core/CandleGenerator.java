@@ -4,10 +4,10 @@ import java.time.Instant;
 
 import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCandle;
-import com.nabiki.corona.kernel.settings.api.SymbolQuery;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 public class CandleGenerator {
-	public CandleGenerator(String symbol, SymbolQuery query) {
+	public CandleGenerator(String symbol, RuntimeInfo info) {
 		// TODO candle generator
 	}
 	

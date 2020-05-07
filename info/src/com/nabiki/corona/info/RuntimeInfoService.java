@@ -1,10 +1,12 @@
 package com.nabiki.corona.info;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -174,5 +176,35 @@ public class RuntimeInfoService implements RuntimeInfo {
 		}
 		
 		return day;
+	}
+
+	@Override
+	public boolean candleNow(String symbol, int min, Instant now, int margin, TimeUnit marginUnit) {
+		// TODO candle now
+		return false;
+	}
+
+	@Override
+	public Collection<String> symbols() {
+		// TODO symbols
+		return null;
+	}
+
+	@Override
+	public boolean marketOpen(Instant now) {
+		// TODO market open
+		return false;
+	}
+
+	@Override
+	public boolean marketClosed(Instant now) {
+		// TODO market closed
+		return false;
+	}
+
+	@Override
+	public boolean endOfDay(Instant now) {
+		// TODO end of day
+		return false;
 	}
 }
