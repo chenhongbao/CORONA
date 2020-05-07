@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.settings.ProductTradingTimeSet;
+import com.nabiki.corona.kernel.settings.api.ProductTradingTimeSet;
 
 public class CandleTime {
 	// Global setting.
@@ -41,13 +41,13 @@ public class CandleTime {
 			var timeSet = DefaultDataCodec.create().decode(is.readAllBytes(), ProductTradingTimeSet.class);
 
 			// Process time to candle instants.
-			for (var set : timeSet.productTimes) {
-				var ins = new TimeList(set.times);
-				for (var s : set.products)
+			for (var set : timeSet.productTimes()) {
+				var ins = new TimeList(set.times());
+				for (var s : set.products())
 					this.productInstants.put(s, ins);
 			}
 
-			this.instantUpdateTime = timeSet.updateTime;
+			this.instantUpdateTime = timeSet.updateTime();
 		} catch (IOException e) {
 			throw new KerError("Fail loading product trading time from file: " + fp.toAbsolutePath().toString());
 		}

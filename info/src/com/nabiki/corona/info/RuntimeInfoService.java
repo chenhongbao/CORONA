@@ -30,7 +30,7 @@ import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
-import com.nabiki.corona.kernel.settings.MarketTimeSet;
+import com.nabiki.corona.kernel.settings.api.MarketTimeSet;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
@@ -261,9 +261,9 @@ public class RuntimeInfoService implements RuntimeInfo {
 		if (this.marketTime == null)
 			loadMarketTime(RuntimeInfoService.configRoot);
 		
-		for(var t : this.marketTime.marketTimes) {
-			var from = t.from.toSecondOfDay();
-			var to = t.to.toSecondOfDay();
+		for(var t : this.marketTime.marketTimes()) {
+			var from = t.from().toSecondOfDay();
+			var to = t.to().toSecondOfDay();
 			var ns = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
 			
 			if (to <= ns && ns < from)

@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.kernel.settings.TimeRange;
+import com.nabiki.corona.kernel.settings.api.TimeRange;
 
 public class TimeList {
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
@@ -36,7 +36,7 @@ public class TimeList {
 		Collections.sort(times, new Comparator<TimeRange>() {
 			@Override
 			public int compare(TimeRange o1, TimeRange o2) {
-				return Integer.compare(o1.rank, o2.rank);
+				return Integer.compare(o1.rank(), o2.rank());
 			}
 		});
 		
@@ -89,11 +89,11 @@ public class TimeList {
 		while (iter.hasNext()) {
 			var range = iter.next();
 			
-			var cur = range.from;
-			while (cur.isBefore(range.to)) {
+			var cur = range.from();
+			while (cur.isBefore(range.to())) {
 				cur = cur.plusMinutes(CandleMinute.MINUTE);
-				if (cur.isAfter(range.to)) {
-					times.add(range.to);
+				if (cur.isAfter(range.to())) {
+					times.add(range.to());
 				} else {
 					times.add(cur);
 				}
