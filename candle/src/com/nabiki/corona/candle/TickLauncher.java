@@ -137,7 +137,7 @@ public class TickLauncher implements Runnable {
 
 			// Notify engine to stop and turn its state to stopping.
 			this.engine.tellStopping();
-			if (!this.tickFuture.cancel(true))
+			if (!this.tickFuture.isDone() && !this.tickFuture.cancel(true))
 				this.log.warn("Fail canceling tick engine.");
 
 			// Clear resources.
