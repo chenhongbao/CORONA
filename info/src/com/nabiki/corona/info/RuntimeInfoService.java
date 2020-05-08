@@ -16,13 +16,11 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ProductClass;
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.info.data.CandleTime;
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.api.KerCommission;
@@ -30,7 +28,6 @@ import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerTick;
-import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.settings.api.MarketTimeSet;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;

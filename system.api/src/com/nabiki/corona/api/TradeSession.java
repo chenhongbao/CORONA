@@ -5,9 +5,9 @@ import java.util.Collection;
 public interface TradeSession {
 	String accountId();
 
-	Trade newTrade();
+	Trade trade();
 
-	Trade recallTrade(String id);
+	Trade retrieve(String id);
 
 	Account account();
 
@@ -15,5 +15,5 @@ public interface TradeSession {
 
 	Collection<PositionDetail> positions(String symbol);
 
-	Error lastError();
+	Error error();
 }

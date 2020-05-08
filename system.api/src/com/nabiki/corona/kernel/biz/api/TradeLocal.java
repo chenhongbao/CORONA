@@ -11,6 +11,8 @@ import com.nabiki.corona.kernel.api.KerTradeReport;
 
 public interface TradeLocal {
 	String name();
+	
+	// TODO add methods for trade query.
 
 	void orderStatus(KerOrderStatus o);
 

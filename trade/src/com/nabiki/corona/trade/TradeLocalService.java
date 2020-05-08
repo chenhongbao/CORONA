@@ -130,6 +130,8 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			sid = this.sm.querySessionId(o.orderId());
 			this.statusKeeper.setStatus(sid, o);
+			
+			// TODO process cancel order.
 		} catch (KerError e) {
 			this.log.error("Fail updating order status. {}", e.getMessage(), e);
 		}		

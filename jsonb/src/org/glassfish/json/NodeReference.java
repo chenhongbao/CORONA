@@ -246,7 +246,6 @@ abstract class NodeReference {
 
         @Override
         public JsonArray add(JsonValue value) {
-            //TODO should we check for arrayoutofbounds?
             // The spec seems to say index = array.size() is allowed. This is handled as append
             JsonArrayBuilder builder = Json.createArrayBuilder(this.array);
             if (index == -1 || index == array.size()) {
