@@ -1,6 +1,7 @@
 package com.nabiki.corona.candle;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
@@ -18,6 +19,7 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.EngineAction;
 import com.nabiki.corona.candle.core.EngineState;
@@ -121,6 +123,7 @@ public class TickLauncher implements Runnable {
 			}
 
 			try {
+				this.engine = null;
 				this.engine = new TickEngine(new TickPostListener(), this.runtime);
 				this.tickFuture = this.executor.submit(this.engine);
 				this.log.info("Launche tick engine.");
@@ -141,10 +144,8 @@ public class TickLauncher implements Runnable {
 				this.log.warn("Fail canceling tick engine.");
 
 			// Clear resources.
+			// Don't set engine to null because it needs to check engine's state to decide the next action.
 			this.executor.remove(this.engine);
-			this.engine = null;
-			
-			// TODO set working state in tick local.
 			break;
 		default:
 			this.log.warn("Unhandled launching action: {}.", action);
@@ -183,12 +184,21 @@ public class TickLauncher implements Runnable {
 	}
 
 	private class TickPostListener implements TickEngineListener {
+		private boolean working = false;
+		
 		public TickPostListener() {
 		}
 
 		@Override
 		public void tick(KerTick tick) {
-			// TODO check and set working state in tick local.
+			// Check and set working state in tick local.
+			if (!this.working && Utils.same(tick.actionDay(), LocalDate.now())) {
+				this.working = true;
+				for (var local : tickLocals)
+					local.isWorking(true);
+				
+				log.info("Tick remote starts working.");
+			}
 			
 			for (var local : tickLocals) {
 				local.tick(tick);
@@ -203,6 +213,15 @@ public class TickLauncher implements Runnable {
 		@Override
 		public void state(EngineState s) {
 			log.info("Tick engine state: {}.", s);
+			
+			// Set working state in tick local.
+			if (s == EngineState.STOPPED) {
+				this.working = false;
+				for (var local : tickLocals)
+					local.isWorking(false);
+				
+				log.info("Tick remote stops working.");
+			}
 		}
 	}
 }
