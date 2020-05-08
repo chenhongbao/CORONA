@@ -4,10 +4,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 
-import com.nabiki.corona.api.Tick;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
+import com.nabiki.corona.kernel.api.KerTick;
 
 public interface RuntimeInfo {
 	String name();
@@ -28,7 +28,9 @@ public interface RuntimeInfo {
 	
 	KerCommission commission(String symbol);
 	
-	Tick lastTick(String symbol);
+	KerTick lastTick(String symbol);
+	
+	void lastTick(KerTick tick);
 	
 	boolean candleNow(String symbol, int min, Instant now);
 

@@ -1,9 +1,6 @@
 package com.nabiki.corona.candle;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -96,11 +93,6 @@ public class TickProcessor implements TickLocal {
 	// Candle engine.
 	private ScheduledThreadPoolExecutor executor;
 	private CandleEngine engine;
-
-	// Last tick preserve.
-	private Map<String, KerTick> lastTicks = new ConcurrentHashMap<>();
-	
-	private LocalDate tradingDay;
 	
 	public TickProcessor() {
 	}
@@ -161,10 +153,7 @@ public class TickProcessor implements TickLocal {
 		}
 		
 		// Keep the tick as last tick.
-		this.lastTicks.put(tick.symbol(), tick);
-		
-		if (tradingDay() == null)
-			this.tradingDay = tick.tradingDay();
+		this.runtime.lastTick(tick);
 	}
 
 	private class CandlePostListener implements CandleEngineListener {
@@ -200,18 +189,5 @@ public class TickProcessor implements TickLocal {
 	@Override
 	public String name() {
 		return this.getClass().getName();
-	}
-
-	@Override
-	public KerTick last(String symbol) {
-		if (symbol == null)
-			return null;
-		
-		return this.lastTicks.get(symbol);
-	}
-
-	@Override
-	public LocalDate tradingDay() {
-		return this.tradingDay;
 	}
 }

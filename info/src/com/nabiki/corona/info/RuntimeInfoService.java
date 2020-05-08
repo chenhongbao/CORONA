@@ -10,6 +10,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -28,6 +29,7 @@ import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
+import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
 import com.nabiki.corona.kernel.settings.api.MarketTimeSet;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
@@ -37,36 +39,6 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 public class RuntimeInfoService implements RuntimeInfo {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
-
-	// Last ticks.
-	@Reference(bind = "bindTickLocal", updated = "updatedTickLocal", unbind = "unbindTickLocal",
-			policy = ReferencePolicy.DYNAMIC)
-	private volatile Collection<TickLocal> ticks = new ConcurrentSkipListSet<>();
-
-	public void bindTickLocal(TickLocal local) {
-		if (local == null)
-			return;
-
-		this.ticks.add(local);
-		this.log.info("Bind local tick: {}.", local.name());
-	}
-
-	public void updatedTickLocal(TickLocal local) {
-		if (local == null)
-			return;
-
-		if (this.ticks.contains(local)) {
-			this.log.info("Update local tick: {}.", local.name());
-		}
-	}
-
-	public void unbindTickLocal(TickLocal local) {
-		if (local == null)
-			return;
-
-		this.ticks.remove(local);
-		this.log.info("Unbind local tick: {}.", local.name());
-	}
 
 	// Information keepers.
 	private boolean instLast = true;
@@ -86,7 +58,13 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private MarketTimeSet marketTime;
 	
 	// Remote configuration.
-	private Collection<RemoteConfig> remoteConfigs;
+	private Set<RemoteConfig> remoteConfigs = new ConcurrentSkipListSet<>();
+	
+	// Last tick preserve.
+	private Map<String, KerTick> ticks = new ConcurrentHashMap<>();
+	
+	// Trading day.
+	private LocalDate tradingDay;
 
 	public RuntimeInfoService() {
 		// TODO load cached info from files.
@@ -190,15 +168,11 @@ public class RuntimeInfoService implements RuntimeInfo {
 	}
 
 	@Override
-	public Tick lastTick(String symbol) {
-		Tick ret = null;
-		for (var t : ticks) {
-			ret = t.last(symbol);
-			if (ret != null)
-				break;
-		}
-
-		return ret;
+	public KerTick lastTick(String symbol) {
+		if (symbol == null)
+			return null;
+		
+		return this.ticks.get(symbol);
 	}
 
 	@Override
@@ -208,16 +182,7 @@ public class RuntimeInfoService implements RuntimeInfo {
 
 	@Override
 	public LocalDate tradingDay() {
-		LocalDate day = null;
-		for (var t : this.ticks) {
-			if (t != null) {
-				day = t.tradingDay();
-				if (day != null)
-					break;
-			}
-		}
-		
-		return day;
+		return this.tradingDay;
 	}
 
 	@Override
@@ -279,5 +244,16 @@ public class RuntimeInfoService implements RuntimeInfo {
 	@Override
 	public Collection<RemoteConfig> remoteConfigs() {
 		return this.remoteConfigs;
+	}
+
+	@Override
+	public void lastTick(KerTick tick) {
+		if (tick == null || tick.symbol() == null)
+			return;
+		
+		this.ticks.put(tick.symbol(), tick);
+		
+		if (this.tradingDay == null)
+			this.tradingDay = tick.tradingDay();
 	}
 }
