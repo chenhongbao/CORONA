@@ -29,8 +29,8 @@ import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.biz.api.TickLocal;
-import com.nabiki.corona.kernel.biz.api.TradeRemote;
 import com.nabiki.corona.kernel.settings.api.MarketTimeSet;
+import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
@@ -68,38 +68,6 @@ public class RuntimeInfoService implements RuntimeInfo {
 		this.log.info("Unbind local tick: {}.", local.name());
 	}
 
-	@Reference(bind = "bindTradeRemote", updated = "updatedTradeRemote", unbind = "unbindTradeRemote",
-			policy = ReferencePolicy.DYNAMIC)
-	private volatile TradeRemote tradeRemote;
-	
-	public void bindTradeRemote(TradeRemote remote) {
-		if (remote == null)
-			return;
-		
-		this.tradeRemote = remote;
-		this.log.info("Bind trade remote: {}.", remote.name());
-	}
-	
-	public void updatedTradeRemote(TradeRemote remote) {
-		if (remote == null)
-			return;
-		
-		this.tradeRemote = remote;
-		this.log.info("Update trade remote: {}.", remote.name());
-	}
-	
-	public void unbindTradeRemote(TradeRemote remote) {
-		if (remote == null)
-			return;
-		
-		this.tradeRemote = remote;
-		this.log.info("Unbind trade remote: {}.", remote.name());
-	}
-	
-	public TradeRemote tradeRemote() {
-		return this.tradeRemote;
-	}
-
 	// Information keepers.
 	private boolean instLast = true;
 	private final Map<String, KerInstrument> instruments = new ConcurrentHashMap<>();
@@ -109,15 +77,20 @@ public class RuntimeInfoService implements RuntimeInfo {
 	// Glocal setting.
 	private final static Path configRoot = Path.of(".", "configuration");
 	private final static String mktTimeFile = "market_time.json";
+	private final static String remoteConfigFile = "remote_config.json";
 	
 	// Candle instants.
 	private CandleTime candleInstants;
 	
 	// Market time.
 	private MarketTimeSet marketTime;
+	
+	// Remote configuration.
+	private Collection<RemoteConfig> remoteConfigs;
 
 	public RuntimeInfoService() {
 		// TODO load cached info from files.
+		// TODO file watcher for config changes and reload.
 		// TODO review code and make them as thread safe as possible.
 	}
 	
@@ -129,6 +102,19 @@ public class RuntimeInfoService implements RuntimeInfo {
 		} catch (KerError e) {
 			this.log.error("Fail initializing candle instants. {}", e.getMessage(), e);
 		}
+	}
+	
+	private void loadMarketTime(Path root) {
+		var fp = Path.of(RuntimeInfoService.configRoot.toAbsolutePath().toString(), RuntimeInfoService.mktTimeFile);
+		 try (InputStream is = new FileInputStream(fp.toFile())) {
+			 this.marketTime = DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
+		 } catch (KerError | IOException e) {
+			this.log.warn("Fail loading market time config: {}. {}", fp.toAbsolutePath().toString(), e.getMessage(), e);
+		}
+	}
+	
+	private void loadRemoteConfig(Path root) {
+		// TODO load remote configs.
 	}
 
 	/**
@@ -248,15 +234,6 @@ public class RuntimeInfoService implements RuntimeInfo {
 	public Collection<String> symbols() {
 		return this.candleInstants.symbols();
 	}
-	
-	private void loadMarketTime(Path root) {
-		var fp = Path.of(RuntimeInfoService.configRoot.toAbsolutePath().toString(), RuntimeInfoService.mktTimeFile);
-		 try (InputStream is = new FileInputStream(fp.toFile())) {
-			 this.marketTime = DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
-		 } catch (KerError | IOException e) {
-			this.log.warn("Fail loading market time config: {}. {}", fp.toAbsolutePath().toString(), e.getMessage(), e);
-		}
-	}
 
 	@Override
 	public boolean isMarketOpen(Instant now) {
@@ -297,5 +274,10 @@ public class RuntimeInfoService implements RuntimeInfo {
 			// Day trade only.
 			return nowTime.isAfter(last);
 		}
+	}
+
+	@Override
+	public Collection<RemoteConfig> remoteConfigs() {
+		return this.remoteConfigs;
 	}
 }

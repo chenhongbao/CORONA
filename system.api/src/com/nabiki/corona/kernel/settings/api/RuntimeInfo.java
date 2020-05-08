@@ -44,4 +44,6 @@ public interface RuntimeInfo {
 	 * @return true if now is the end of the current trading day.
 	 */
 	boolean endOfDay(Instant now, String symbol);
+	
+	Collection<RemoteConfig> remoteConfigs();
 }

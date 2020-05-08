@@ -17,6 +17,16 @@ public interface TradeLocal {
 	void tradeReport(KerTradeReport r);
 
 	void positionDetail(KerPositionDetail p, boolean last);
+	
+	/**
+	 * Perform settlement after the previous trading day.
+	 */
+	void settle();
+	
+	/**
+	 * Perform initialization for new trading day.
+	 */
+	void init();
 
 	/**
 	 * Set the global account info. The account is the remote broker account.

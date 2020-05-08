@@ -143,6 +143,8 @@ public class TickLauncher implements Runnable {
 			// Clear resources.
 			this.executor.remove(this.engine);
 			this.engine = null;
+			
+			// TODO set working state in tick local.
 			break;
 		default:
 			this.log.warn("Unhandled launching action: {}.", action);
@@ -186,6 +188,8 @@ public class TickLauncher implements Runnable {
 
 		@Override
 		public void tick(KerTick tick) {
+			// TODO check and set working state in tick local.
+			
 			for (var local : tickLocals) {
 				local.tick(tick);
 			}

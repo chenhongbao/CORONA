@@ -237,4 +237,22 @@ public class TradeLocalService implements TradeLocal {
 	public Collection<KerPositionDetail> remotePositionDetails() {
 		return this.remotePositions;
 	}
+
+	@Override
+	public void settle() {
+		try {
+			this.investors.settle();
+		} catch (KerError e) {
+			this.log.error("Fail settlement. {}", e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void init() {
+		try {
+			this.investors.init();
+		} catch (KerError e) {
+			this.log.error("Fail initialization. {}", e.getMessage(), e);
+		}
+	}
 }
