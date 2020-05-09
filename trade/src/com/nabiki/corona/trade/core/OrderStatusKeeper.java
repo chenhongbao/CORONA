@@ -15,7 +15,7 @@ public class OrderStatusKeeper {
 		this.statuses.put(sid, status);
 	}
 	
-	public void getStatus(String sid) {
-		this.statuses.get(sid);
+	public KerOrderStatus getStatus(String sid) {
+		return this.statuses.get(sid);
 	}
 }

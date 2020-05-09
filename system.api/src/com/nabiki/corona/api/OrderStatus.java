@@ -13,6 +13,8 @@ public interface OrderStatus {
 	String symbol();
 
 	String orderId();
+	
+	String tradeSessionId();
 
 	char priceType();
 

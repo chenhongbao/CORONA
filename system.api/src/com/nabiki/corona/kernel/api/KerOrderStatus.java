@@ -17,6 +17,8 @@ public interface KerOrderStatus extends OrderStatus {
 	String brokerId();
 
 	void brokerId(String s);
+	
+	void tradeSessionId(String sid);
 
 	String investorId();
 

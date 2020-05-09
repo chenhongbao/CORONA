@@ -13,7 +13,7 @@ public class SessionManager {
 	private Map<String, String> sessionIds = new ConcurrentHashMap<>();
 	// Session ID -> Order ID.
 	private Map<String, String> orderIds = new ConcurrentHashMap<>();
-	// Order ID -> Account ID.
+	// Session ID -> Account ID.
 	private Map<String, String> accountIds = new ConcurrentHashMap<>();
 	
 	public SessionManager() {}
@@ -24,7 +24,8 @@ public class SessionManager {
 		
 		var sid = Utils.sessionId();
 		this.sessionIds.put(orderId, sid);
-		this.accountIds.put(orderId, accountId);
+		this.orderIds.put(sid, orderId);
+		this.accountIds.put(sid, accountId);
 		return sid;
 	}
 	
@@ -44,7 +45,8 @@ public class SessionManager {
 		return this.orderIds.get(sessionId);
 	}
 	
-	public String getAccountId(String orderId) {
-		return this.accountIds.get(orderId);
+	// Get account ID with session ID.
+	public String getAccountId(String sessionId) {
+		return this.accountIds.get(sessionId);
 	}
 }

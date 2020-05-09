@@ -1,6 +1,7 @@
 package com.nabiki.corona.trade.core;
 
 import java.nio.file.Path;
+import java.util.Collection;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.ErrorMessage;
@@ -10,6 +11,7 @@ import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderEvalue;
+import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
@@ -18,6 +20,9 @@ public class InvestorAccount {
 	private final AccountManager accountManager;
 	private final PositionManager positionManager;
 	private final SessionManager sessionManager;
+	private final TradeKeeper tradeKeeper;
+	private final SessionWriter sessionWriter;
+	private final OrderStatusKeeper statusKeeper;
 
 	private final String accountId;
 	private final Path directory;
@@ -40,9 +45,21 @@ public class InvestorAccount {
 		this.sessionManager = sm;
 		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
 		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
+		this.tradeKeeper = new TradeKeeper();
+		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"));
+		this.statusKeeper = new OrderStatusKeeper();
 		
 		// Get account engine from account manager.
 		this.account = this.accountManager.account();
+	}
+	
+	public void orderStatus(KerOrderStatus status) throws KerError {
+		this.orderStatus(status);
+		this.sessionWriter.write(status);
+	}
+	
+	public KerOrderStatus orderStatus(String sid) {
+		return this.statusKeeper.getStatus(sid);
 	}
 	
 	public String accountId() {
@@ -65,6 +82,10 @@ public class InvestorAccount {
 	public void init() throws KerError {
 		this.positionManager.init();
 		this.accountManager.init();
+	}
+	
+	public Collection<KerTradeReport> trades(String sid) throws KerError {
+		return this.tradeKeeper.tradeReports(sid);
 	}
 
 	public void trade(KerTradeReport rep) throws KerError {
@@ -89,9 +110,13 @@ public class InvestorAccount {
 			// What happens in real is to reduce the used margin, then account's available is increased thereby.
 			positionEngine.trade(rep);
 		}
+		
+		// Save trades.
+		this.tradeKeeper.addTradeReport(rep);
+		this.sessionWriter.write(rep);
 	}
 	
-	public void cancel(KerOrder order) throws KerError {
+	public void cancel(KerOrderStatus order) throws KerError {
 		if (order == null)
 			throw new KerError("Can't cancel order of null pointer.");
 		
@@ -132,6 +157,9 @@ public class InvestorAccount {
 		// Create session ID.
 		var sid = this.sessionManager.createSessionId(order.orderId(), order.accountId());
 		order.sessionId(sid);
+		
+		// Save order.
+		this.sessionWriter.write(order);
 		
 		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 			r = validateOpen(order);
