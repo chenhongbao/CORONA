@@ -49,7 +49,6 @@ public class InvestorManager {
 		return this.investors.get(accountId);
 	}
 	
-	// TODO review set new account, it is important. need better design.
 	public void setInvestor(String accountId) throws KerError {
 		var np = Path.of(InvestorManager.root.toAbsolutePath().toString(), accountId);
 		this.investors.put(accountId, new InvestorAccount(accountId, np, this.runtime, this.factory, this.sm));

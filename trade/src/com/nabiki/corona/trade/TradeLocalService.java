@@ -23,6 +23,7 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.mgr.api.CashMoveCommand;
 import com.nabiki.corona.trade.core.InvestorAccount;
 import com.nabiki.corona.trade.core.InvestorManager;
 import com.nabiki.corona.trade.core.SessionManager;
@@ -88,17 +89,21 @@ public class TradeLocalService implements TradeLocal {
 	
 	// Execute trade report.
 	private void executeTradeReport(KerTradeReport r) {
-		var accountId = this.sm.getAccountId(r.orderId());
-		if (accountId == null) {
-			this.log.warn("Can't get account ID for order: {}.", r.orderId());
+		String sid;
+		try {
+			sid = this.sm.querySessionId(r.orderId());
+			if (sid == null) {
+				this.log.warn("Trade session ID not found for order: {}.", r.orderId());
+				return;
+			}
+		} catch (KerError e) {
+			this.log.error("Fail getting session ID for order: " + r.orderId());
 			return;
 		}
 		
-		var investor = this.investors.getInvestor(accountId);
-		if (investor == null) {
-			this.log.error("Can't get investor account for account ID: {}.", accountId);
+		var investor = investor(sid);
+		if (investor == null)
 			return;
-		}
 		
 		try {
 			investor.trade(r);
@@ -122,7 +127,6 @@ public class TradeLocalService implements TradeLocal {
 	public String name() {
 		return "trade_account";
 	}
-	// TODO Need validate given order/trade before executing.
 
 	@Override
 	public void orderStatus(KerOrderStatus o) {
@@ -318,5 +322,34 @@ public class TradeLocalService implements TradeLocal {
 		}
 		
 		return investor;
+	}
+
+	@Override
+	public void createAccount(String accountId) {
+		try {
+			this.investors.setInvestor(accountId);
+		} catch (KerError e) {
+			this.log.error("Fail creating new account: {}. {}", accountId, e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void moveCash(CashMoveCommand cmd) {
+		if (cmd == null) {
+			this.log.warn("Cash move command null pointer.");
+			return;
+		}
+		
+		var investor = this.investors.getInvestor(cmd.accountId());
+		if (investor == null) {
+			this.log.warn("Investor account not found: {}.", cmd.accountId());
+			return;
+		}
+		
+		try {
+			investor.moveCash(cmd);
+		} catch (KerError e) {
+			this.log.error("Fail moving cash for account: {}. {}", investor.accountId(), e.getMessage(), e);
+		}
 	}
 }

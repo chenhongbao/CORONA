@@ -12,7 +12,7 @@ public class TradeRemoteService implements TradeRemote{
 
 	@Override
 	public String name() {
-		// TODO Auto-generated method stub
+		// TODO name
 		return null;
 	}
 

@@ -47,5 +47,5 @@ public interface RuntimeInfo {
 	 */
 	boolean endOfDay(Instant now, String symbol);
 	
-	Collection<RemoteConfig> remoteConfigs();
+	RemoteConfigSet remoteConfig();
 }

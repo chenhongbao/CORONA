@@ -1,6 +1,8 @@
 package com.nabiki.corona.mgr.api;
 
 public interface CashMoveCommand {
+	String accountId();
+	
 	CashMoveType type();
 	
 	String sessionId();

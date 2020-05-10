@@ -14,9 +14,9 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.mgr.api.CashMoveCommand;
 
 public class InvestorAccount {
-	private final AccountEngine account;
 	private final AccountManager accountManager;
 	private final PositionManager positionManager;
 	private final SessionManager sessionManager;
@@ -48,9 +48,6 @@ public class InvestorAccount {
 		this.tradeKeeper = new TradeKeeper();
 		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"));
 		this.statusKeeper = new OrderStatusKeeper();
-		
-		// Get account engine from account manager.
-		this.account = this.accountManager.account();
 	}
 	
 	public void orderStatus(KerOrderStatus status) throws KerError {
@@ -68,6 +65,10 @@ public class InvestorAccount {
 	
 	public AccountManager account() {
 		return this.accountManager;
+	}
+	
+	public void moveCash(CashMoveCommand cmd) throws KerError {
+		this.accountManager.account().moveCash(cmd);
 	}
 	
 	public PositionManager position() {
@@ -104,7 +105,7 @@ public class InvestorAccount {
 			// Add new position, then unlocked the margin.
 			// What happens in real is to move the money from account's available to used margin of position.
 			positionEngine.trade(rep);
-			this.account.trade(rep);
+			this.accountManager.account().trade(rep);
 		} else {
 			// Remove locked position to closed position.
 			// What happens in real is to reduce the used margin, then account's available is increased thereby.
@@ -123,7 +124,7 @@ public class InvestorAccount {
 		var sid = this.sessionManager.querySessionId(order.orderId());
 		
 		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
-			this.account.cancel(sid);
+			this.accountManager.account().cancel(sid);
 		} else {
 			// Other flags are closing order.
 			var positionEngine = this.positionManager.getPositon(order.symbol());
@@ -196,7 +197,7 @@ public class InvestorAccount {
 	}
 
 	private KerOrderEvalue validateOpen(KerOrder order) throws KerError {
-		var eval = this.account.lock(order);
+		var eval = this.accountManager.account().lock(order);
 		if (eval.error() == null)
 			eval.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
 		return eval;

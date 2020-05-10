@@ -8,6 +8,7 @@ import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.mgr.api.CashMoveCommand;
 
 public interface TradeLocal {
 	String name();
@@ -82,6 +83,20 @@ public interface TradeLocal {
 	 * @return account info
 	 */
 	KerAccount account(String accountId);
+	
+	/**
+	 * Create a new account with given ID.
+	 * 
+	 * @param accountId account id
+	 */
+	void createAccount(String accountId);
+	
+	/**
+	 * Move cash into/out of an account.
+	 * 
+	 * @param cmd cash move command
+	 */
+	void moveCash(CashMoveCommand cmd);
 
 	/**
 	 * Get remote counter account.

@@ -5,12 +5,12 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.kernel.settings.api.TimeRange;
@@ -21,10 +21,10 @@ public class TimeList {
 	
 	// Instants are stored in default order for fast look up.
 	// Time points are kept in minutes of day.
-	private final Map<Integer, Set<Integer>> instants = new HashMap<>();
+	private final Map<Integer, Set<Integer>> instants = new ConcurrentHashMap<>();
 	
 	// Local times are stored in the order of candle generation.
-	private final Map<Integer, List<LocalTime>> orderedInstants = new HashMap<>();
+	private final Map<Integer, List<LocalTime>> orderedInstants = new ConcurrentHashMap<>();
 	
 	public TimeList(List<TimeRange> times) {
 		calculateOrderedInstant(times);
@@ -104,6 +104,7 @@ public class TimeList {
 		this.instants.put(1, minutes);
 	}
 	
+	// After times' info is loaded, it won't change. So concurrent visiting will have no problem.
 	public boolean hit(int minPeriod, Instant now) {
 		var list = this.instants.get(minPeriod);
 		if (list == null)
@@ -113,6 +114,7 @@ public class TimeList {
 		return list.contains(minuteOfDay);
 	}
 	
+	// No need to add more thread-safe because it won't change after loaded.
 	public LocalTime firstOfDay(int minPeriod) {
 		var list = this.orderedInstants.get(minPeriod);
 		if (list == null)
@@ -121,6 +123,7 @@ public class TimeList {
 		return list.get(0);
 	}
 	
+	// No need to add more thread-safe because it won't change after loaded.
 	public LocalTime lastOfDay(int minPeriod) {
 		var list = this.orderedInstants.get(minPeriod);
 		if (list == null)

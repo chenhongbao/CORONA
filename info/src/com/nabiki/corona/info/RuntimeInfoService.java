@@ -10,9 +10,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -23,13 +21,14 @@ import com.nabiki.corona.ProductClass;
 import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.info.data.CandleTime;
 import com.nabiki.corona.kernel.DefaultDataCodec;
+import com.nabiki.corona.kernel.api.DataCodec;
 import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerInstrument;
 import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.settings.api.MarketTimeSet;
-import com.nabiki.corona.kernel.settings.api.RemoteConfig;
+import com.nabiki.corona.kernel.settings.api.RemoteConfigSet;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
 @Component
@@ -48,14 +47,17 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private final static String mktTimeFile = "market_time.json";
 	private final static String remoteConfigFile = "remote_config.json";
 	
+	// Codec.
+	private final DataCodec codec = DefaultDataCodec.create();
+	
 	// Candle instants.
 	private CandleTime candleInstants;
 	
 	// Market time.
-	private MarketTimeSet marketTime;
+	//private MarketTimeSet marketTime;
 	
 	// Remote configuration.
-	private Set<RemoteConfig> remoteConfigs = new ConcurrentSkipListSet<>();
+	//private RemoteConfigSet remoteConfigs;
 	
 	// Last tick preserve.
 	private Map<String, KerTick> ticks = new ConcurrentHashMap<>();
@@ -64,9 +66,6 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private LocalDate tradingDay;
 
 	public RuntimeInfoService() {
-		// TODO load cached info from files.
-		// TODO file watcher for config changes and reload.
-		// TODO review code and make them as thread safe as possible.
 	}
 	
 	private void createCandleInstants() {
@@ -79,17 +78,24 @@ public class RuntimeInfoService implements RuntimeInfo {
 		}
 	}
 	
-	private void loadMarketTime(Path root) {
+	private MarketTimeSet loadMarketTime(Path root) {
 		var fp = Path.of(RuntimeInfoService.configRoot.toAbsolutePath().toString(), RuntimeInfoService.mktTimeFile);
 		 try (InputStream is = new FileInputStream(fp.toFile())) {
-			 this.marketTime = DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
+			 return  DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
 		 } catch (KerError | IOException e) {
 			this.log.warn("Fail loading market time config: {}. {}", fp.toAbsolutePath().toString(), e.getMessage(), e);
+			return null;
 		}
 	}
 	
-	private void loadRemoteConfig(Path root) {
-		// TODO load remote configs.
+	private RemoteConfigSet loadRemoteConfig(Path root) {
+		Path file = Path.of(root.toAbsolutePath().toString(), RuntimeInfoService.remoteConfigFile);
+		try (InputStream is = new FileInputStream(file.toFile())){
+			return this.codec.decode(is.readAllBytes(), RemoteConfigSet.class);
+		} catch (KerError | IOException e) {
+			this.log.warn("Fail loading remote server configurations: {}.", file.toAbsolutePath(), e);
+			return null;
+		}
 	}
 
 	/**
@@ -199,10 +205,10 @@ public class RuntimeInfoService implements RuntimeInfo {
 
 	@Override
 	public boolean isMarketOpen(Instant now) {
-		if (this.marketTime == null)
-			loadMarketTime(RuntimeInfoService.configRoot);
+		// Reload market time per visit.
+		var marketTime = loadMarketTime(RuntimeInfoService.configRoot);
 		
-		for(var t : this.marketTime.marketTimes()) {
+		for(var t : marketTime.marketTimes()) {
 			var from = t.from().toSecondOfDay();
 			var to = t.to().toSecondOfDay();
 			var ns = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
@@ -239,8 +245,9 @@ public class RuntimeInfoService implements RuntimeInfo {
 	}
 
 	@Override
-	public Collection<RemoteConfig> remoteConfigs() {
-		return this.remoteConfigs;
+	public RemoteConfigSet remoteConfig() {	
+		// Reload config per visit.
+		return loadRemoteConfig(RuntimeInfoService.configRoot);
 	}
 
 	@Override

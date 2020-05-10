@@ -16,6 +16,7 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.mgr.api.CashMoveCommand;
+import com.nabiki.corona.mgr.api.CashMoveType;
 
 public class AccountEngine {
 	private class RuntimeLockMoney {
@@ -91,8 +92,20 @@ public class AccountEngine {
 	public KerAccount origin() {
 		return this.factory.kerAccount(this.origin);
 	}
+	
+	public void moveCash(CashMoveCommand cmd) throws KerError {
+		if (cmd == null)
+			throw new KerError("Cash move command null pointer.");
+		if (cmd.type() == null)
+			throw new KerError("Cash move type null pointer.");
+		
+		if (cmd.type() == CashMoveType.DEPOSIT)
+			deposit(cmd);
+		else
+			withdraw(cmd);
+	}
 
-	public void deposit(CashMoveCommand cmd) throws KerError {
+	private void deposit(CashMoveCommand cmd) throws KerError {
 		if (cmd == null)
 			throw new KerError("Cash command null pointer.");
 		if (cmd.amount() <= 0)
@@ -101,7 +114,7 @@ public class AccountEngine {
 		this.deposits.add(cmd);
 	}
 
-	public void withdraw(CashMoveCommand cmd) throws KerError {
+	private void withdraw(CashMoveCommand cmd) throws KerError {
 		if (cmd == null)
 			throw new KerError("Cash command null pointer.");
 		if (cmd.amount() <= 0)

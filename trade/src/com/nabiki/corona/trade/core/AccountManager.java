@@ -28,8 +28,7 @@ public class AccountManager {
 		this.factory = factory;
 		
 		// Try loading account from disk.
-		var a = readAccount(this.root);
-		this.account = new AccountEngine(a, this.runtime, this.positions, this.factory);
+		this.account = new AccountEngine(readAccount(this.root), this.runtime, this.positions, this.factory);
 	}
 
 	public AccountEngine account() {
