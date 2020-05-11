@@ -12,6 +12,11 @@ import com.nabiki.corona.kernel.biz.api.TradeRemote;
 
 @Component
 public class TradeRemoteService implements TradeRemote{
+	
+	private final TradeLauncher launcher = new TradeLauncher();
+	
+	public TradeRemoteService() {
+	}
 
 	@Override
 	public String name() {
@@ -76,6 +81,7 @@ public class TradeRemoteService implements TradeRemote{
 	@Activate
 	public void start(ComponentContext ctx) {
 		// TODO activate
+		// TODO schedule trade launcher in executor
 	}
 
 	@Deactivate
