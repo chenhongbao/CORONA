@@ -151,6 +151,22 @@ public class TickLauncher implements Runnable {
 			this.log.warn("Unhandled launching action: {}.", action);
 			break;
 		}
+		
+		// Check time and send remote with symbols to subscribe in next trading day. Must wait all symbols ready.
+		if (minutesAfterMarketOpen(5)) {
+			try {
+				this.engine.sendSymbols();
+			} catch (KerError e) {
+				this.log.warn("Fail sending subscribed symbols to remote. {}", e.getMessage(), e);
+			}
+		}
+	}
+	
+	// Check now is the N minutes after market opens.
+	private boolean minutesAfterMarketOpen(int minutes) {
+		minutes = Math.max(0, minutes);
+		var before = Instant.now().minusSeconds(minutes * 60);
+		return this.runtime.isMarketOpen(before);
 	}
 
 	private boolean userReady() {

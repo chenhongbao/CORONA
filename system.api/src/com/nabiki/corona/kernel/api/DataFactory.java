@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.api;
 
+import com.nabiki.corona.kernel.settings.api.SubscribedSymbols;
+
 public interface DataFactory {
 	KerAccount kerAccount(KerAccount... args);
 	
@@ -24,4 +26,6 @@ public interface DataFactory {
 	KerTradeSession kerTradeSession(KerTradeSession... args);
 	
 	KerCandle kerCandle(KerCandle... args);
+	
+	SubscribedSymbols subscribedSymbols(SubscribedSymbols... args);
 }

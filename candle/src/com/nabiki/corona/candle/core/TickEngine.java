@@ -5,13 +5,16 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.time.LocalDateTime;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.nabiki.corona.PacketType;
 import com.nabiki.corona.kernel.DefaultDataCodec;
+import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataCodec;
+import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
@@ -26,6 +29,7 @@ public class TickEngine implements Runnable {
 	private final RuntimeInfo runtime;
 	private final TickEngineListener listener;
 	private final DataCodec codec = DefaultDataCodec.create();
+	private final DataFactory factory = DefaultDataFactory.create();
 	
 	// Data queue.
 	private Thread queDaemon;
@@ -34,6 +38,19 @@ public class TickEngine implements Runnable {
 	public TickEngine(TickEngineListener l, RuntimeInfo info) {
 		this.listener = l;
 		this.runtime = info;
+	}
+	
+	public void sendSymbols() throws KerError {
+		var symbols = this.factory.subscribedSymbols();
+		symbols.updateTime(LocalDateTime.now());
+		symbols.symbols(this.runtime.symbols());
+		
+		// Encode.
+		var bytes = this.codec.encode(symbols);
+		if (!this.remote.socket().isConnected() || this.remote.socket().isClosed())
+			throw new KerError("Can't send symbols because remote connection is closed.");
+		
+		this.remote.send(PacketType.SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
 	}
 
 	@Override
@@ -101,7 +118,7 @@ public class TickEngine implements Runnable {
 	private PacketSocket connect() throws KerError{
 		// Find connection config to remote.
 		RemoteConfig conf = null;
-		for (var c : this.runtime.remoteConfigs()) {
+		for (var c : this.runtime.remoteConfig().configs()) {
 			if (c.name().toLowerCase().matches("(md)|(tick)|((market)[\\s_-]?(data))")) {
 				conf = c;
 				break;
