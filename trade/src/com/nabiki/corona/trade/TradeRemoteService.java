@@ -2,7 +2,10 @@ package com.nabiki.corona.trade;
 
 import java.time.LocalDate;
 
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 
 import com.nabiki.corona.api.Order;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
@@ -63,5 +66,22 @@ public class TradeRemoteService implements TradeRemote{
 		// TODO query position details
 		
 	}
+
+	@Override
+	public int action(String sessionId) {
+		// TODO action
+		return 0;
+	}
+	
+	@Activate
+	public void start(ComponentContext ctx) {
+		// TODO activate
+	}
+
+	@Deactivate
+	public void stop(ComponentContext ctx) {
+		// TODO stop
+	}
+	
 	// TODO start trade app.
 }

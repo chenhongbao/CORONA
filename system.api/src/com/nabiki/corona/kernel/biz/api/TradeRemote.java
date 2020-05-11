@@ -33,6 +33,14 @@ public interface TradeRemote {
 	 * @return number of pending order request in queue
 	 */
 	int order(Order o);
+	
+	/**
+	 * Cancel orders denoted by given order ID.
+	 * 
+	 * @param orderId ID of order to be canceled
+	 * @return number of pending action request in queue
+	 */
+	int action(String orderId);
 
 	/**
 	 * Query instrument information of the given symbol from remote counter and return the number of currently pending
