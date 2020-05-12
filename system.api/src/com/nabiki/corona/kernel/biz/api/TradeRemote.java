@@ -2,7 +2,7 @@ package com.nabiki.corona.kernel.biz.api;
 
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Order;
+import com.nabiki.corona.kernel.api.KerOrder;
 
 public interface TradeRemote {
 	/**
@@ -27,12 +27,13 @@ public interface TradeRemote {
 	LocalDate tradingDay();
 
 	/**
-	 * Send new order to remote counter and return the number of currently pending order requests in queue.
+	 * Send new order to remote counter and return the number of currently pending order requests in queue. If the order
+	 * can't be enqueued due to some error, return -1.
 	 * 
-	 * @param o new oder
-	 * @return number of pending order request in queue
+	 * @param order new oder
+	 * @return number of pending order request in queue, or -1 on error.
 	 */
-	int order(Order o);
+	int order(KerOrder order);
 	
 	/**
 	 * Cancel orders denoted by given order ID.

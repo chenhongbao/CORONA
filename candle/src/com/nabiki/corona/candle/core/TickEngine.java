@@ -50,7 +50,7 @@ public class TickEngine implements Runnable {
 		if (!this.remote.socket().isConnected() || this.remote.socket().isClosed())
 			throw new KerError("Can't send symbols because remote connection is closed.");
 		
-		this.remote.send(PacketType.SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
+		this.remote.send(PacketType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public class TickEngine implements Runnable {
 	}
 	
 	private void processPacket(Packet packet) {
-		if (packet.type() != PacketType.TICK) {
+		if (packet.type() != PacketType.RX_TICK) {
 			callListener(new KerError("Wrong packet type, need TICK."));
 			return;
 		}

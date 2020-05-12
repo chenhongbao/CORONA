@@ -28,4 +28,6 @@ public interface DataFactory {
 	KerCandle kerCandle(KerCandle... args);
 	
 	SubscribedSymbols subscribedSymbols(SubscribedSymbols... args);
+	
+	KerRemoteRequest kerRemoteRequest(KerRemoteRequest... args);
 }
