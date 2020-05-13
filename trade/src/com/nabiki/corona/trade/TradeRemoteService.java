@@ -15,6 +15,7 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.PacketType;
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataCodec;
@@ -74,6 +75,10 @@ public class TradeRemoteService implements TradeRemote {
 
 		@Override
 		public void remoteLogin(KerRemoteLoginReport rep) {
+			// Repeatedly login on the same trading day, don't update.
+			if (Utils.same(rep.tradingDay(), loginReport.tradingDay()))
+				return;
+			
 			loginReport = rep;
 
 			// Set order ref.
