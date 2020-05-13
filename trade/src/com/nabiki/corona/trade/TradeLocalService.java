@@ -101,7 +101,7 @@ public class TradeLocalService implements TradeLocal {
 			return;
 		}
 		
-		var investor = investor(sid);
+		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return;
 		
@@ -138,7 +138,7 @@ public class TradeLocalService implements TradeLocal {
 				return;
 			}
 			
-			var investor = investor(sid);
+			var investor = investorWithSessionId(sid);
 			if (investor == null)
 				return;
 			
@@ -287,7 +287,7 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public KerOrderStatus orderStatus(String sid) {
-		var investor = investor(sid);
+		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;
 		
@@ -296,7 +296,7 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public Collection<KerTradeReport> tradeReports(String sid) {
-		var investor = investor(sid);
+		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;
 		
@@ -308,7 +308,7 @@ public class TradeLocalService implements TradeLocal {
 		}
 	}
 	
-	private InvestorAccount investor(String sid) {
+	private InvestorAccount investorWithSessionId(String sid) {
 		var accountId = this.sm.getAccountId(sid);
 		if (accountId == null || accountId.length() == 0) {
 			this.log.error("Can't find account ID with given session ID: {}.", sid);
