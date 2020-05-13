@@ -28,10 +28,13 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
-import com.nabiki.corona.kernel.packet.api.TxActionRequestMessage;
-import com.nabiki.corona.kernel.packet.api.TxCommissionQueryMessage;
-import com.nabiki.corona.kernel.packet.api.TxInstrumentQueryMessage;
-import com.nabiki.corona.kernel.packet.api.TxMarginQueryMessage;
+import com.nabiki.corona.kernel.packet.api.TxQueryAccountMessage;
+import com.nabiki.corona.kernel.packet.api.TxRequestActionMessage;
+import com.nabiki.corona.kernel.packet.api.TxQueryCommissionMessage;
+import com.nabiki.corona.kernel.packet.api.TxQueryInstrumentMessage;
+import com.nabiki.corona.kernel.packet.api.TxQueryMarginMessage;
+import com.nabiki.corona.kernel.packet.api.TxRequestOrderMessage;
+import com.nabiki.corona.kernel.packet.api.TxQueryPositionDetailMessage;
 import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.trade.core.PacketQueue;
 import com.nabiki.corona.trade.core.TradeEngineListener;
@@ -152,100 +155,96 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int order(KerOrder order) {
+		TxRequestOrderMessage req;
 		try {
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ORDER, this.codec.encode(order)));
+			req = this.factory.create(TxRequestOrderMessage.class);
+			req.value(order);
+			req.last(true);
+			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ORDER, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail encoding order request: {}. {}.", order.orderId(), e.getMessage(), e);
+			this.log.error("fail sending order request: {}. {}.", order.orderId(), e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int instrument(String symbol) {
-		TxInstrumentQueryMessage req;
+		TxQueryInstrumentMessage req;
 		try {
-			req = this.factory.create(TxInstrumentQueryMessage.class);
-		} catch (KerError e) {
-			this.log.error("Factory fails creating query instrument: {}. {}.", symbol, e.getMessage(), e);
-			return -1;
-		}
-		
-		req.value(symbol);
-
-		try {
+			req = this.factory.create(TxQueryInstrumentMessage.class);
+			req.value(symbol);
+			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_INSTRUMENT, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Failail encoding query instrument: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query instrument: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int margin(String symbol) {
-		TxMarginQueryMessage req;
+		TxQueryMarginMessage req;
 		try {
-			req = this.factory.create(TxMarginQueryMessage.class);
-		} catch (KerError e) {
-			this.log.error("Factory fails creating query margin: {}. {}.", symbol, e.getMessage(), e);
-			return -1;
-		}
-		
-		req.value(symbol);
-
-		try {
+			req = this.factory.create(TxQueryMarginMessage.class);
+			req.value(symbol);
+			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_MARGIN, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail encoding query margin: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query margin: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int commission(String symbol) {
-		TxCommissionQueryMessage req;
+		TxQueryCommissionMessage req;
 		try {
-			req = this.factory.create(TxCommissionQueryMessage.class);
-		} catch (KerError e) {
-			this.log.error("Factory fail creating query commission: {}. {}.", symbol, e.getMessage(), e);
-			return -1;
-		}
-		
-		req.value(symbol);
-
-		try {
+			req = this.factory.create(TxQueryCommissionMessage.class);
+			req.value(symbol);
+			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_COMMISSION, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail encoding query commission: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query commission: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public void account() {
-		this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_ACCOUNT, new byte[0]));
+		TxQueryAccountMessage req;
+		try {
+			req = this.factory.create(TxQueryAccountMessage.class);
+			req.value("");
+			req.last(true);
+			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_ACCOUNT, this.codec.encode(req)));
+		} catch (KerError e) {
+			this.log.error("Fail sending query account. {}.", e.getMessage(), e);
+		}	
 	}
 
 	@Override
 	public void position() {
-		this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL, new byte[0]));
+		TxQueryPositionDetailMessage req;
+		try {
+			req = this.factory.create(TxQueryPositionDetailMessage.class);
+			req.value("");
+			req.last(true);
+			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL, this.codec.encode(req)));
+		} catch (KerError e) {
+			this.log.error("Fail sending query position detail. {}.", e.getMessage(), e);
+		}
 	}
 
 	@Override
 	public int action(String orderId) {
-		TxActionRequestMessage req;
+		TxRequestActionMessage req;
 		try {
-			req = this.factory.create(TxActionRequestMessage.class);
-		} catch (KerError e) {
-			this.log.error("Factory fails creating action request: {}. {}.", orderId, e.getMessage(), e);
-			return -1;
-		}
-		
-		req.value(orderId);
-
-		try {
+			req = this.factory.create(TxRequestActionMessage.class);
+			req.value(orderId);
+			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ACTION, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail encoding action request: {}. {}.", orderId, e.getMessage(), e);
+			this.log.error("Fails creating action request: {}. {}.", orderId, e.getMessage(), e);
 			return -1;
 		}
 	}

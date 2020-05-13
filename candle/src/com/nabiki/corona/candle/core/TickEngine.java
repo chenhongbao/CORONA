@@ -5,7 +5,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.time.LocalDateTime;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +17,7 @@ import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.packet.api.RxTickMessage;
-import com.nabiki.corona.kernel.packet.api.TxSymbolSubscriptionMessage;
+import com.nabiki.corona.kernel.packet.api.TxSubscribeSymbolMessage;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.tools.Packet;
@@ -43,9 +42,9 @@ public class TickEngine implements Runnable {
 	}
 	
 	public void sendSymbols() throws KerError {
-		var symbols = this.factory.create(TxSymbolSubscriptionMessage.class);
-		symbols.time(LocalDateTime.now());
+		var symbols = this.factory.create(TxSubscribeSymbolMessage.class);
 		symbols.values(this.runtime.symbols());
+		symbols.last(true);
 		
 		// Encode.
 		var bytes = this.codec.encode(symbols);
