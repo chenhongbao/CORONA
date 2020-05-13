@@ -213,8 +213,13 @@ public class RuntimeInfoService implements RuntimeInfo {
 			var to = t.to().toSecondOfDay();
 			var ns = LocalTime.ofInstant(now, ZoneId.systemDefault()).toSecondOfDay();
 			
-			if (to <= ns && ns < from)
-				return true;
+			if (from < to) {
+				if (from <= ns && ns < to)
+					return true;
+			} else {
+				if (from <= ns || ns < to)
+					return true;
+			}
 		}
 		
 		return false;
