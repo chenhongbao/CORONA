@@ -83,7 +83,7 @@ public class TradeLocalService implements TradeLocal {
 			return false;
 		
 		// Save trade reports.
-		this.cacheTradeReports.add(this.factory.kerTradeReport(r));
+		this.cacheTradeReports.add(this.factory.create(r));
 		return true;
 	}
 	
@@ -181,13 +181,13 @@ public class TradeLocalService implements TradeLocal {
 			this.remotePositions.clear();
 		}
 		
-		this.remotePositions.add(this.factory.kerPositionDetail(p));
+		this.remotePositions.add(this.factory.create(p));
 		this.remotePosLast = last;
 	}
 
 	@Override
 	public void account(KerAccount a) {
-		this.account = this.factory.kerAccount(a);
+		this.account = this.factory.create(a);
 	}
 
 	@Override
@@ -251,7 +251,7 @@ public class TradeLocalService implements TradeLocal {
 			this.log.error("Fail allocating resource for order: {} and account: {}.", op.orderId(), op.accountId());
 
 			// Make an error report.
-			var eval = this.factory.kerOrderEvalue();
+			var eval = this.factory.create(KerOrderEvalue.class);
 			eval.error(new KerError(ErrorCode.BAD_FIELD, e.getMessage()));
 			return eval;
 		}

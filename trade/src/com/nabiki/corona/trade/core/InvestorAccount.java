@@ -149,7 +149,7 @@ public class InvestorAccount {
 		}
 		// Don't insert order if the information for the denoted instrument is not ready.
 		if (!this.info.ready(order.symbol)) {
-			var r = this.factory.kerOrderEvalue();
+			var r = this.factory.create(KerOrderEvalue.class);
 			r.error(new KerError(ErrorCode.NOT_INITED, ErrorMessage.NOT_INITED));
 			return r;
 		}
@@ -180,7 +180,7 @@ public class InvestorAccount {
 	}
 
 	private KerOrderEvalue validateClose(KerOrder order) {
-		KerOrderEvalue eval = this.factory.kerOrderEvalue();
+		KerOrderEvalue eval = this.factory.create(KerOrderEvalue.class);
 		
 		var positionEngine = this.positionManager.getPositon(order.symbol());
 		if (positionEngine == null) {

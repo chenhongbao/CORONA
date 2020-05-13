@@ -28,6 +28,10 @@ import com.nabiki.corona.kernel.api.KerPositionDetail;
 import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
+import com.nabiki.corona.kernel.packet.api.TxActionRequestMessage;
+import com.nabiki.corona.kernel.packet.api.TxCommissionQueryMessage;
+import com.nabiki.corona.kernel.packet.api.TxInstrumentQueryMessage;
+import com.nabiki.corona.kernel.packet.api.TxMarginQueryMessage;
 import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.trade.core.PacketQueue;
 import com.nabiki.corona.trade.core.TradeEngineListener;
@@ -158,7 +162,7 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int instrument(String symbol) {
-		var req = this.factory.kerRemoteRequest();
+		var req = this.factory.create(TxInstrumentQueryMessage.class);
 		req.value(symbol);
 
 		try {
@@ -171,7 +175,7 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int margin(String symbol) {
-		var req = this.factory.kerRemoteRequest();
+		var req = this.factory.create(TxMarginQueryMessage.class);
 		req.value(symbol);
 
 		try {
@@ -184,7 +188,7 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int commission(String symbol) {
-		var req = this.factory.kerRemoteRequest();
+		var req = this.factory.create(TxCommissionQueryMessage.class);
 		req.value(symbol);
 
 		try {
@@ -197,27 +201,17 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public void account() {
-		try {
-			this.packetQueue.enqueue(
-					new Packet(PacketType.TX_QUERY_ACCOUNT, this.codec.encode(this.factory.kerRemoteRequest())));
-		} catch (KerError e) {
-			this.log.error("fail encoding query commission. {}.", e.getMessage(), e);
-		}
+		this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_ACCOUNT, new byte[0]));
 	}
 
 	@Override
 	public void position() {
-		try {
-			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL,
-					this.codec.encode(this.factory.kerRemoteRequest())));
-		} catch (KerError e) {
-			this.log.error("fail encoding query position detail. {}.", e.getMessage(), e);
-		}
+		this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL, new byte[0]));
 	}
 
 	@Override
 	public int action(String orderId) {
-		var req = this.factory.kerRemoteRequest();
+		var req = this.factory.create(TxActionRequestMessage.class);
 		req.value(orderId);
 
 		try {

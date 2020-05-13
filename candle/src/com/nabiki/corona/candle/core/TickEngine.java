@@ -17,6 +17,8 @@ import com.nabiki.corona.kernel.api.DataCodec;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerTick;
+import com.nabiki.corona.kernel.packet.api.RxTickMessage;
+import com.nabiki.corona.kernel.packet.api.TxSymbolSubscriptionMessage;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.tools.Packet;
@@ -41,9 +43,9 @@ public class TickEngine implements Runnable {
 	}
 	
 	public void sendSymbols() throws KerError {
-		var symbols = this.factory.subscribedSymbols();
-		symbols.updateTime(LocalDateTime.now());
-		symbols.symbols(this.runtime.symbols());
+		var symbols = this.factory.create(TxSymbolSubscriptionMessage.class);
+		symbols.time(LocalDateTime.now());
+		symbols.values(this.runtime.symbols());
 		
 		// Encode.
 		var bytes = this.codec.encode(symbols);
@@ -152,9 +154,11 @@ public class TickEngine implements Runnable {
 		}
 		
 		try {
-			var tick = this.codec.decode(packet.bytes(), KerTick.class);
-			if (!this.dataQueue.offer(tick))
-				callListener(new KerError("Fail enqueuing the tick."));
+			var ticks = this.codec.decode(packet.bytes(), RxTickMessage.class);
+			for (var tick : ticks.values()) {
+				if (!this.dataQueue.offer(tick))
+					callListener(new KerError("Fail enqueuing the tick."));
+			}
 		} catch (KerError e) {
 			callListener(e);
 		}

@@ -70,7 +70,7 @@ public class CandleGenerator {
 			this.min = min;
 			this.popped = true;
 			this.symbol = symbol;
-			this.runtime = this.factory.kerCandle();
+			this.runtime = this.factory.create(KerCandle.class);
 			
 			// Initialize runtime candle.
 			this.runtime.highPrice(-Double.MAX_VALUE);
@@ -126,7 +126,7 @@ public class CandleGenerator {
 		}
 		
 		KerCandle peak() {
-			var ret = this.factory.kerCandle();
+			var ret = this.factory.create(KerCandle.class);
 			
 			synchronized(this.runtime) {
 				// Copy runtime candle.

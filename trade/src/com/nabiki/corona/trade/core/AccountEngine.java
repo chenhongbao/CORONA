@@ -81,7 +81,7 @@ public class AccountEngine {
 		if (init != null)
 			this.origin = init;
 		else
-			this.origin = this.factory.kerAccount();
+			this.origin = this.factory.create(KerAccount.class);
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class AccountEngine {
 	 * @return new instance of account
 	 */
 	public KerAccount origin() {
-		return this.factory.kerAccount(this.origin);
+		return this.factory.create(this.origin);
 	}
 	
 	public void moveCash(CashMoveCommand cmd) throws KerError {
@@ -150,7 +150,7 @@ public class AccountEngine {
 
 		double lockCommission = Utils.marginOrCommission(order.price, order.volume(), multi, byMny, byVol);
 
-		KerOrderEvalue eval = this.factory.kerOrderEvalue();
+		KerOrderEvalue eval = this.factory.create(KerOrderEvalue.class);
 		if (lockMargin + lockCommission > current().available()) {
 			eval.error(new KerError(ErrorCode.INSUFFICIENT_MONEY, ErrorMessage.INSUFFICIENT_MONEY));
 		} else {
