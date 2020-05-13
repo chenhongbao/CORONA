@@ -144,7 +144,7 @@ public class PositionEngine {
 			throw new KerError("Can't lock position for order: " + o.orderId());
 
 		Collection<KerPositionDetail> ret = new LinkedList<>();
-		KerOrder toLock = this.fatory.create(o);
+		KerOrder toLock = this.fatory.create(KerOrder.class, o);
 		var iter = this.details.iterator();
 
 		while (iter.hasNext() && toLock.volume() > 0) {

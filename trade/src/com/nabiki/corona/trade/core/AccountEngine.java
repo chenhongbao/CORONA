@@ -73,7 +73,7 @@ public class AccountEngine {
 	private final List<CashMoveCommand> deposits = new LinkedList<>();
 	private final List<CashMoveCommand> withdraws = new LinkedList<>();
 
-	public AccountEngine(KerAccount init, RuntimeInfo info, PositionManager pos, DataFactory factory) {
+	public AccountEngine(KerAccount init, RuntimeInfo info, PositionManager pos, DataFactory factory) throws KerError {
 		this.info = info;
 		this.position = pos;
 		this.factory = factory;
@@ -88,9 +88,10 @@ public class AccountEngine {
 	 * Get a new instance copy of original account.
 	 * 
 	 * @return new instance of account
+	 * @throws KerError factory fails creating instance and throws exception
 	 */
-	public KerAccount origin() {
-		return this.factory.create(this.origin);
+	public KerAccount origin() throws KerError {
+		return this.factory.create(KerAccount.class, this.origin);
 	}
 	
 	public void moveCash(CashMoveCommand cmd) throws KerError {

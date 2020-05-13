@@ -321,9 +321,10 @@ public class RuntimePositionDetail {
 	 * changed.
 	 * 
 	 * @return original position detail
+	 * @throws KerError factory fails creating instance of given class, throws exception
 	 */
-	public KerPositionDetail origin() {
-		return this.factory.create(this.origin);
+	public KerPositionDetail origin() throws KerError {
+		return this.factory.create(KerPositionDetail.class, this.origin);
 	}
 
 	/**
@@ -391,7 +392,7 @@ public class RuntimePositionDetail {
 	public List<KerPositionDetail> locked() throws KerError {
 		List<KerPositionDetail> ret = new LinkedList<>();
 		for (var p : this.locked) {
-			var n = this.factory.create(p);
+			var n = this.factory.create(KerPositionDetail.class, p);
 			calculateCloseInfo2(n);
 			ret.add(n);
 		}
@@ -407,7 +408,7 @@ public class RuntimePositionDetail {
 	public List<KerPositionDetail> closed() throws KerError {
 		List<KerPositionDetail> ret = new LinkedList<>();
 		for (var p : this.closed) {
-			var n = this.factory.create(p);
+			var n = this.factory.create(KerPositionDetail.class, p);
 			calculateCloseInfo2(n);
 			ret.add(n);
 		}
@@ -459,7 +460,7 @@ public class RuntimePositionDetail {
 		if (splitVol < 0)
 			throw new KerError("Can't split a negative volume position.");
 
-		var r = this.factory.create(origin);
+		var r = this.factory.create(KerPositionDetail.class, origin);
 
 		// Margin.
 		r.margin(r.margin() * splitVol / r.volume());
@@ -532,7 +533,7 @@ public class RuntimePositionDetail {
 		}
 
 		// Return trade left to close in other position details.
-		var r = this.factory.create(rep);
+		var r = this.factory.create(KerTradeReport.class, rep);
 		r.volume(r.volume() - closeVol);
 
 		return r;

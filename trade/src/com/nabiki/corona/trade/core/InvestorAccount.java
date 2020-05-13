@@ -179,7 +179,7 @@ public class InvestorAccount {
 		return r;
 	}
 
-	private KerOrderEvalue validateClose(KerOrder order) {
+	private KerOrderEvalue validateClose(KerOrder order) throws KerError {
 		KerOrderEvalue eval = this.factory.create(KerOrderEvalue.class);
 		
 		var positionEngine = this.positionManager.getPositon(order.symbol());

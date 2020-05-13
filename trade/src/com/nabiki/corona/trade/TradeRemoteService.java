@@ -162,39 +162,60 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int instrument(String symbol) {
-		var req = this.factory.create(TxInstrumentQueryMessage.class);
+		TxInstrumentQueryMessage req;
+		try {
+			req = this.factory.create(TxInstrumentQueryMessage.class);
+		} catch (KerError e) {
+			this.log.error("Factory fails creating query instrument: {}. {}.", symbol, e.getMessage(), e);
+			return -1;
+		}
+		
 		req.value(symbol);
 
 		try {
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_INSTRUMENT, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail encoding query instrument: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Failail encoding query instrument: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int margin(String symbol) {
-		var req = this.factory.create(TxMarginQueryMessage.class);
+		TxMarginQueryMessage req;
+		try {
+			req = this.factory.create(TxMarginQueryMessage.class);
+		} catch (KerError e) {
+			this.log.error("Factory fails creating query margin: {}. {}.", symbol, e.getMessage(), e);
+			return -1;
+		}
+		
 		req.value(symbol);
 
 		try {
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_MARGIN, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail encoding query margin: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail encoding query margin: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int commission(String symbol) {
-		var req = this.factory.create(TxCommissionQueryMessage.class);
+		TxCommissionQueryMessage req;
+		try {
+			req = this.factory.create(TxCommissionQueryMessage.class);
+		} catch (KerError e) {
+			this.log.error("Factory fail creating query commission: {}. {}.", symbol, e.getMessage(), e);
+			return -1;
+		}
+		
 		req.value(symbol);
 
 		try {
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_COMMISSION, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail encoding query commission: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail encoding query commission: {}. {}.", symbol, e.getMessage(), e);
 			return -1;
 		}
 	}
@@ -211,7 +232,14 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public int action(String orderId) {
-		var req = this.factory.create(TxActionRequestMessage.class);
+		TxActionRequestMessage req;
+		try {
+			req = this.factory.create(TxActionRequestMessage.class);
+		} catch (KerError e) {
+			this.log.error("Factory fails creating action request: {}. {}.", orderId, e.getMessage(), e);
+			return -1;
+		}
+		
 		req.value(orderId);
 
 		try {

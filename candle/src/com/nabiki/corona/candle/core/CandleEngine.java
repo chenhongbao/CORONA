@@ -38,7 +38,7 @@ public class CandleEngine implements Runnable {
 		this.runtime = info;
 	}
 
-	private void initCandleGen() {
+	private void initCandleGen() throws KerError {
 		// Create candle generators.
 		for (var s : this.runtime.symbols()) {
 			this.candles.put(s, new CandleGenerator(s, this.runtime));
@@ -65,15 +65,23 @@ public class CandleEngine implements Runnable {
 		// Initialize candle generators when market open.
 		if (this.runtime.isMarketOpen(now) && this.candles.isEmpty()) {
 			this.listener.error(new KerError(ErrorCode.NONE, "Initialize candle generators."));
-			initCandleGen();
+			try {
+				initCandleGen();
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		}
 
 		// Try generating candles.
 		for (int period : CandleEngine.periods) {
 			for (var g : this.candles.values()) {
-				KerCandle c = g.get(period, now);
-				if (c != null)
-					callListener(c);
+				try {
+					var c = g.get(period, now);
+					if (c != null)
+						callListener(c);
+				} catch (KerError e) {
+					this.listener.error(e);
+				}
 			}
 		}
 		

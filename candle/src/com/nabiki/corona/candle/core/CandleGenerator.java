@@ -10,6 +10,7 @@ import com.nabiki.corona.api.CandleMinute;
 import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerCandle;
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerTick;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 
@@ -21,7 +22,7 @@ public class CandleGenerator {
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
 			CandleMinute.HALF_HOUR, CandleMinute.HALF_QUADTER_HOUR, CandleMinute.HOUR, CandleMinute.TWO_HOUR};
 	
-	public CandleGenerator(String symbol, RuntimeInfo info) {
+	public CandleGenerator(String symbol, RuntimeInfo info) throws KerError {
 		this.symbol = symbol;
 		this.info = info;
 		
@@ -35,7 +36,7 @@ public class CandleGenerator {
 			c.update(tick);
 	}
 	
-	public KerCandle get(int min, Instant now) {
+	public KerCandle get(int min, Instant now) throws KerError {
 		if (!this.info.candleNow(this.symbol, min, now))
 			return null;
 		
@@ -46,7 +47,7 @@ public class CandleGenerator {
 		return rc.pop();
 	}
 	
-	public KerCandle peak(int minPeriod, Instant now) {
+	public KerCandle peak(int minPeriod, Instant now) throws KerError {
 		var rc = this.candles.get(minPeriod);
 		if (rc == null)
 			return null;
@@ -60,28 +61,28 @@ public class CandleGenerator {
 		private final DataFactory factory = DefaultDataFactory.create();
 		
 		// Candle info.
-		private KerCandle runtime;
+		private KerCandle rtCandle;
 		private int currentVolume = 0;
 		private int previousVolume = 0;
 		private LocalDate tradingDay;
 		private boolean popped;
 		
-		RuntimeCandle(String symbol, int min) {
+		RuntimeCandle(String symbol, int min) throws KerError {
 			this.min = min;
 			this.popped = true;
 			this.symbol = symbol;
-			this.runtime = this.factory.create(KerCandle.class);
+			this.rtCandle = this.factory.create(KerCandle.class);
 			
 			// Initialize runtime candle.
-			this.runtime.highPrice(-Double.MAX_VALUE);
-			this.runtime.lowPrice(Double.MAX_VALUE);
-			this.runtime.symbol(this.symbol);
-			this.runtime.minutePeriod(this.min);
+			this.rtCandle.highPrice(-Double.MAX_VALUE);
+			this.rtCandle.lowPrice(Double.MAX_VALUE);
+			this.rtCandle.symbol(this.symbol);
+			this.rtCandle.minutePeriod(this.min);
 			
 			if (min == CandleMinute.DAY)
-				this.runtime.isDay(true);
+				this.rtCandle.isDay(true);
 			else
-				this.runtime.isDay(false);
+				this.rtCandle.isDay(false);
 		}
 		
 		void update(KerTick tick) {
@@ -89,34 +90,34 @@ public class CandleGenerator {
 			if (tick.symbol().compareTo(this.symbol) != 0)
 				return;
 			
-			synchronized(this.runtime) {
+			synchronized(this.rtCandle) {
 				if (this.popped) {
-					this.runtime.openPrice(tick.lastPrice());
-					this.runtime.highPrice(tick.lastPrice());
-					this.runtime.lowPrice(tick.lastPrice());
-					this.runtime.closePrice(tick.lastPrice());
+					this.rtCandle.openPrice(tick.lastPrice());
+					this.rtCandle.highPrice(tick.lastPrice());
+					this.rtCandle.lowPrice(tick.lastPrice());
+					this.rtCandle.closePrice(tick.lastPrice());
 					// Save trading day once per candle.
 					this.tradingDay = tick.tradingDay();
 					// Mark.
 					this.popped = false;
 				} else {
-					this.runtime.closePrice(tick.lastPrice());
-					this.runtime.highPrice(Math.max(this.runtime.highPrice(), tick.lastPrice()));
-					this.runtime.lowPrice(Math.min(this.runtime.lowPrice(), tick.lastPrice()));
+					this.rtCandle.closePrice(tick.lastPrice());
+					this.rtCandle.highPrice(Math.max(this.rtCandle.highPrice(), tick.lastPrice()));
+					this.rtCandle.lowPrice(Math.min(this.rtCandle.lowPrice(), tick.lastPrice()));
 				}
 				
-				this.runtime.openInterest(tick.openInterest());
-				this.runtime.updateTime(Instant.now());
+				this.rtCandle.openInterest(tick.openInterest());
+				this.rtCandle.updateTime(Instant.now());
 				
 				// Save volume.
 				this.currentVolume = tick.volume();
 			}
 		}
 		
-		KerCandle pop() {
+		KerCandle pop() throws KerError {
 			var ret = peak();
 			
-			synchronized(this.runtime) {
+			synchronized(this.rtCandle) {
 				// Reset volume.
 				this.previousVolume = this.currentVolume;
 				this.popped = true;
@@ -125,18 +126,18 @@ public class CandleGenerator {
 			return ret;
 		}
 		
-		KerCandle peak() {
+		KerCandle peak() throws KerError {
 			var ret = this.factory.create(KerCandle.class);
 			
-			synchronized(this.runtime) {
+			synchronized(this.rtCandle) {
 				// Copy runtime candle.
-				ret.symbol(this.runtime.symbol());
-				ret.openPrice(this.runtime.openPrice());
-				ret.highPrice(this.runtime.highPrice());
-				ret.lowPrice(this.runtime.lowPrice());
-				ret.closePrice(this.runtime.closePrice());
-				ret.openInterest(this.runtime.openInterest());
-				ret.updateTime(this.runtime.updateTime());
+				ret.symbol(this.rtCandle.symbol());
+				ret.openPrice(this.rtCandle.openPrice());
+				ret.highPrice(this.rtCandle.highPrice());
+				ret.lowPrice(this.rtCandle.lowPrice());
+				ret.closePrice(this.rtCandle.closePrice());
+				ret.openInterest(this.rtCandle.openInterest());
+				ret.updateTime(this.rtCandle.updateTime());
 				
 				// Get volume in this candle.
 				ret.volume(this.currentVolume - this.previousVolume);

@@ -32,61 +32,61 @@ import com.nabiki.corona.trade.core.SessionManager;
 public class TradeLocalService implements TradeLocal {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
-	
+
 	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
 	private volatile RuntimeInfo info;
-	
+
 	public void bindRuntimeInfo(RuntimeInfo info) {
 		if (info == null)
 			return;
-		
+
 		this.info = info;
 		this.log.info("Bind runtime info.");
-		
+
 		// Create investor manager.
 		try {
 			this.investors = new InvestorManager(this.info, this.factory, this.sm);
 			this.log.info("Initialize investors.");
-			
+
 			// If there are reports coming in before investors are ready, execute them.
 			executeTradeReportCache();
 		} catch (KerError e) {
 			this.log.warn("Fail initializing investors. {}", e.getMessage(), e);
 		}
 	}
-	
+
 	public void unbindRuntimeInfo(RuntimeInfo info) {
 		if (this.info != info)
 			return;
-		
+
 		this.info = null;
 		this.log.info("Unbind runtime info.");
 	}
-	
+
 	private final DataFactory factory = DefaultDataFactory.create();
 	private final SessionManager sm = new SessionManager();
-	
+
 	// Manage investors.
 	private InvestorManager investors;
-	
+
 	// Keep remote counter info.
 	private KerAccount account;
 	private boolean remotePosLast = true;
 	private final List<KerPositionDetail> remotePositions = new LinkedList<>();
-	
+
 	// Save trade report and wait for investors are ready.
 	private final Set<KerTradeReport> cacheTradeReports = new ConcurrentSkipListSet<>();
-	
+
 	// If investors are not ready, save the trade reports for future and return true.
-	private boolean trySaveTradeReportWaitReady(KerTradeReport r) {
+	private boolean trySaveTradeReportWaitReady(KerTradeReport r) throws KerError {
 		if (this.investors != null)
 			return false;
-		
+
 		// Save trade reports.
-		this.cacheTradeReports.add(this.factory.create(r));
+		this.cacheTradeReports.add(this.factory.create(KerTradeReport.class, r));
 		return true;
 	}
-	
+
 	// Execute trade report.
 	private void executeTradeReport(KerTradeReport r) {
 		String sid;
@@ -100,23 +100,23 @@ public class TradeLocalService implements TradeLocal {
 			this.log.error("Fail getting session ID for order: " + r.orderId());
 			return;
 		}
-		
+
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return;
-		
+
 		try {
 			investor.trade(r);
 		} catch (KerError e) {
 			this.log.error("Fail updating trade report. {}", e.getMessage(), e);
 		}
 	}
-	
+
 	// If there are trade report cached, execute them.
 	private void executeTradeReportCache() {
 		if (this.cacheTradeReports.size() == 0)
 			return;
-		
+
 		var iter = this.cacheTradeReports.iterator();
 		while (iter.hasNext()) {
 			executeTradeReport(iter.next());
@@ -137,23 +137,23 @@ public class TradeLocalService implements TradeLocal {
 				this.log.error("Fail getting valid session ID for order: {}.", o.orderId());
 				return;
 			}
-			
+
 			var investor = investorWithSessionId(sid);
 			if (investor == null)
 				return;
-			
+
 			// Set trade session ID.
 			o.tradeSessionId(sid);
 			// Update order status into investor account.
-			investor.orderStatus(o);	
-			
+			investor.orderStatus(o);
+
 			// Cancel order.
 			if (o.orderStatus() == OrderStatus.CANCELED) {
 				investor.cancel(o);
 			}
 		} catch (KerError e) {
 			this.log.error("Fail updating order status. {}", e.getMessage(), e);
-		}		
+		}
 	}
 
 	@Override
@@ -165,12 +165,17 @@ public class TradeLocalService implements TradeLocal {
 			this.log.error("Fail setting session ID into trade report.", e.getMessage(), e);
 			return;
 		}
-		
+
 		// Save trade report if investors are not ready, and wait. After investors are initialized, it will check the
 		// saved reports and execute them.
-		if (trySaveTradeReportWaitReady(r))
+		try {
+			if (trySaveTradeReportWaitReady(r))
+				return;
+		} catch (KerError e) {
+			this.log.error("Fail saving trade report for future execution. {}", e.getMessage(), e);
 			return;
-		
+		}
+
 		executeTradeReport(r);
 	}
 
@@ -180,14 +185,22 @@ public class TradeLocalService implements TradeLocal {
 		if (this.remotePosLast) {
 			this.remotePositions.clear();
 		}
-		
-		this.remotePositions.add(this.factory.create(p));
-		this.remotePosLast = last;
+
+		try {
+			this.remotePositions.add(this.factory.create(KerPositionDetail.class, p));
+			this.remotePosLast = last;
+		} catch (KerError e) {
+			this.log.error("fail adding remote position. {}", e.getMessage(), e);
+		}
 	}
 
 	@Override
 	public void account(KerAccount a) {
-		this.account = this.factory.create(a);
+		try {
+			this.account = this.factory.create(KerAccount.class, a);
+		} catch (KerError e) {
+			this.log.error("Factory fail creating account instance. {}", e.getMessage(), e);
+		}
 	}
 
 	@Override
@@ -196,13 +209,13 @@ public class TradeLocalService implements TradeLocal {
 			this.log.warn("Query account {} when investors are not ready.", accountId);
 			return null;
 		}
-		
+
 		var investor = this.investors.getInvestor(accountId);
 		if (investor == null) {
 			this.log.error("Can't get investor: {}.", accountId);
 			return null;
 		}
-		
+
 		try {
 			return investor.account().account().current();
 		} catch (KerError e) {
@@ -217,13 +230,13 @@ public class TradeLocalService implements TradeLocal {
 			this.log.warn("Query {} position detail under account {} when investors are not ready.", symbol, accountId);
 			return null;
 		}
-		
+
 		var investor = this.investors.getInvestor(accountId);
 		if (investor == null) {
 			this.log.error("Fail getting investor: {}.", accountId);
 			return null;
 		}
-		
+
 		try {
 			return investor.position().getPositon(symbol).current();
 		} catch (KerError e) {
@@ -238,20 +251,27 @@ public class TradeLocalService implements TradeLocal {
 			this.log.warn("Alocate order for account {} when investors are not ready.", op.accountId());
 			return null;
 		}
-		
+
 		var investor = this.investors.getInvestor(op.accountId());
 		if (investor == null) {
 			this.log.error("Fail getting investor: {}.", op.accountId());
 			return null;
 		}
-		
+
 		try {
 			return investor.allocateOrder(op);
 		} catch (KerError e) {
 			this.log.error("Fail allocating resource for order: {} and account: {}.", op.orderId(), op.accountId());
 
 			// Make an error report.
-			var eval = this.factory.create(KerOrderEvalue.class);
+			KerOrderEvalue eval;
+			try {
+				eval = this.factory.create(KerOrderEvalue.class);
+			} catch (KerError ex) {
+				this.log.error("Factory fails creating order evalue instance. {}", ex.getMessage(), ex);
+				return null;
+			}
+			
 			eval.error(new KerError(ErrorCode.BAD_FIELD, e.getMessage()));
 			return eval;
 		}
@@ -290,7 +310,7 @@ public class TradeLocalService implements TradeLocal {
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;
-		
+
 		return investor.orderStatus(sid);
 	}
 
@@ -299,7 +319,7 @@ public class TradeLocalService implements TradeLocal {
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;
-		
+
 		try {
 			return investor.trades(sid);
 		} catch (KerError e) {
@@ -307,20 +327,20 @@ public class TradeLocalService implements TradeLocal {
 			return null;
 		}
 	}
-	
+
 	private InvestorAccount investorWithSessionId(String sid) {
 		var accountId = this.sm.getAccountId(sid);
 		if (accountId == null || accountId.length() == 0) {
 			this.log.error("Can't find account ID with given session ID: {}.", sid);
 			return null;
 		}
-		
+
 		var investor = this.investors.getInvestor(accountId);
 		if (investor == null) {
 			this.log.error("Can't find account with given account ID: {}.", accountId);
 			return null;
 		}
-		
+
 		return investor;
 	}
 
@@ -339,13 +359,13 @@ public class TradeLocalService implements TradeLocal {
 			this.log.warn("Cash move command null pointer.");
 			return;
 		}
-		
+
 		var investor = this.investors.getInvestor(cmd.accountId());
 		if (investor == null) {
 			this.log.warn("Investor account not found: {}.", cmd.accountId());
 			return;
 		}
-		
+
 		try {
 			investor.moveCash(cmd);
 		} catch (KerError e) {
