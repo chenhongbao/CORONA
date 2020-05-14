@@ -1,7 +1,6 @@
 package com.nabiki.corona.candle;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
@@ -19,7 +18,6 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.Utils;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.EngineAction;
 import com.nabiki.corona.candle.core.EngineState;
@@ -204,11 +202,16 @@ public class TickLauncher implements Runnable {
 		
 		public TickPostListener() {
 		}
+		
+		private boolean isWorkingTick(Instant update) {
+			var diff = Instant.now().getEpochSecond() - update.getEpochSecond();
+			return Math.abs(diff) < 60;
+		}
 
 		@Override
 		public void tick(KerTick tick) {
 			// Check and set working state in tick local.
-			if (!this.working && Utils.same(tick.actionDay(), LocalDate.now())) {
+			if (!this.working && isWorkingTick(tick.updateTime())) {
 				this.working = true;
 				for (var local : tickLocals)
 					local.isWorking(true);
