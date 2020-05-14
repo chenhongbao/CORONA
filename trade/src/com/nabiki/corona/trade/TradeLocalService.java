@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.OrderStatus;
+import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
@@ -20,6 +22,7 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
+import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.kernel.biz.api.TradeLocal;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
@@ -45,7 +48,7 @@ public class TradeLocalService implements TradeLocal {
 
 		// Create investor manager.
 		try {
-			this.investors = new InvestorManager(this.info, this.factory, this.sm);
+			this.investors = new InvestorManager(this.info, this.factory, this.idKeeper);
 			this.log.info("Initialize investors.");
 
 			// If there are reports coming in before investors are ready, execute them.
@@ -64,10 +67,13 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	private final DataFactory factory = DefaultDataFactory.create();
-	private final IdKeeper sm = new IdKeeper();
+	private final IdKeeper idKeeper = new IdKeeper();
 
 	// Manage investors.
 	private InvestorManager investors;
+	
+	// Remote login rsp.
+	private KerRemoteLoginReport login;
 
 	// Keep remote counter info.
 	private KerAccount account;
@@ -76,6 +82,9 @@ public class TradeLocalService implements TradeLocal {
 
 	// Save trade report and wait for investors are ready.
 	private final Set<KerTradeReport> cacheTradeReports = new ConcurrentSkipListSet<>();
+	
+	public TradeLocalService() {
+	}
 
 	// If investors are not ready, save the trade reports for future and return true.
 	private boolean trySaveTradeReportWaitReady(KerTradeReport r) throws KerError {
@@ -89,15 +98,9 @@ public class TradeLocalService implements TradeLocal {
 
 	// Execute trade report.
 	private void executeTradeReport(KerTradeReport r) {
-		String sid;
-		try {
-			sid = this.sm.querySessionId(r.orderId());
-			if (sid == null) {
-				this.log.warn("Trade session ID not found for order: {}.", r.orderId());
-				return;
-			}
-		} catch (KerError e) {
-			this.log.error("Fail getting session ID for order: " + r.orderId());
+		var sid = this.idKeeper.getSessionIdWithOrderId(r.orderId());
+		if (sid == null) {
+			this.log.warn("Trade session ID not found for order: {}.", r.orderId());
 			return;
 		}
 
@@ -132,7 +135,7 @@ public class TradeLocalService implements TradeLocal {
 	public void orderStatus(KerOrderStatus o) {
 		String sid;
 		try {
-			sid = this.sm.querySessionId(o.orderId());
+			sid = this.idKeeper.getSessionIdWithOrderId(o.orderId());
 			if (sid == null || sid.length() == 0) {
 				this.log.error("Fail getting valid session ID for order: {}.", o.orderId());
 				return;
@@ -143,13 +146,17 @@ public class TradeLocalService implements TradeLocal {
 				return;
 
 			// Set trade session ID.
-			o.tradeSessionId(sid);
+			o.sessionId(sid);
 			// Update order status into investor account.
 			investor.orderStatus(o);
 
 			// Cancel order.
+			// Need to remove order ID mappings for a completed order.
 			if (o.orderStatus() == OrderStatus.CANCELED) {
 				investor.cancel(o);
+				this.idKeeper.removeOrderId(o.orderId());
+			} else if (o.orderStatus() == OrderStatus.ALL_TRADED) {
+				this.idKeeper.removeOrderId(o.orderId());
 			}
 		} catch (KerError e) {
 			this.log.error("Fail updating order status. {}", e.getMessage(), e);
@@ -158,13 +165,13 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public void tradeReport(KerTradeReport r) {
-		try {
-			var sid = this.sm.querySessionId(r.orderId());
-			r.sessionId(sid);
-		} catch (KerError e) {
-			this.log.error("Fail setting session ID into trade report.", e.getMessage(), e);
+		var sid = this.idKeeper.getSessionIdWithOrderId(r.orderId());
+		if (sid == null) {
+			this.log.error("No session ID associated with order: {}.", r.orderId());
 			return;
 		}
+		
+		r.sessionId(sid);
 
 		// Save trade report if investors are not ready, and wait. After investors are initialized, it will check the
 		// saved reports and execute them.
@@ -329,7 +336,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	private InvestorAccount investorWithSessionId(String sid) {
-		var accountId = this.sm.getAccountId(sid);
+		var accountId = this.idKeeper.getAccountIdWithSessionId(sid);
 		if (accountId == null || accountId.length() == 0) {
 			this.log.error("Can't find account ID with given session ID: {}.", sid);
 			return null;
@@ -371,5 +378,27 @@ public class TradeLocalService implements TradeLocal {
 		} catch (KerError e) {
 			this.log.error("Fail moving cash for account: {}. {}", investor.accountId(), e.message(), e);
 		}
+	}
+
+	@Override
+	public String createOrderId(String accountId) {
+		return this.idKeeper.createOrderId(accountId);
+	}
+
+	@Override
+	public void login(KerRemoteLoginReport rep) {
+		if (this.login != null && Utils.same(rep.tradingDay(), this.login.tradingDay()))
+			return;
+		
+		this.login = rep;
+		this.idKeeper.resetId(this.login.maxOrderReference());
+	}
+
+	@Override
+	public LocalDate tradingDay() {
+		if (this.login == null)
+			return null;
+		else
+			return this.login.tradingDay();
 	}
 }

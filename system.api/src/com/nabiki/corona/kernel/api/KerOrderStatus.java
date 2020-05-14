@@ -18,7 +18,7 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void brokerId(String s);
 	
-	void tradeSessionId(String sid);
+	void sessionId(String sid);
 
 	String investorId();
 
@@ -148,13 +148,13 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void sequenceNo(int i);
 
-	int frontId();
+	int remoteFrontId();
 
-	void frontId(int i);
+	void remoteFrontId(int i);
 
-	int sessionId();
+	int remoteSessionId();
 
-	void sessionId(int i);
+	void remoteSessionId(int i);
 
 	String userProductInfo();
 

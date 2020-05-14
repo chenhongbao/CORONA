@@ -2,51 +2,65 @@ package com.nabiki.corona.trade.core;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.nabiki.corona.ErrorCode;
-import com.nabiki.corona.ErrorMessage;
 import com.nabiki.corona.Utils;
-import com.nabiki.corona.kernel.api.KerError;
 
 public class IdKeeper {
 	// Order ID -> Session ID.
-	private Map<String, String> sessionIds = new ConcurrentHashMap<>();
+	private Map<String, String> o2s = new ConcurrentHashMap<>();
 	// Session ID -> Order ID.
-	private Map<String, String> orderIds = new ConcurrentHashMap<>();
+	private Map<String, String> s2o = new ConcurrentHashMap<>();
 	// Session ID -> Account ID.
-	private Map<String, String> accountIds = new ConcurrentHashMap<>();
+	private Map<String, String> s2a = new ConcurrentHashMap<>();
+	
+	private AtomicInteger origin = new AtomicInteger(0);
 	
 	public IdKeeper() {}
 	
-	public String createSessionId(String orderId, String accountId) throws KerError {
-		if (!this.sessionIds.containsKey(orderId))
-			throw new KerError(ErrorCode.DUPLICATE_ORDER_REF, ErrorMessage.DUPLICATE_ORDER_REF);
+	public void resetId(int origin) {
+		this.origin.set(origin);
+	}
+	
+	/**
+	 * Remove mapping for order ID. The method is called after session ends.
+	 * 
+	 * @param orderId order ID
+	 */
+	public void removeOrderId(String orderId) {
+		this.o2s.remove(orderId);
 		
+		var sid = getSessionIdWithOrderId(orderId);
+		if (sid == null)
+			return;
+		
+		this.s2o.remove(sid);
+		this.s2a.remove(sid);
+	}
+	
+	public String createOrderId(String accountId) {
+		var newId = Integer.toString(this.origin.incrementAndGet());
 		var sid = Utils.sessionId();
-		this.sessionIds.put(orderId, sid);
-		this.orderIds.put(sid, orderId);
-		this.accountIds.put(sid, accountId);
-		return sid;
+		
+		// Save mapping.
+		this.o2s.put(newId, sid);
+		this.s2o.put(sid, newId);
+		this.s2a.put(sid, accountId);
+		
+		return newId;
 	}
 	
-	public String querySessionId(String orderId) throws KerError {
-		if (!this.sessionIds.containsKey(orderId))
-			throw new KerError(ErrorCode.ORDER_NOT_FOUND, ErrorMessage.ORDER_NOT_FOUND);
-		
-		return this.sessionIds.get(orderId);
+	public String getSessionIdWithOrderId(String orderId) {		
+		return this.o2s.get(orderId);
 	}
 	
-	// Return order ID associated with the given session ID, or null if not such mapping.
-	public String getOrderId(String sessionId) throws KerError {
-		if (!this.orderIds.containsKey(sessionId)) {
-			throw new KerError(ErrorCode.INCONSISTENT_INFORMATION, ErrorMessage.INCONSISTENT_INFORMATION);
-		}
-		
-		return this.orderIds.get(sessionId);
+	// Return order ID associated with the given session ID, or null if no such mapping.
+	public String getOrderIdWithSessionId(String sessionId) {
+		return this.s2o.get(sessionId);
 	}
 	
 	// Get account ID with session ID.
-	public String getAccountId(String sessionId) {
-		return this.accountIds.get(sessionId);
+	public String getAccountIdWithSessionId(String sessionId) {
+		return this.s2a.get(sessionId);
 	}
 }

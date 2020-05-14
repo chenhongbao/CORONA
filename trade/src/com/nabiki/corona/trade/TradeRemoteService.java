@@ -1,11 +1,9 @@
 package com.nabiki.corona.trade;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -16,7 +14,6 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.ActionFlag;
 import com.nabiki.corona.OrderStatus;
 import com.nabiki.corona.OrderSubmitStatus;
 import com.nabiki.corona.PacketType;
@@ -115,10 +112,7 @@ public class TradeRemoteService implements TradeRemote {
 				return;
 			
 			login = rep;
-
-			// Set order ref.
-			currentOrderReference = new AtomicInteger(0);
-			currentOrderReference.set(rep.maxOrderReference());
+			local.login(rep);
 		}
 
 		@Override
@@ -170,7 +164,6 @@ public class TradeRemoteService implements TradeRemote {
 
 	// Remote login rsp.
 	private KerRemoteLoginReport login;
-	private AtomicInteger currentOrderReference;
 
 	public TradeRemoteService() {
 		this.engineListener = new TradeMessageProcessor();
@@ -184,22 +177,6 @@ public class TradeRemoteService implements TradeRemote {
 	@Override
 	public String name() {
 		return "trade_remote_service";
-	}
-
-	@Override
-	public String nextOrderId() {
-		if (this.currentOrderReference == null)
-			return null;
-		else
-			return Integer.toString(this.currentOrderReference.incrementAndGet());
-	}
-
-	@Override
-	public LocalDate tradingDay() {
-		if (this.login == null)
-			return null;
-		else
-			return this.login.tradingDay();
 	}
 
 	@Override

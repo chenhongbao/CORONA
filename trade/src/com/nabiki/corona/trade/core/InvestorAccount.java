@@ -19,7 +19,7 @@ import com.nabiki.corona.mgr.api.CashMoveCommand;
 public class InvestorAccount {
 	private final AccountManager accountManager;
 	private final PositionManager positionManager;
-	private final IdKeeper sessionManager;
+	private final IdKeeper idKeeper;
 	private final TradeKeeper tradeKeeper;
 	private final SessionWriter sessionWriter;
 	private final OrderStatusKeeper statusKeeper;
@@ -29,7 +29,7 @@ public class InvestorAccount {
 	private final RuntimeInfo info;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, IdKeeper sm) throws KerError {
+	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, IdKeeper keeper) throws KerError {
 		this.accountId = accountId;
 		this.info = info;
 		this.directory= dir;
@@ -42,7 +42,7 @@ public class InvestorAccount {
 		Utils.ensureDir(accountDir);
 		
 		// Create instances of data.
-		this.sessionManager = sm;
+		this.idKeeper = keeper;
 		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
 		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
 		this.tradeKeeper = new TradeKeeper();
@@ -94,7 +94,7 @@ public class InvestorAccount {
 			throw new KerError("Can't process trade report of null pointer.");
 		
 		// Set session ID.
-		var sid = this.sessionManager.querySessionId(rep.orderId());
+		var sid = this.idKeeper.getSessionIdWithOrderId(rep.orderId());
 		rep.sessionId(sid);
 		
 		var positionEngine = this.positionManager.getPositon(rep.symbol());
@@ -121,7 +121,7 @@ public class InvestorAccount {
 		if (order == null)
 			throw new KerError("Can't cancel order of null pointer.");
 		
-		var sid = this.sessionManager.querySessionId(order.orderId());
+		var sid = this.idKeeper.getSessionIdWithOrderId(order.orderId());
 		
 		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 			this.accountManager.account().cancel(sid);
@@ -156,7 +156,7 @@ public class InvestorAccount {
 
 		KerOrderEvalue r = null;
 		// Create session ID.
-		var sid = this.sessionManager.createSessionId(order.orderId(), order.accountId());
+		var sid = this.idKeeper.getSessionIdWithOrderId(order.orderId());
 		order.sessionId(sid);
 		
 		// Save order.

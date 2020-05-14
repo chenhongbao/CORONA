@@ -1,7 +1,5 @@
 package com.nabiki.corona.kernel.biz.api;
 
-import java.time.LocalDate;
-
 import com.nabiki.corona.kernel.api.KerAction;
 import com.nabiki.corona.kernel.api.KerOrder;
 
@@ -12,20 +10,6 @@ public interface TradeRemote {
 	 * @return service name
 	 */
 	String name();
-	
-	/**
-	 * Get next valid order ID. The order ID increases per call.
-	 * 
-	 * @return order ID
-	 */
-	String nextOrderId();
-	
-	/**
-	 * Get trading day.
-	 * 
-	 * @return trading day
-	 */
-	LocalDate tradingDay();
 
 	/**
 	 * Send new order to remote counter and return the number of currently pending order requests in queue. If the order

@@ -1,5 +1,6 @@
 package com.nabiki.corona.kernel.biz.api;
 
+import java.time.LocalDate;
 import java.util.Collection;
 
 import com.nabiki.corona.kernel.api.KerAccount;
@@ -7,11 +8,34 @@ import com.nabiki.corona.kernel.api.KerOrderEvalue;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
+import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
 import com.nabiki.corona.kernel.api.KerTradeReport;
 import com.nabiki.corona.mgr.api.CashMoveCommand;
 
 public interface TradeLocal {
 	String name();
+	
+	/**
+	 * Create a valid order ID associated with a trade session ID.
+	 * 
+	 * @param accountId the account with given ID owns the order ID
+	 * @return order ID
+	 */
+	String createOrderId(String accountId);
+	
+	/**
+	 * Get trading day.
+	 * 
+	 * @return trading day
+	 */
+	LocalDate tradingDay();
+	
+	/**
+	 * Notifier for remote login.
+	 * 
+	 * @param rep remote login report
+	 */
+	void login(KerRemoteLoginReport rep);
 
 	/**
 	 * Query latest order status of the given trade session ID.

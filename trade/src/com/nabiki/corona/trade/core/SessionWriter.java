@@ -75,9 +75,9 @@ public class SessionWriter {
 	}
 	
 	public void write(KerOrderStatus status) throws KerError {
-		var dir = ensureDir(status.tradeSessionId(), "status");
+		var dir = ensureDir(status.sessionId(), "status");
 		if (dir == null)
-			throw new KerError("Fail creating directory to save session info: " + status.tradeSessionId());
+			throw new KerError("Fail creating directory to save session info: " + status.sessionId());
 		
 		var bytes = this.codec.encode(status);
 		write(bytes, Path.of(dir.toAbsolutePath().toString(), "status." + formatInstant(status.updateTime()) + ".json"));
