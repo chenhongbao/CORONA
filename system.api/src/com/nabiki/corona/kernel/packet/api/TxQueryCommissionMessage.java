@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.packet.api;
 
-public interface TxQueryCommissionMessage extends PacketMessage<String> {
+import com.nabiki.corona.kernel.api.KerQueryCommission;
+
+public interface TxQueryCommissionMessage extends PacketMessage<KerQueryCommission> {
 
 }

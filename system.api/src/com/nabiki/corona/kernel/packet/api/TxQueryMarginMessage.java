@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.packet.api;
 
-public interface TxQueryMarginMessage extends PacketMessage<String> {
+import com.nabiki.corona.kernel.api.KerQueryMargin;
+
+public interface TxQueryMarginMessage extends PacketMessage<KerQueryMargin> {
 
 }

@@ -2,6 +2,7 @@ package com.nabiki.corona.kernel.biz.api;
 
 import java.time.LocalDate;
 
+import com.nabiki.corona.kernel.api.KerAction;
 import com.nabiki.corona.kernel.api.KerOrder;
 
 public interface TradeRemote {
@@ -38,10 +39,10 @@ public interface TradeRemote {
 	/**
 	 * Cancel orders denoted by given order ID.
 	 * 
-	 * @param orderId ID of order to be canceled
+	 * @param action action
 	 * @return number of pending action request in queue
 	 */
-	int action(String orderId);
+	int action(KerAction action);
 
 	/**
 	 * Query instrument information of the given symbol from remote counter and return the number of currently pending

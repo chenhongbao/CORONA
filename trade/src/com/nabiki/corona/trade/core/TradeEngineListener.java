@@ -1,6 +1,7 @@
 package com.nabiki.corona.trade.core;
 
 import com.nabiki.corona.kernel.api.KerAccount;
+import com.nabiki.corona.kernel.api.KerAction;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
@@ -15,11 +16,13 @@ public interface TradeEngineListener {
 	
 	void account(KerAccount account);
 	
-	void position(KerPositionDetail pos);
+	void position(KerPositionDetail pos, boolean last);
 	
 	void error(KerError error);
 	
 	void error(KerOrder order, KerError error);
+	
+	void error(KerAction action, KerError error);
 	
 	void remoteLogin(KerRemoteLoginReport rep);
 	

@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.packet.api;
 
-public interface TxRequestActionMessage extends PacketMessage<String> {
+import com.nabiki.corona.kernel.api.KerAction;
+
+public interface TxRequestActionMessage extends PacketMessage<KerAction> {
 
 }

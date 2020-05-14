@@ -40,7 +40,7 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void price(double d);
 
-	void orginalVolume(int i);
+	void originalVolume(int i);
 
 	void timeCondition(char t);
 

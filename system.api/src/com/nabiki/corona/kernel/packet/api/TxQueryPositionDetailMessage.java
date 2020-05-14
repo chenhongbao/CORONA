@@ -1,5 +1,7 @@
 package com.nabiki.corona.kernel.packet.api;
 
-public interface TxQueryPositionDetailMessage extends PacketMessage<String> {
+import com.nabiki.corona.kernel.api.KerQueryPositionDetail;
+
+public interface TxQueryPositionDetailMessage extends PacketMessage<KerQueryPositionDetail> {
 
 }

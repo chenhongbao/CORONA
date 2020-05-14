@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -11,9 +12,13 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.ActionFlag;
+import com.nabiki.corona.OrderStatus;
+import com.nabiki.corona.OrderSubmitStatus;
 import com.nabiki.corona.PacketType;
 import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.DefaultDataCodec;
@@ -21,12 +26,19 @@ import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataCodec;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
+import com.nabiki.corona.kernel.api.KerAction;
 import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
+import com.nabiki.corona.kernel.api.KerQueryAccount;
+import com.nabiki.corona.kernel.api.KerQueryCommission;
+import com.nabiki.corona.kernel.api.KerQueryInstrument;
+import com.nabiki.corona.kernel.api.KerQueryMargin;
+import com.nabiki.corona.kernel.api.KerQueryPositionDetail;
 import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
 import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.kernel.biz.api.TradeLocal;
 import com.nabiki.corona.kernel.biz.api.TradeRemote;
 import com.nabiki.corona.kernel.packet.api.TxQueryAccountMessage;
 import com.nabiki.corona.kernel.packet.api.TxRequestActionMessage;
@@ -63,30 +75,46 @@ public class TradeRemoteService implements TradeRemote {
 		}
 
 		@Override
-		public void position(KerPositionDetail pos) {
-			// TODO position
-
+		public void position(KerPositionDetail pos, boolean last) {
+			local.positionDetail(pos, last);
 		}
 
 		@Override
 		public void error(KerError error) {
-			// TODO error
-
+			log.error("Operation error({}): {}", error.code(), error.message(), error);
 		}
 
 		@Override
 		public void error(KerOrder order, KerError error) {
-			// TODO order error
-
+			log.error("Order request error({}): {}", error.code(), error.message(), error);
+			
+			// Cancel order.
+			try {
+				var status = factory.create(KerOrderStatus.class);
+				
+				// Build order status for the failed order.
+				status.orderId(order.orderId());
+				status.originalVolume(order.volume());
+				status.tradedVolume(0);
+				status.price(0.0D);
+				status.updateTime(Instant.now());
+				status.orderStatus((char)OrderStatus.CANCELED);
+				status.orderSubmitStatus((char)OrderSubmitStatus.INSERT_REJECTED);
+				
+				// Call method.
+				local.orderStatus(status);
+			} catch (KerError e) {
+				log.error("Fail canceling order: {}. {}", order.orderId(), e.message(), e);
+			}
 		}
 
 		@Override
 		public void remoteLogin(KerRemoteLoginReport rep) {
 			// Repeatedly login on the same trading day, don't update.
-			if (Utils.same(rep.tradingDay(), loginReport.tradingDay()))
+			if (Utils.same(rep.tradingDay(), login.tradingDay()))
 				return;
 			
-			loginReport = rep;
+			login = rep;
 
 			// Set order ref.
 			currentOrderReference = new AtomicInteger(0);
@@ -99,12 +127,33 @@ public class TradeRemoteService implements TradeRemote {
 
 		}
 
+		@Override
+		public void error(KerAction action, KerError error) {
+			log.error("Action failed for order: {}. [{}]{}", action.orderId(), error.code(), error.message(), error);		
+		}
+
 	}
 
 	// Use OSGi logging service
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
-
+	
+	// Trade local service.
+	private volatile TradeLocal local;
+	
+	@Reference(policy = ReferencePolicy.DYNAMIC)
+	public void setTradeLocal(TradeLocal local) {
+		this.local = local;
+		this.log.info("Set trade local: {}.", local.name());
+	}
+	
+	public void unsetTradeLocal(TradeLocal local) {
+		if (local == this.local) {
+			this.local = null;
+			this.log.info("Unset trade local: {}.", local.name());
+		}
+	}
+	
 	private final TradeEngineListener engineListener;
 	private final TradeLauncher launcher;
 	private final PacketQueue packetQueue;
@@ -120,7 +169,7 @@ public class TradeRemoteService implements TradeRemote {
 	private final DataCodec codec = DefaultDataCodec.create();
 
 	// Remote login rsp.
-	private KerRemoteLoginReport loginReport;
+	private KerRemoteLoginReport login;
 	private AtomicInteger currentOrderReference;
 
 	public TradeRemoteService() {
@@ -147,10 +196,10 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Override
 	public LocalDate tradingDay() {
-		if (this.loginReport == null)
+		if (this.login == null)
 			return null;
 		else
-			return this.loginReport.tradingDay();
+			return this.login.tradingDay();
 	}
 
 	@Override
@@ -162,89 +211,110 @@ public class TradeRemoteService implements TradeRemote {
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ORDER, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail sending order request: {}. {}.", order.orderId(), e.getMessage(), e);
+			this.log.error("fail sending order request: {}. {}", order.orderId(), e.message(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int instrument(String symbol) {
-		TxQueryInstrumentMessage req;
 		try {
-			req = this.factory.create(TxQueryInstrumentMessage.class);
-			req.value(symbol);
+			var req = this.factory.create(TxQueryInstrumentMessage.class);
+			// Set query.
+			var val = this.factory.create(KerQueryInstrument.class);
+			val.symbol(symbol);
+			// Set message.
+			req.value(val);
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_INSTRUMENT, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail sending query instrument: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query instrument: {}. {}", symbol, e.message(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int margin(String symbol) {
-		TxQueryMarginMessage req;
 		try {
-			req = this.factory.create(TxQueryMarginMessage.class);
-			req.value(symbol);
+			var req = this.factory.create(TxQueryMarginMessage.class);
+			// Set query.
+			var val = this.factory.create(KerQueryMargin.class);
+			val.brokerId(this.login.brokerId());
+			val.investorId(this.login.userId());
+			val.symbol(symbol);
+			// Set message.
+			req.value(val);
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_MARGIN, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail sending query margin: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query margin: {}. {}", symbol, e.message(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public int commission(String symbol) {
-		TxQueryCommissionMessage req;
 		try {
-			req = this.factory.create(TxQueryCommissionMessage.class);
-			req.value(symbol);
+			var req = this.factory.create(TxQueryCommissionMessage.class);
+			// Set query.
+			var val = this.factory.create(KerQueryCommission.class);
+			val.brokerId(this.login.brokerId());
+			val.investorId(this.login.userId());
+			val.symbol(symbol);
+			// Set message.
+			req.value(val);
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_COMMISSION, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail sending query commission: {}. {}.", symbol, e.getMessage(), e);
+			this.log.error("Fail sending query commission: {}. {}", symbol, e.message(), e);
 			return -1;
 		}
 	}
 
 	@Override
 	public void account() {
-		TxQueryAccountMessage req;
 		try {
-			req = this.factory.create(TxQueryAccountMessage.class);
-			req.value("");
+			var req = this.factory.create(TxQueryAccountMessage.class);
+			// Set query.
+			var val = this.factory.create(KerQueryAccount.class);
+			val.brokerId(this.login.brokerId());
+			val.investorId(this.login.userId());
+			val.investorId("CNY");
+			// Set message.
+			req.value(val);
 			req.last(true);
 			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_ACCOUNT, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail sending query account. {}.", e.getMessage(), e);
+			this.log.error("Fail sending query account. {}", e.message(), e);
 		}	
 	}
 
 	@Override
 	public void position() {
-		TxQueryPositionDetailMessage req;
 		try {
-			req = this.factory.create(TxQueryPositionDetailMessage.class);
-			req.value("");
+			var req = this.factory.create(TxQueryPositionDetailMessage.class);
+			// Set query, query all position so the symbol is empty.
+			var val = this.factory.create(KerQueryPositionDetail.class);
+			val.brokerId(this.login.brokerId());
+			val.investorId(this.login.userId());
+			// Set message.
+			req.value(val);
 			req.last(true);
 			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fail sending query position detail. {}.", e.getMessage(), e);
+			this.log.error("Fail sending query position detail. {}", e.message(), e);
 		}
 	}
 
 	@Override
-	public int action(String orderId) {
-		TxRequestActionMessage req;
+	public int action(KerAction action) {
 		try {
-			req = this.factory.create(TxRequestActionMessage.class);
-			req.value(orderId);
+			var req = this.factory.create(TxRequestActionMessage.class);
+			req.value(action);
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ACTION, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("Fails creating action request: {}. {}.", orderId, e.getMessage(), e);
+			this.log.error("Fails creating action request: {}. {}", action.orderId(), e.message(), e);
 			return -1;
 		}
 	}

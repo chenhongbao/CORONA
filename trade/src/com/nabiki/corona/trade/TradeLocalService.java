@@ -268,7 +268,7 @@ public class TradeLocalService implements TradeLocal {
 			try {
 				eval = this.factory.create(KerOrderEvalue.class);
 			} catch (KerError ex) {
-				this.log.error("Factory fails creating order evalue instance. {}", ex.getMessage(), ex);
+				this.log.error("Factory fails creating order evalue instance. {}", ex.message(), ex);
 				return null;
 			}
 			
@@ -323,7 +323,7 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			return investor.trades(sid);
 		} catch (KerError e) {
-			this.log.error("Fail retriving trades' reports under session ID: {}. {}", sid, e.getMessage(), e);
+			this.log.error("Fail retriving trades' reports under session ID: {}. {}", sid, e.message(), e);
 			return null;
 		}
 	}
@@ -349,7 +349,7 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			this.investors.setInvestor(accountId);
 		} catch (KerError e) {
-			this.log.error("Fail creating new account: {}. {}", accountId, e.getMessage(), e);
+			this.log.error("Fail creating new account: {}. {}", accountId, e.message(), e);
 		}
 	}
 
@@ -369,7 +369,7 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			investor.moveCash(cmd);
 		} catch (KerError e) {
-			this.log.error("Fail moving cash for account: {}. {}", investor.accountId(), e.getMessage(), e);
+			this.log.error("Fail moving cash for account: {}. {}", investor.accountId(), e.message(), e);
 		}
 	}
 }
