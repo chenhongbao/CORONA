@@ -26,7 +26,7 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.mgr.api.CashMoveCommand;
 import com.nabiki.corona.trade.core.InvestorAccount;
 import com.nabiki.corona.trade.core.InvestorManager;
-import com.nabiki.corona.trade.core.SessionManager;
+import com.nabiki.corona.trade.core.IdKeeper;
 
 @Component
 public class TradeLocalService implements TradeLocal {
@@ -64,7 +64,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	private final DataFactory factory = DefaultDataFactory.create();
-	private final SessionManager sm = new SessionManager();
+	private final IdKeeper sm = new IdKeeper();
 
 	// Manage investors.
 	private InvestorManager investors;

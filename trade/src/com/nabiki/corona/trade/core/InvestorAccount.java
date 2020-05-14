@@ -19,7 +19,7 @@ import com.nabiki.corona.mgr.api.CashMoveCommand;
 public class InvestorAccount {
 	private final AccountManager accountManager;
 	private final PositionManager positionManager;
-	private final SessionManager sessionManager;
+	private final IdKeeper sessionManager;
 	private final TradeKeeper tradeKeeper;
 	private final SessionWriter sessionWriter;
 	private final OrderStatusKeeper statusKeeper;
@@ -29,7 +29,7 @@ public class InvestorAccount {
 	private final RuntimeInfo info;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, SessionManager sm) throws KerError {
+	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, IdKeeper sm) throws KerError {
 		this.accountId = accountId;
 		this.info = info;
 		this.directory= dir;

@@ -111,22 +111,21 @@ public class LogCache {
 		// Time info of the log.
 		// Format currentMillis into readable date time.
 		var dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(entry.getTime()), TimeZone.getDefault().toZoneId());
-		this.pw.println("[TIM]" + dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS")));
-		this.pw.println("[EXC]" + entry.getException());
-		this.pw.println("[SEQ]" + entry.getSequence());
+		this.pw.print(dt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss SSS")));
+		this.pw.print("\t" + entry.getSequence());
 		
 		// Name of the logger.
-		this.pw.println("[LOG]" + entry.getLoggerName());
-		this.pw.println("[LEV]" + entry.getLogLevel());
+		this.pw.print("\t" + entry.getLoggerName());
+		this.pw.print("\t" + entry.getLogLevel());
 		
 		// Location of the log.
-		this.pw.println("[BUN]" + entry.getBundle().getSymbolicName() + " - " + entry.getBundle().getVersion());
-		var location = entry.getLocation().getClassName() + "." + entry.getLocation().getMethodName() + "():"
-				+ entry.getLocation().getLineNumber();
-		this.pw.println("[LOC]" + location);
+		this.pw.print("\t" + entry.getBundle().getSymbolicName() + " - " + entry.getBundle().getVersion());
+		var location = entry.getLocation().getClassName() + "." + entry.getLocation().getMethodName() + "("
+				+ entry.getLocation().getLineNumber() + ")";
+		this.pw.print("\t" + location);
 		
 		// Separator.
-		this.pw.println("[END]");
+		this.pw.println("\t" + entry.getMessage());
 		
 		if (this.pw.checkError()) {
 			try {if (this.listener != null)

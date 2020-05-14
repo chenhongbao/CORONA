@@ -1,6 +1,7 @@
 package com.nabiki.corona.trade.core;
 
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,12 +13,12 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 public class InvestorManager {
 	private final RuntimeInfo runtime;
 	private final DataFactory factory;
-	private final SessionManager sm;
+	private final IdKeeper sm;
 	private final Map<String, InvestorAccount> investors = new ConcurrentHashMap<>();
 	
 	private final static Path root = Path.of(".", "investor");
 
-	public InvestorManager(RuntimeInfo info, DataFactory factory, SessionManager sm) throws KerError {
+	public InvestorManager(RuntimeInfo info, DataFactory factory, IdKeeper sm) throws KerError {
 		this.runtime= info;
 		this.factory = factory;
 		this.sm = sm;
@@ -45,8 +46,23 @@ public class InvestorManager {
 			i.init();
 	}
 	
+	/**
+	 * Get investor with the given account ID.
+	 * 
+	 * @param accountId account ID
+	 * @return investor
+	 */
 	public InvestorAccount getInvestor(String accountId) {
 		return this.investors.get(accountId);
+	}
+	
+	/**
+	 * Get all investors.
+	 * 
+	 * @return collection of all investors.
+	 */
+	public Collection<InvestorAccount> getInvestors() {
+		return this.investors.values();
 	}
 	
 	public void setInvestor(String accountId) throws KerError {

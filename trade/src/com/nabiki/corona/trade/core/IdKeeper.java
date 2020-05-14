@@ -8,7 +8,7 @@ import com.nabiki.corona.ErrorMessage;
 import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.api.KerError;
 
-public class SessionManager {
+public class IdKeeper {
 	// Order ID -> Session ID.
 	private Map<String, String> sessionIds = new ConcurrentHashMap<>();
 	// Session ID -> Order ID.
@@ -16,7 +16,7 @@ public class SessionManager {
 	// Session ID -> Account ID.
 	private Map<String, String> accountIds = new ConcurrentHashMap<>();
 	
-	public SessionManager() {}
+	public IdKeeper() {}
 	
 	public String createSessionId(String orderId, String accountId) throws KerError {
 		if (!this.sessionIds.containsKey(orderId))
