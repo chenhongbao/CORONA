@@ -2,7 +2,10 @@ package com.nabiki.corona.trade.core;
 
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerAction;
+import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.api.KerInstrument;
+import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -17,6 +20,12 @@ public interface TradeEngineListener {
 	void account(KerAccount account);
 	
 	void position(KerPositionDetail pos, boolean last);
+	
+	void instrument(KerInstrument in, boolean last);
+	
+	void margin(KerMargin m);
+	
+	void commission(KerCommission c);
 	
 	void error(KerError error);
 	

@@ -1,6 +1,8 @@
 package com.nabiki.corona.trade;
 
 import java.time.Instant;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,10 @@ import com.nabiki.corona.kernel.api.DataCodec;
 import com.nabiki.corona.kernel.api.DataFactory;
 import com.nabiki.corona.kernel.api.KerAccount;
 import com.nabiki.corona.kernel.api.KerAction;
+import com.nabiki.corona.kernel.api.KerCommission;
 import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.kernel.api.KerInstrument;
+import com.nabiki.corona.kernel.api.KerMargin;
 import com.nabiki.corona.kernel.api.KerOrder;
 import com.nabiki.corona.kernel.api.KerOrderStatus;
 import com.nabiki.corona.kernel.api.KerPositionDetail;
@@ -43,6 +48,7 @@ import com.nabiki.corona.kernel.packet.api.TxQueryCommissionMessage;
 import com.nabiki.corona.kernel.packet.api.TxQueryInstrumentMessage;
 import com.nabiki.corona.kernel.packet.api.TxQueryMarginMessage;
 import com.nabiki.corona.kernel.packet.api.TxRequestOrderMessage;
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.packet.api.TxQueryPositionDetailMessage;
 import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.trade.core.PacketQueue;
@@ -52,6 +58,8 @@ import com.nabiki.corona.trade.core.TradeEngineListener;
 public class TradeRemoteService implements TradeRemote {
 
 	private class TradeMessageProcessor implements TradeEngineListener {
+		private boolean instLast = true;
+		private Queue<KerInstrument> insts = new ConcurrentLinkedQueue<>();
 
 		@Override
 		public void orderStatus(KerOrderStatus status) {
@@ -122,11 +130,57 @@ public class TradeRemoteService implements TradeRemote {
 			log.error("Action failed for order: {}. [{}]{}", action.orderId(), error.code(), error.message(), error);		
 		}
 
+		@Override
+		public void instrument(KerInstrument in, boolean last) {
+			// Clear old data.
+			if (this.instLast)
+				this.insts.clear();
+		
+			this.instLast = last;
+			this.insts.add(in);
+			
+			// If data all ready, last bit is true, call the setter.
+			if (this.instLast && this.insts.size() > 0) {
+				while (this.insts.size() > 1) {
+					info.instrument(this.insts.poll(), false);
+				}
+				
+				// Set the last piece of data with last bit set true.
+				info.instrument(this.insts.poll(), true);
+			}
+		}
+
+		@Override
+		public void margin(KerMargin m) {		
+			info.margin(m);
+		}
+
+		@Override
+		public void commission(KerCommission c) {
+			info.commission(c);
+		}
+
 	}
 
 	// Use OSGi logging service
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
+	
+	// Runtime info.
+	private volatile RuntimeInfo info;
+	
+	@Reference(policy = ReferencePolicy.DYNAMIC)
+	public void setInfo(RuntimeInfo info) {
+		this.info = info;
+		this.log.info("Set runtime info: {}.", info.name());
+	}
+	
+	public void unsetInfo(RuntimeInfo info) {
+		if (this.info == info) {
+			this.info = null;
+			this.log.info("Unset runtime info: {}.", info.name());
+		}
+	}
 	
 	// Trade local service.
 	private volatile TradeLocal local;
