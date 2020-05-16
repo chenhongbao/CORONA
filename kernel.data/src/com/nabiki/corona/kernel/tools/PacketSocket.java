@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketAddress;
 
+import com.nabiki.corona.MessageType;
 import com.nabiki.corona.kernel.api.KerError;
 
 public class PacketSocket {
@@ -51,9 +52,9 @@ public class PacketSocket {
             throw new KerError("Fail reading packet type.");
         }
 
-        if (type == Packet.Type.CLOSE) {
+        if (type == MessageType.TX_MGR_CLOSE_CONN) {
             passiveClose();
-            return new Packet(Packet.Type.CLOSE, null);
+            return new Packet(MessageType.TX_MGR_CLOSE_CONN, null);
         }
 
         try {
@@ -63,7 +64,7 @@ public class PacketSocket {
         }
 
         if (length == 0) {
-            return new Packet(Packet.Type.EMPTY, null);
+            return new Packet(MessageType.TX_MGR_EMPTY, null);
         } else if (length < 0) {
             // Abnormal close.
             passiveClose();
@@ -106,7 +107,7 @@ public class PacketSocket {
     public void close() {
         try {
             // Write type and zero length.
-            this.output.writeShort(Packet.Type.CLOSE);
+            this.output.writeShort(MessageType.TX_MGR_CLOSE_CONN);
             this.output.writeInt(0);
             // Wait for peer's response and then close.
             this.input.readInt();
@@ -120,7 +121,7 @@ public class PacketSocket {
             return;
 
         try {
-            this.output.writeShort(Packet.Type.CLOSE);
+            this.output.writeShort(MessageType.TX_MGR_CLOSE_CONN);
             this.output.writeInt(0);
             this.socket.close();
         } catch (IOException e) {

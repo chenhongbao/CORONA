@@ -1,12 +1,6 @@
 package com.nabiki.corona.kernel.tools;
 
 public class Packet {
-    public static class Type {
-        public static short CLOSE = 0;
-        public static short EMPTY = 1;
-        public static short PLAIN_TXT = 2;
-    }
-
     private short type;
     private byte[] bytes;
 
@@ -15,7 +9,7 @@ public class Packet {
         this.bytes = bytes;
     }
 
-    public int type() {
+    public short type() {
         return this.type;
     }
 

@@ -9,7 +9,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import com.nabiki.corona.PacketType;
+import com.nabiki.corona.MessageType;
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.DefaultDataFactory;
 import com.nabiki.corona.kernel.api.DataCodec;
@@ -51,7 +51,7 @@ public class TickEngine implements Runnable {
 		if (!this.remote.socket().isConnected() || this.remote.socket().isClosed())
 			throw new KerError("Can't send symbols because remote connection is closed.");
 		
-		this.remote.send(PacketType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
+		this.remote.send(MessageType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
 	}
 
 	@Override
@@ -147,7 +147,7 @@ public class TickEngine implements Runnable {
 	}
 	
 	private void processPacket(Packet packet) {
-		if (packet.type() != PacketType.RX_TICK) {
+		if (packet.type() != MessageType.RX_TICK) {
 			callListener(new KerError("Wrong packet type, need TICK."));
 			return;
 		}

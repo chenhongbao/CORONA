@@ -18,7 +18,7 @@ import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.OrderStatus;
 import com.nabiki.corona.OrderSubmitStatus;
-import com.nabiki.corona.PacketType;
+import com.nabiki.corona.MessageType;
 import com.nabiki.corona.Utils;
 import com.nabiki.corona.kernel.DefaultDataCodec;
 import com.nabiki.corona.kernel.DefaultDataFactory;
@@ -236,7 +236,7 @@ public class TradeRemoteService implements TradeRemote {
 			req = this.factory.create(TxRequestOrderMessage.class);
 			req.value(order);
 			req.last(true);
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ORDER, this.codec.encode(req)));
+			return this.packetQueue.enqueue(new Packet(MessageType.TX_REQUEST_ORDER, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("fail sending order request: {}. {}", order.orderId(), e.message(), e);
 			return -1;
@@ -253,7 +253,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Set message.
 			req.value(val);
 			req.last(true);
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_INSTRUMENT, this.codec.encode(req)));
+			return this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_INSTRUMENT, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query instrument: {}. {}", symbol, e.message(), e);
 			return -1;
@@ -272,7 +272,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Set message.
 			req.value(val);
 			req.last(true);
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_MARGIN, this.codec.encode(req)));
+			return this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_MARGIN, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query margin: {}. {}", symbol, e.message(), e);
 			return -1;
@@ -291,7 +291,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Set message.
 			req.value(val);
 			req.last(true);
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_COMMISSION, this.codec.encode(req)));
+			return this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_COMMISSION, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query commission: {}. {}", symbol, e.message(), e);
 			return -1;
@@ -310,7 +310,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Set message.
 			req.value(val);
 			req.last(true);
-			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_ACCOUNT, this.codec.encode(req)));
+			this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_ACCOUNT, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query account. {}", e.message(), e);
 		}	
@@ -327,7 +327,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Set message.
 			req.value(val);
 			req.last(true);
-			this.packetQueue.enqueue(new Packet(PacketType.TX_QUERY_POSITION_DETAIL, this.codec.encode(req)));
+			this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_POSITION_DETAIL, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query position detail. {}", e.message(), e);
 		}
@@ -339,7 +339,7 @@ public class TradeRemoteService implements TradeRemote {
 			var req = this.factory.create(TxRequestActionMessage.class);
 			req.value(action);
 			req.last(true);
-			return this.packetQueue.enqueue(new Packet(PacketType.TX_REQUEST_ACTION, this.codec.encode(req)));
+			return this.packetQueue.enqueue(new Packet(MessageType.TX_REQUEST_ACTION, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fails creating action request: {}. {}", action.orderId(), e.message(), e);
 			return -1;
@@ -364,6 +364,10 @@ public class TradeRemoteService implements TradeRemote {
 	@Deactivate
 	public void stop(ComponentContext ctx) {
 		this.executor.remove(this.launcher);
+		
+		// Stop packet queue.
+		this.packetQueue.tellStop();
+		this.executor.remove(this.packetQueue);
 
 		try {
 			this.executor.shutdown();

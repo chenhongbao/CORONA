@@ -8,7 +8,7 @@ public class TradeEngine {
 		this.listener = listener;
 	}
 
-	public void send(short type, byte[] bytes, int offset, int length) {
+	public synchronized void send(short type, byte[] bytes, int offset, int length) {
 		// TODO send encoded bytes to remote
 	}
 }
