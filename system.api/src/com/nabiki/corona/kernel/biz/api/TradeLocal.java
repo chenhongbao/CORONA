@@ -36,6 +36,11 @@ public interface TradeLocal {
 	 * @param rep remote login report
 	 */
 	void login(KerRemoteLoginReport rep);
+	
+	/**
+	 * Notifier for remote logout.
+	 */
+	void logout();
 
 	/**
 	 * Query latest order status of the given trade session ID.
@@ -74,16 +79,6 @@ public interface TradeLocal {
 	 * @param last true if the current input is the last of the series
 	 */
 	void positionDetail(KerPositionDetail p, boolean last);
-
-	/**
-	 * Perform settlement after the previous trading day.
-	 */
-	void settle();
-
-	/**
-	 * Perform initialization for new trading day.
-	 */
-	void init();
 
 	/**
 	 * Set the global account info. The account is the remote broker account.

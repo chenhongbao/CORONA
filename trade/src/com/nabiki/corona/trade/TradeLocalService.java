@@ -1,5 +1,6 @@
 package com.nabiki.corona.trade;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -295,24 +296,6 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public void settle() {
-		try {
-			this.investors.settle();
-		} catch (KerError e) {
-			this.log.error("Fail settlement. {}", e.getMessage(), e);
-		}
-	}
-
-	@Override
-	public void init() {
-		try {
-			this.investors.init();
-		} catch (KerError e) {
-			this.log.error("Fail initialization. {}", e.getMessage(), e);
-		}
-	}
-
-	@Override
 	public KerOrderStatus orderStatus(String sid) {
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
@@ -387,11 +370,19 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public void login(KerRemoteLoginReport rep) {
+		// Filter the repeated login in the same trading day.
 		if (this.login != null && Utils.same(rep.tradingDay(), this.login.tradingDay()))
 			return;
 		
 		this.login = rep;
 		this.idKeeper.resetId(this.login.maxOrderReference());
+		
+		// Initialize accounts.
+		try {
+			this.investors.init();
+		} catch (KerError e) {
+			this.log.error("Fail initializing accounts. {}", e.message(), e);
+		}
 	}
 
 	@Override
@@ -400,5 +391,35 @@ public class TradeLocalService implements TradeLocal {
 			return null;
 		else
 			return this.login.tradingDay();
+	}
+
+	@Override
+	public void logout() {
+		// Logout once per trading day.
+		// However, the remote may logout over once between different episodes.
+		// Check the time to logout at the end of trading day.
+		
+		// Take any of the subscribed symbols.
+		var iter = this.info.symbols().iterator();
+		if (!iter.hasNext()) {
+			this.log.warn("No symbols found in runtime info.");
+			return;
+		}
+		
+		var symbol = iter.next();
+		
+		// Check now is the end of a trading day.
+		if (!this.info.endOfDay(Instant.now(), symbol))
+			return;
+		
+		// Settle.
+		try {
+			this.investors.settle();
+		} catch (KerError e) {
+			this.log.error("Fail settling accounts. {}", e.message(), e);
+		}
+		
+		// Reset login info.
+		this.login = null;
 	}
 }

@@ -55,20 +55,17 @@ public class TradeRemoteService implements TradeRemote {
 
 		@Override
 		public void orderStatus(KerOrderStatus status) {
-			// TODO order status
-
+			local.orderStatus(status);
 		}
 
 		@Override
 		public void tradeReport(KerTradeReport rep) {
-			// TODO trade report
-
+			local.tradeReport(rep);
 		}
 
 		@Override
 		public void account(KerAccount account) {
-			// TODO account
-
+			local.account(account);
 		}
 
 		@Override
@@ -117,8 +114,7 @@ public class TradeRemoteService implements TradeRemote {
 
 		@Override
 		public void remoteLogout() {
-			// TODO logout rsp
-
+			local.logout();
 		}
 
 		@Override
