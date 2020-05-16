@@ -1,4 +1,4 @@
-package com.mabiki.corona.loghost.core;
+package com.nabiki.corona.info.log;
 
 import java.io.File;
 import java.io.FilenameFilter;

@@ -1,4 +1,4 @@
-package com.mabiki.corona.loghost;
+package com.nabiki.corona.info;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,14 +15,14 @@ import org.osgi.service.log.LogReaderService;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.mabiki.corona.loghost.core.CacheErrorListener;
-import com.mabiki.corona.loghost.core.LogCache;
-import com.mabiki.corona.loghost.core.LogWriter;
+import com.nabiki.corona.info.log.CacheErrorListener;
+import com.nabiki.corona.info.log.LogCache;
+import com.nabiki.corona.info.log.LogWriter;
 import com.nabiki.corona.kernel.biz.api.LogQuery;
 import com.nabiki.corona.kernel.api.KerError;
 
 @Component
-public class LogQueryService implements LogQuery {
+public class LogKeeperService implements LogQuery {
 	public final static int LOG_CACHE_NUM = 10000;
 	public final static String LOG_CACHE_ROOT = "./.logs/";
 
@@ -72,9 +72,9 @@ public class LogQueryService implements LogQuery {
 
 	}
 
-	public LogQueryService() {
-		this.cache = new LogCache(Paths.get(LogQueryService.LOG_CACHE_ROOT).toAbsolutePath(),
-				LogQueryService.LOG_CACHE_NUM, new CacheListener());
+	public LogKeeperService() {
+		this.cache = new LogCache(Paths.get(LogKeeperService.LOG_CACHE_ROOT).toAbsolutePath(),
+				LogKeeperService.LOG_CACHE_NUM, new CacheListener());
 		this.writer = new LogWriter(this.cache);
 	}
 
