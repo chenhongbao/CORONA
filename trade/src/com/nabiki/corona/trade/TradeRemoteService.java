@@ -117,12 +117,12 @@ public class TradeRemoteService implements TradeRemote {
 				return;
 			
 			login = rep;
-			local.login(rep);
+			local.remoteLogin(rep);
 		}
 
 		@Override
 		public void remoteLogout() {
-			local.logout();
+			local.remoteLogout();
 		}
 
 		@Override

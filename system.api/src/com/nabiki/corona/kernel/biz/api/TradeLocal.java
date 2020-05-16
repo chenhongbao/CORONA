@@ -31,16 +31,23 @@ public interface TradeLocal {
 	LocalDate tradingDay();
 	
 	/**
+	 * Get remote login report for the current trading day. If it is logout, return null.
+	 * 
+	 * @return remote login report
+	 */
+	KerRemoteLoginReport remoteInfo();
+	
+	/**
 	 * Notifier for remote login.
 	 * 
 	 * @param rep remote login report
 	 */
-	void login(KerRemoteLoginReport rep);
+	void remoteLogin(KerRemoteLoginReport rep);
 	
 	/**
 	 * Notifier for remote logout.
 	 */
-	void logout();
+	void remoteLogout();
 
 	/**
 	 * Query latest order status of the given trade session ID.

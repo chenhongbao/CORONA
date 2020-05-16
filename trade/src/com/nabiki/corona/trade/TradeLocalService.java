@@ -369,7 +369,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public void login(KerRemoteLoginReport rep) {
+	public void remoteLogin(KerRemoteLoginReport rep) {
 		// Filter the repeated login in the same trading day.
 		if (this.login != null && Utils.same(rep.tradingDay(), this.login.tradingDay()))
 			return;
@@ -380,6 +380,7 @@ public class TradeLocalService implements TradeLocal {
 		// Initialize accounts.
 		try {
 			this.investors.init();
+			this.log.info("Initialize accounts.");
 		} catch (KerError e) {
 			this.log.error("Fail initializing accounts. {}", e.message(), e);
 		}
@@ -394,7 +395,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public void logout() {
+	public void remoteLogout() {
 		// Logout once per trading day.
 		// However, the remote may logout over once between different episodes.
 		// Check the time to logout at the end of trading day.
@@ -415,11 +416,17 @@ public class TradeLocalService implements TradeLocal {
 		// Settle.
 		try {
 			this.investors.settle();
+			this.log.info("Settle accounts.");
 		} catch (KerError e) {
 			this.log.error("Fail settling accounts. {}", e.message(), e);
 		}
 		
 		// Reset login info.
 		this.login = null;
+	}
+
+	@Override
+	public KerRemoteLoginReport remoteInfo() {
+		return this.login;
 	}
 }
