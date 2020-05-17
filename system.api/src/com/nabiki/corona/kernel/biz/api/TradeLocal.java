@@ -31,7 +31,7 @@ public interface TradeLocal {
 	LocalDate tradingDay();
 	
 	/**
-	 * Get remote login report for the current trading day. If it is logout, return null.
+	 * Get remote login report for the current trading day. Check the field or getter for login status.
 	 * 
 	 * @return remote login report
 	 */

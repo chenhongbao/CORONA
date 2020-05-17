@@ -217,7 +217,7 @@ public class TradeRemoteService implements TradeRemote {
 
 	public TradeRemoteService() {
 		this.engineListener = new TradeMessageProcessor();
-		this.launcher = new TradeLauncher(this.engineListener);
+		this.launcher = new TradeLauncher(this.engineListener, this.info);
 
 		// Create and run packet queue that schedules the packet to remote server.
 		this.packetQueue = new PacketQueue(this.launcher);

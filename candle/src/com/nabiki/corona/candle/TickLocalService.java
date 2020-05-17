@@ -31,7 +31,7 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
  *
  */
 @Component
-public class TickProcessor implements TickLocal {
+public class TickLocalService implements TickLocal {
 	// Use OSGi logging service
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
@@ -94,7 +94,7 @@ public class TickProcessor implements TickLocal {
 	private ScheduledThreadPoolExecutor executor;
 	private CandleEngine engine;
 	
-	public TickProcessor() {
+	public TickLocalService() {
 	}
 
 	@Activate

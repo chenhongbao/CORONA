@@ -375,6 +375,7 @@ public class TradeLocalService implements TradeLocal {
 			return;
 		
 		this.login = rep;
+		this.login.logined(true);
 		this.idKeeper.resetId(this.login.maxOrderReference());
 		
 		// Initialize accounts.
@@ -422,11 +423,16 @@ public class TradeLocalService implements TradeLocal {
 		}
 		
 		// Reset login info.
-		this.login = null;
+		this.login.logined(false);;
 	}
 
 	@Override
 	public KerRemoteLoginReport remoteInfo() {
-		return this.login;
+		try {
+			return this.factory.create(KerRemoteLoginReport.class, this.login);
+		} catch (KerError e) {
+			this.log.warn("Fail copying login report. {}", e.message(), e);
+			return this.login;
+		}
 	}
 }

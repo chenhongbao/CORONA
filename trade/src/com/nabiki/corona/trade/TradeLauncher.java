@@ -2,6 +2,7 @@ package com.nabiki.corona.trade;
 
 import org.osgi.service.component.annotations.Component;
 
+import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.trade.core.TradeEngine;
 import com.nabiki.corona.trade.core.TradeEngineListener;
 
@@ -9,9 +10,11 @@ import com.nabiki.corona.trade.core.TradeEngineListener;
 public class TradeLauncher implements Runnable {
 	// TODO launch connection to remote
 	
+	private final RuntimeInfo runtime;
 	private final TradeEngineListener listener;
 	
-	public TradeLauncher(TradeEngineListener listener) {
+	public TradeLauncher(TradeEngineListener listener, RuntimeInfo info) {
+		this.runtime = info;
 		this.listener = listener;
 	}
 	
