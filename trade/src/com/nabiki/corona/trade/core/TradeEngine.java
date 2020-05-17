@@ -66,6 +66,9 @@ public class TradeEngine implements Runnable {
 
 	@Override
 	public void run() {
+		// Mark state.
+		this.closed = false;
+		
 		// Queue daemon.
 		this.queDaemon = new Thread(new Runnable() {
 			@Override
@@ -75,8 +78,7 @@ public class TradeEngine implements Runnable {
 						invokePacket(dataQueue.poll(24, TimeUnit.HOURS));
 					} catch (InterruptedException e) {
 						// Interrupted by trade launcher to exit.
-						if (closed)
-							break;
+						// Do nothing here. The while loop will exit if thread is interrupted for close.
 					} catch (KerError e) {
 						errorListener.error(e);
 					}
@@ -84,14 +86,10 @@ public class TradeEngine implements Runnable {
 			}
 		});
 
-		// Connect remote server.
-		try {
-			this.connection = connect();
-			this.closed = false;
-		} catch (KerError e) {
-			this.errorListener.error(e);
-			return;
-		}
+		// Connect remote until success.
+		// Reconnect on previous failure for every minute, 60 minutes per hour, 24 hour per day, and year.
+		int n = 365 * 24 * 60;
+		connectUntil(n, 60, TimeUnit.SECONDS);
 
 		// Loop to receive packet.
 		while (!this.closed) {
@@ -100,6 +98,10 @@ public class TradeEngine implements Runnable {
 					this.errorListener.error(new KerError("Fail offering packet to queue."));
 			} catch (KerError e) {
 				this.errorListener.error(e);
+				
+				// Need to reconnect on socket error. More robust.
+				if (!this.closed)
+					connectUntil(n, 60, TimeUnit.SECONDS);
 			}
 		}
 
@@ -114,6 +116,32 @@ public class TradeEngine implements Runnable {
 			this.queDaemon.join();
 		} catch (InterruptedException e) {
 		}
+	}
+
+	private void connectUntil(int n, int wait, TimeUnit unit) {
+		n = Math.max(1, n);
+		int count = 0;
+
+		try {
+			while (count++ < n && !tryConnect()) {
+				try {
+					Thread.sleep(unit.toMillis(wait));
+				} catch (InterruptedException e) {
+					throw new KerError("Fail waiting for next connect. " + e.getMessage(), e);
+				}
+			}
+		} catch (KerError e) {
+			this.errorListener.error(e);
+		}
+	}
+
+	private boolean tryConnect() throws KerError {
+		// Return true if underlying socket is open.
+		if (this.connection != null && this.connection.socket().isConnected() && !this.connection.socket().isClosed())
+			return true;
+
+		this.connection = connect();
+		return true;
 	}
 
 	private PacketSocket connect() throws KerError {

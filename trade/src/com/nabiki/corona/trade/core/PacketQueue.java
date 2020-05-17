@@ -66,8 +66,8 @@ public class PacketQueue implements Runnable {
 				sendPackets(this.reqQueue, this.reqCounter, PacketQueue.MAX_REQUEST_PER_SEC);
 				sendPackets(this.qryQueue, this.qryCounter, PacketQueue.MAX_QUERY_PER_SEC);
 			} catch (InterruptedException e) {
-				if (this.stopped)
-					break;
+				// Interrupted by trade launcher to exit.
+				// Do nothing here. The while loop will exit if thread is interrupted for close.
 			}
 		}
 	}
