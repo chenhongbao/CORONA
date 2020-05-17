@@ -12,6 +12,9 @@ public class PacketSocket {
     private final DataInputStream input;
     private final DataOutputStream output;
     public PacketSocket(Socket s) throws KerError {
+    	if (s == null)
+    		throw new KerError("Socket null pointer.");
+    	
         if (s.isClosed() || s.isInputShutdown() || s.isOutputShutdown())
             throw new KerError("Given socket incapable of duplex communication.");
         this.socket = s;

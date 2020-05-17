@@ -75,18 +75,11 @@ public class TickEngine implements Runnable {
 			}
 		});
 		
-		// Connect remote.
-		try {
-			this.remote = connect();
-		} catch (KerError e) {
-			callListener(e);
+		// Connect remote until success.
+		// Reconnect on previous failure for every minute, 60 minutes per hour, 24 hour per day, and year.
+		int n = 365 * 24 * 60;
+		connectUntil(n, 60, TimeUnit.SECONDS);
 			
-			// Change state.
-			this.state = EngineState.STOPPED;
-			callListener(this.state);
-			return;
-		}
-		
 		// Receive packet and process it.
 		while (this.state != EngineState.STOPPING) {
 			try {
@@ -94,6 +87,10 @@ public class TickEngine implements Runnable {
 			} catch (KerError e) {
 				if (this.state != EngineState.STOPPING) {
 					callListener(e);
+					
+					// If reading socket failed, try reconnect.
+					// It will check the validity of socket state and reconnect remote server if socket is broken.
+					connectUntil(n, 60, TimeUnit.SECONDS);
 				} else {
 					callListener(this.state);
 				}
@@ -114,6 +111,37 @@ public class TickEngine implements Runnable {
 		// Call listener on state change.
 		this.state = EngineState.STOPPED;
 		callListener(this.state);
+	}
+	
+	private void connectUntil(int n, int wait, TimeUnit unit) {
+		n = Math.max(1, n);
+		
+		int count = 0;
+		while (count++ < n && !tryConnect()) {
+			try {
+				Thread.sleep(unit.toMillis(wait));
+			} catch (InterruptedException e) {
+				callListener(new KerError("Fail waiting for next connect. " + e.getMessage(), e));
+			}
+		}
+	}
+	
+	private boolean tryConnect() {
+		// Return true if underlying socket is open.
+		if (this.remote != null && this.remote.socket().isConnected() && !this.remote.socket().isClosed())
+			return true;
+		
+		try {
+			this.remote = connect();
+			return true;
+		} catch (KerError e) {
+			callListener(e);
+			
+			// Change state.
+			this.state = EngineState.STOPPED;
+			callListener(this.state);
+			return false;
+		}
 	}
 	
 	private PacketSocket connect() throws KerError{
