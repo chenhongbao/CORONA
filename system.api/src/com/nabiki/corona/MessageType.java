@@ -16,17 +16,14 @@ public class MessageType {
 	public final static short RX_TRADE_REPORT = 12;
 	
 	// Sent query, ID range: [101, 200]
-	public final static short TX_QEURY_CLIENT_ORDER_STATUS = 101;
-	public final static short TX_QEURY_ORDER_STATUS = 102;
-	public final static short TX_QUERY_ACCOUNT = 103;
-	public final static short TX_QUERY_CLIENT_ACCOUNT = 104;
-	public final static short TX_QUERY_CLIENT_POSITION_DETAIL = 105;
-	public final static short TX_QUERY_CLIENT_TRADE_REPORT = 106;
-	public final static short TX_QUERY_COMMISSION = 107;
-	public final static short TX_QUERY_INSTRUMENT = 108;
-	public final static short TX_QUERY_MARGIN = 109;
-	public final static short TX_QUERY_POSITION_DETAIL = 110;
-	public final static short TX_QUERY_TRADE_REPORT = 111;
+	public final static short TX_QUERY_ACCOUNT = 101;
+	public final static short TX_QUERY_COMMISSION = 102;
+	public final static short TX_QUERY_INSTRUMENT = 103;
+	public final static short TX_QUERY_MARGIN = 104;
+	public final static short TX_QUERY_POSITION_DETAIL = 105;
+	public final static short TX_QUERY_CLIENT_ACCOUNT = 106;
+	public final static short TX_QUERY_CLIENT_ORDER_STATUS = 107;
+	public final static short TX_QUERY_CLIENT_POSITION_DETAIL = 108;
 	
 	// Sent request, ID range: [201, 300]
 	public final static short TX_REQUEST_ACTION = 201;

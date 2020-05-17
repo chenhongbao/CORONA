@@ -4,6 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.nabiki.corona.kernel.api.KerError;
 import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.trade.TradeLauncher;
 
@@ -27,7 +28,7 @@ public class PacketQueue implements Runnable {
 		this.launcher = launcher;
 	}
 
-	public int enqueue(Packet packet) {
+	public int enqueue(Packet packet) throws KerError {
 		if (101 <= packet.type() && packet.type() <= 200) {
 			// Query packet.
 			if (this.qryCounter.get() < PacketQueue.MAX_QUERY_PER_SEC) {
@@ -77,8 +78,13 @@ public class PacketQueue implements Runnable {
 		// Process packets.
 		while (packets.size() > 0 && count < maxCount) {
 			var p = packets.poll();
-			this.launcher.remote().send(p.type(), p.bytes(), 0, p.bytes().length);
-			++count;
+			if (p  == null)
+				continue;
+			
+			try {
+				this.launcher.remote().send(p.type(), p.bytes(), 0, p.bytes().length);
+				++count;
+			} catch (KerError e) {}
 		}
 		
 		countToSet.set(count);
