@@ -57,7 +57,7 @@ public class TradeEngine implements Runnable {
 	}
 
 	public synchronized void send(short type, byte[] bytes, int offset, int length) throws KerError {
-		if (!this.connection.available())
+		if (this.connection.closed())
 			throw new KerError("Can't send through a closed or never connected socket.");
 		// Send bytes.
 		this.connection.send(type, bytes, offset, length);

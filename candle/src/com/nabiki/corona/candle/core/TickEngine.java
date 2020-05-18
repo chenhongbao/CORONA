@@ -48,7 +48,7 @@ public class TickEngine implements Runnable {
 		
 		// Encode.
 		var bytes = this.codec.encode(symbols);
-		if (!this.remote.available())
+		if (this.remote.closed())
 			throw new KerError("Can't send symbols because remote connection is closed.");
 		
 		this.remote.send(MessageType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
