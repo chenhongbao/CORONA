@@ -28,7 +28,7 @@ import com.nabiki.corona.kernel.packet.api.RxTradeReportMessage;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.tools.Packet;
-import com.nabiki.corona.kernel.tools.PacketSocket;
+import com.nabiki.corona.kernel.tools.PacketConnector;
 
 public class TradeEngine implements Runnable {
 	public enum State {
@@ -41,7 +41,7 @@ public class TradeEngine implements Runnable {
 
 	// Socket connection.
 	private State state = State.STOPPED;
-	private PacketSocket connection;
+	private PacketConnector connection;
 
 	// Data queue.
 	private Thread queDaemon;
@@ -57,7 +57,7 @@ public class TradeEngine implements Runnable {
 	}
 
 	public synchronized void send(short type, byte[] bytes, int offset, int length) throws KerError {
-		if (!this.connection.socket().isConnected() || this.connection.socket().isClosed())
+		if (!this.connection.available())
 			throw new KerError("Can't send through a closed or never connected socket.");
 		// Send bytes.
 		this.connection.send(type, bytes, offset, length);
@@ -94,10 +94,13 @@ public class TradeEngine implements Runnable {
 			}
 		});
 
-		// Connect remote until success.
-		// Reconnect on previous failure for every minute, 60 minutes per hour, 24 hour per day, and year.
-		int n = 365 * 24 * 60;
-		connectUntil(n, 60, TimeUnit.SECONDS);
+		// Connect.
+		try {
+			this.connection = connect();
+		} catch (KerError e) {
+			this.errorListener.error(e);
+			return;
+		}
 		
 		// Mark state.
 		this.state = State.STARTED;
@@ -109,10 +112,6 @@ public class TradeEngine implements Runnable {
 					this.errorListener.error(new KerError("Fail offering packet to queue."));
 			} catch (KerError e) {
 				this.errorListener.error(e);
-				
-				// Need to reconnect on socket error. More robust.
-				if (state == State.STARTED)
-					connectUntil(n, 60, TimeUnit.SECONDS);
 			}
 		}
 
@@ -132,33 +131,7 @@ public class TradeEngine implements Runnable {
 		this.state = State.STOPPED;
 	}
 
-	private void connectUntil(int n, int wait, TimeUnit unit) {
-		n = Math.max(1, n);
-		int count = 0;
-
-		try {
-			while (count++ < n && !tryConnect()) {
-				try {
-					Thread.sleep(unit.toMillis(wait));
-				} catch (InterruptedException e) {
-					throw new KerError("Fail waiting for next connect. " + e.getMessage(), e);
-				}
-			}
-		} catch (KerError e) {
-			this.errorListener.error(e);
-		}
-	}
-
-	private boolean tryConnect() throws KerError {
-		// Return true if underlying socket is open.
-		if (this.connection != null && this.connection.socket().isConnected() && !this.connection.socket().isClosed())
-			return true;
-
-		this.connection = connect();
-		return true;
-	}
-
-	private PacketSocket connect() throws KerError {
+	private PacketConnector connect() throws KerError {
 		// Find connection config to remote.
 		RemoteConfig conf = null;
 		for (var c : this.runtime.remoteConfig().configs()) {
@@ -179,7 +152,7 @@ public class TradeEngine implements Runnable {
 			connection.connect(address);
 
 			// Wrap connection into packet socket.
-			return new PacketSocket(connection);
+			return new PacketConnector(connection);
 		} catch (UnknownHostException e) {
 			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
 		} catch (IOException e) {
@@ -188,14 +161,10 @@ public class TradeEngine implements Runnable {
 	}
 
 	private void tryClose() {
-		if (this.connection.socket().isClosed())
+		if (this.connection.closed())
 			return;
 
-		try {
-			this.connection.socket().close();
-		} catch (IOException e) {
-			this.errorListener.error(new KerError("Fail closing remote connection.", e));
-		}
+		this.connection.close();
 	}
 
 	private void invokePacket(Packet packet) throws KerError {

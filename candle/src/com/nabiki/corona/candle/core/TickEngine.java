@@ -21,11 +21,11 @@ import com.nabiki.corona.kernel.packet.api.TxSubscribeSymbolMessage;
 import com.nabiki.corona.kernel.settings.api.RemoteConfig;
 import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.tools.Packet;
-import com.nabiki.corona.kernel.tools.PacketSocket;
+import com.nabiki.corona.kernel.tools.PacketConnector;
 
 public class TickEngine implements Runnable {
 	private EngineState state = EngineState.STOPPED;
-	private PacketSocket remote;
+	private PacketConnector remote;
 	
 	private final RuntimeInfo runtime;
 	private final TickEngineListener listener;
@@ -48,7 +48,7 @@ public class TickEngine implements Runnable {
 		
 		// Encode.
 		var bytes = this.codec.encode(symbols);
-		if (!this.remote.socket().isConnected() || this.remote.socket().isClosed())
+		if (!this.remote.available())
 			throw new KerError("Can't send symbols because remote connection is closed.");
 		
 		this.remote.send(MessageType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
@@ -75,10 +75,13 @@ public class TickEngine implements Runnable {
 			}
 		});
 		
-		// Connect remote until success.
-		// Reconnect on previous failure for every minute, 60 minutes per hour, 24 hour per day, and year.
-		int n = 365 * 24 * 60;
-		connectUntil(n, 60, TimeUnit.SECONDS);
+		// Connect remote.
+		try {
+			this.remote = connect();
+		} catch (KerError e) {
+			callListener(e);
+			return;
+		}
 			
 		// Receive packet and process it.
 		while (this.state != EngineState.STOPPING) {
@@ -87,10 +90,6 @@ public class TickEngine implements Runnable {
 			} catch (KerError e) {
 				if (this.state != EngineState.STOPPING) {
 					callListener(e);
-					
-					// If reading socket failed, try reconnect.
-					// It will check the validity of socket state and reconnect remote server if socket is broken.
-					connectUntil(n, 60, TimeUnit.SECONDS);
 				} else {
 					callListener(this.state);
 				}
@@ -113,38 +112,7 @@ public class TickEngine implements Runnable {
 		callListener(this.state);
 	}
 	
-	private void connectUntil(int n, int wait, TimeUnit unit) {
-		n = Math.max(1, n);
-		
-		int count = 0;
-		while (count++ < n && !tryConnect()) {
-			try {
-				Thread.sleep(unit.toMillis(wait));
-			} catch (InterruptedException e) {
-				callListener(new KerError("Fail waiting for next connect. " + e.getMessage(), e));
-			}
-		}
-	}
-	
-	private boolean tryConnect() {
-		// Return true if underlying socket is open.
-		if (this.remote != null && this.remote.socket().isConnected() && !this.remote.socket().isClosed())
-			return true;
-		
-		try {
-			this.remote = connect();
-			return true;
-		} catch (KerError e) {
-			callListener(e);
-			
-			// Change state.
-			this.state = EngineState.STOPPED;
-			callListener(this.state);
-			return false;
-		}
-	}
-	
-	private PacketSocket connect() throws KerError{
+	private PacketConnector connect() throws KerError{
 		// Find connection config to remote.
 		RemoteConfig conf = null;
 		for (var c : this.runtime.remoteConfig().configs()) {
@@ -166,7 +134,7 @@ public class TickEngine implements Runnable {
 			connection.connect(address);
 			
 			// Wrap connection into packet socket.
-			return new PacketSocket(connection);
+			return new PacketConnector(connection);
 		} catch (UnknownHostException e) {
 			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
 		} catch (IOException e) {
@@ -219,14 +187,10 @@ public class TickEngine implements Runnable {
 	}
 	
 	private void tryClose() {
-		if (this.remote.socket().isClosed())
+		if (this.remote.closed())
 			return;
 		
-		try {
-			this.remote.socket().close();
-		} catch (IOException e) {
-			callListener(new KerError("Fail closing remote connection.", e));
-		}
+		this.remote.close();
 	}
 
 	public void tellStopping() {
