@@ -375,7 +375,7 @@ public class TradeLocalService implements TradeLocal {
 			return;
 		
 		this.login = rep;
-		this.login.logined(true);
+		this.login.isLogin(true);
 		this.idKeeper.resetId(this.login.maxOrderReference());
 		
 		// Initialize accounts.
@@ -423,7 +423,7 @@ public class TradeLocalService implements TradeLocal {
 		}
 		
 		// Reset login info.
-		this.login.logined(false);;
+		this.login.isLogin(false);;
 	}
 
 	@Override

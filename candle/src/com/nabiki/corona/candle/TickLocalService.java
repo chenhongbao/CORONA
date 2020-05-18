@@ -181,7 +181,7 @@ public class TickLocalService implements TickLocal {
 	}
 
 	@Override
-	public void isWorking(boolean working) {
+	public void marketWorking(boolean working) {
 		if (this.engine != null)
 			this.engine.state(working);
 	}

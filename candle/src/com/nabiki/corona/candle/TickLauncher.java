@@ -143,7 +143,7 @@ public class TickLauncher implements Runnable {
 
 			// Clear resources.
 			// Don't set engine to null because it needs to check engine's state to decide the next action.
-			this.executor.remove(this.engine);
+			this.executor.purge();
 			break;
 		default:
 			this.log.warn("Unhandled launching action: {}.", action);
@@ -214,7 +214,7 @@ public class TickLauncher implements Runnable {
 			if (!this.working && isWorkingTick(tick.updateTime())) {
 				this.working = true;
 				for (var local : tickLocals)
-					local.isWorking(true);
+					local.marketWorking(true);
 				
 				log.info("Tick remote starts working.");
 			}
@@ -237,7 +237,7 @@ public class TickLauncher implements Runnable {
 			if (s == EngineState.STOPPED) {
 				this.working = false;
 				for (var local : tickLocals)
-					local.isWorking(false);
+					local.marketWorking(false);
 				
 				log.info("Tick remote stops working.");
 			}

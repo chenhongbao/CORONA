@@ -15,7 +15,7 @@ public interface TickLocal {
 	 * 
 	 * @param working working state
 	 */
-	void isWorking(boolean working);
+	void marketWorking(boolean working);
 
 	/**
 	 * Set the latest tick into the service.

@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 public interface KerRemoteLoginReport {
-	boolean logined();
+	boolean isLogin();
 	
-	void logined(boolean b);
+	void isLogin(boolean b);
 	
 	LocalDate tradingDay();
 	

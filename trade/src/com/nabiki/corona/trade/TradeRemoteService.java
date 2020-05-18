@@ -52,12 +52,13 @@ import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
 import com.nabiki.corona.kernel.packet.api.TxQueryPositionDetailMessage;
 import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.trade.core.PacketQueue;
+import com.nabiki.corona.trade.core.TradeEngineErrorListener;
 import com.nabiki.corona.trade.core.TradeEngineListener;
 
 @Component
 public class TradeRemoteService implements TradeRemote {
 
-	private class TradeMessageProcessor implements TradeEngineListener {
+	private class TradeMessageHandler implements TradeEngineListener {
 		private boolean instLast = true;
 		private Queue<KerInstrument> insts = new ConcurrentLinkedQueue<>();
 
@@ -161,6 +162,16 @@ public class TradeRemoteService implements TradeRemote {
 		}
 
 	}
+	
+	private class TradeErrorHandler implements TradeEngineErrorListener {
+		public TradeErrorHandler() {}
+
+		@Override
+		public void error(KerError e) {
+			log.error("Trade engine error: {}.", e.message(), e);
+		}
+		
+	}
 
 	// Use OSGi logging service
 	@Reference(service = LoggerFactory.class)
@@ -199,6 +210,7 @@ public class TradeRemoteService implements TradeRemote {
 	}
 	
 	private final TradeEngineListener engineListener;
+	private final TradeEngineErrorListener errorListener;
 	private final TradeLauncher launcher;
 	private final PacketQueue packetQueue;
 
@@ -216,8 +228,9 @@ public class TradeRemoteService implements TradeRemote {
 	private KerRemoteLoginReport login;
 
 	public TradeRemoteService() {
-		this.engineListener = new TradeMessageProcessor();
-		this.launcher = new TradeLauncher(this.engineListener, this.info);
+		this.engineListener = new TradeMessageHandler();
+		this.errorListener = new TradeErrorHandler();
+		this.launcher = new TradeLauncher(this.engineListener, this.errorListener, this.info);
 
 		// Create and run packet queue that schedules the packet to remote server.
 		this.packetQueue = new PacketQueue(this.launcher);

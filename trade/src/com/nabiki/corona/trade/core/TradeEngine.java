@@ -31,12 +31,16 @@ import com.nabiki.corona.kernel.tools.Packet;
 import com.nabiki.corona.kernel.tools.PacketSocket;
 
 public class TradeEngine implements Runnable {
+	public enum State {
+		STARTING, STARTED, STOPPING, STOPPED
+	}
+	
 	private final RuntimeInfo runtime;
 	private final TradeEngineListener listener;
 	private final TradeEngineErrorListener errorListener;
 
 	// Socket connection.
-	private boolean closed = true;
+	private State state = State.STOPPED;
 	private PacketSocket connection;
 
 	// Data queue.
@@ -59,21 +63,25 @@ public class TradeEngine implements Runnable {
 		this.connection.send(type, bytes, offset, length);
 	}
 
-	public void close() {
-		this.closed = true;
+	public void tellStop() {
+		this.state = State.STOPPING;
 		tryClose();
+	}
+	
+	public State state() {
+		return this.state;
 	}
 
 	@Override
 	public void run() {
 		// Mark state.
-		this.closed = false;
+		this.state = State.STARTING;
 		
 		// Queue daemon.
 		this.queDaemon = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				while (!closed) {
+				while (state != State.STOPPING) {
 					try {
 						invokePacket(dataQueue.poll(24, TimeUnit.HOURS));
 					} catch (InterruptedException e) {
@@ -90,9 +98,12 @@ public class TradeEngine implements Runnable {
 		// Reconnect on previous failure for every minute, 60 minutes per hour, 24 hour per day, and year.
 		int n = 365 * 24 * 60;
 		connectUntil(n, 60, TimeUnit.SECONDS);
+		
+		// Mark state.
+		this.state = State.STARTED;
 
 		// Loop to receive packet.
-		while (!this.closed) {
+		while (state == State.STARTED) {
 			try {
 				if (!this.dataQueue.offer(this.connection.receive()))
 					this.errorListener.error(new KerError("Fail offering packet to queue."));
@@ -100,7 +111,7 @@ public class TradeEngine implements Runnable {
 				this.errorListener.error(e);
 				
 				// Need to reconnect on socket error. More robust.
-				if (!this.closed)
+				if (state == State.STARTED)
 					connectUntil(n, 60, TimeUnit.SECONDS);
 			}
 		}
@@ -116,6 +127,9 @@ public class TradeEngine implements Runnable {
 			this.queDaemon.join();
 		} catch (InterruptedException e) {
 		}
+		
+		// Mark state.
+		this.state = State.STOPPED;
 	}
 
 	private void connectUntil(int n, int wait, TimeUnit unit) {
