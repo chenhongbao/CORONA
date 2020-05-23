@@ -215,7 +215,7 @@ public class TradeLocalService implements TradeLocal {
 		}
 
 		try {
-			return investor.account().account().current();
+			return investor.accountManager().accountEngine().current();
 		} catch (KerError e) {
 			this.log.error("Fail getting account: {}.", accountId, e);
 			return null;

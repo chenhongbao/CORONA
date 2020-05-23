@@ -28,7 +28,7 @@ public class AccountManager {
 		this.account = new AccountEngine(readAccount(this.root), this.runtime, this.positions, this.factory);
 	}
 
-	public AccountEngine account() {
+	public AccountEngine accountEngine() {
 		return this.account;
 	}
 

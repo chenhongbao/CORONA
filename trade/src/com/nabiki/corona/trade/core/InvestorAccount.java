@@ -59,12 +59,12 @@ public class InvestorAccount {
 		return this.accountId;
 	}
 	
-	public AccountManager account() {
+	public AccountManager accountManager() {
 		return this.accountManager;
 	}
 	
 	public void moveCash(CashMoveCommand cmd) throws KerError {
-		this.accountManager.account().moveCash(cmd);
+		this.accountManager.accountEngine().moveCash(cmd);
 	}
 	
 	public PositionManager position() {
@@ -101,7 +101,7 @@ public class InvestorAccount {
 			// Add new position, then unlocked the margin.
 			// What happens in real is to move the money from account's available to used margin of position.
 			positionEngine.trade(rep);
-			this.accountManager.account().trade(rep);
+			this.accountManager.accountEngine().trade(rep);
 		} else {
 			// Remove locked position to closed position.
 			// What happens in real is to reduce the used margin, then account's available is increased thereby.
@@ -120,7 +120,7 @@ public class InvestorAccount {
 		var sid = this.idKeeper.getSessionIdWithOrderId(order.orderId());
 		
 		if (order.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
-			this.accountManager.account().cancel(sid);
+			this.accountManager.accountEngine().cancel(sid);
 		} else {
 			// Other flags are closing order.
 			var positionEngine = this.positionManager.getPositon(order.symbol());
@@ -193,7 +193,7 @@ public class InvestorAccount {
 	}
 
 	private KerOrderEvalue validateOpen(KerOrder order) throws KerError {
-		var eval = this.accountManager.account().lock(order);
+		var eval = this.accountManager.accountEngine().lock(order);
 		if (eval.error() == null)
 			eval.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
 		return eval;
