@@ -3,6 +3,7 @@ package com.nabiki.corona.trade;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -428,5 +429,19 @@ public class TradeLocalService implements TradeLocal {
 			this.log.warn("Fail copying login report. {}", e.message(), e);
 			return this.login;
 		}
+	}
+
+	@Override
+	public Collection<String> accountIds() {
+		var r = new HashSet<String>();
+		for (var inv : this.investors.getInvestors())
+			r.add(inv.accountId());
+		
+		return r;
+	}
+
+	@Override
+	public Collection<String> sessionIdsOfAccount(String accountId) {
+		return this.idKeeper.sessionIds(accountId);
 	}
 }

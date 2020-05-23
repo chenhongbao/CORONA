@@ -1,5 +1,7 @@
 package com.nabiki.corona.trade.core;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,6 +50,21 @@ public class IdKeeper {
 		this.s2a.put(sid, accountId);
 		
 		return newId;
+	}
+	
+	/**
+	 * Get sessions Ids of the given account.
+	 * 
+	 * @param accountId account id
+	 * @return collection of session ids
+	 */
+	public Collection<String> sessionIds(String accountId) {
+		var r = new HashSet<String>();
+		for (var entry : this.s2a.entrySet())
+			if (entry.getValue().compareTo(accountId) == 0)
+				r.add(entry.getKey());
+		
+		return r;
 	}
 	
 	public String getSessionIdWithOrderId(String orderId) {		

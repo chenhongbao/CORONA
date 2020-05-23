@@ -15,7 +15,7 @@ import com.nabiki.corona.system.api.KerTradeReport;
 
 public interface TradeLocal {
 	String name();
-	
+
 	/**
 	 * Create a valid order ID associated with a trade session ID.
 	 * 
@@ -23,32 +23,47 @@ public interface TradeLocal {
 	 * @return order ID
 	 */
 	String createOrderId(String accountId);
-	
+
 	/**
 	 * Get trading day.
 	 * 
 	 * @return trading day
 	 */
 	LocalDate tradingDay();
-	
+
 	/**
 	 * Get remote login report for the current trading day. Check the field or getter for login status.
 	 * 
 	 * @return remote login report
 	 */
 	KerRemoteLoginReport remoteInfo();
-	
+
 	/**
 	 * Notifier for remote login.
 	 * 
 	 * @param rep remote login report
 	 */
 	void remoteLogin(KerRemoteLoginReport rep);
-	
+
 	/**
 	 * Notifier for remote logout.
 	 */
 	void remoteLogout();
+
+	/**
+	 * Get all account IDs.
+	 * 
+	 * @return collection of all account ids.
+	 */
+	Collection<String> accountIds();
+
+	/**
+	 * Get sessions of the given account, both finished and unfinished.
+	 * 
+	 * @param accountId account ID
+	 * @return session ids of the account
+	 */
+	Collection<String> sessionIdsOfAccount(String accountId);
 
 	/**
 	 * Query latest order status of the given trade session ID.
@@ -83,7 +98,7 @@ public interface TradeLocal {
 	/**
 	 * Update position detail from remote counter. This is total position summarization of all sub accounts.
 	 * 
-	 * @param p position detail
+	 * @param p    position detail
 	 * @param last true if the current input is the last of the series
 	 */
 	void positionDetail(KerPositionDetail p, boolean last);
@@ -110,14 +125,14 @@ public interface TradeLocal {
 	 * @return account info
 	 */
 	KerAccount account(String accountId);
-	
+
 	/**
 	 * Create a new account with given ID.
 	 * 
 	 * @param accountId account id
 	 */
 	void createAccount(String accountId);
-	
+
 	/**
 	 * Move cash into/out of an account.
 	 * 
@@ -134,7 +149,8 @@ public interface TradeLocal {
 
 	/**
 	 * Query position detail of given symbol under given account. Account ID can't be null or empty. If symbol is null
-	 * or empty string, query all position details under the given account.
+	 * or empty string, query all position details under the given account. The position detail is created directly from
+	 * trades, so it only concerns the open position and closed position. Frozen position is taken as own position.
 	 * 
 	 * @param accountId account id
 	 * @param symbol    symbol of the query detail
