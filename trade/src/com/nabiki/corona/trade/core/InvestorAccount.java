@@ -1,7 +1,7 @@
 package com.nabiki.corona.trade.core;
 
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.List;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.ErrorMessage;
@@ -9,15 +9,16 @@ import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
-import com.nabiki.corona.system.api.CashMoveCommand;
 
 public class InvestorAccount {
 	private final AccountManager accountManager;
 	private final PositionManager positionManager;
 	private final IdKeeper idKeeper;
-	private final TradeKeeper tradeKeeper;
 	private final SessionWriter sessionWriter;
-	private final OrderStatusKeeper statusKeeper;
+	
+	// Message keepers.
+	private final MessageKeeper<KerTradeReport> tradeKeeper;
+	private final MessageKeeper<KerOrderStatus> statusKeeper;
 
 	private final String accountId;
 	private final Path directory;
@@ -40,18 +41,18 @@ public class InvestorAccount {
 		this.idKeeper = keeper;
 		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
 		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
-		this.tradeKeeper = new TradeKeeper();
 		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"));
-		this.statusKeeper = new OrderStatusKeeper();
+		this.tradeKeeper = new MessageKeeper<>();
+		this.statusKeeper = new MessageKeeper<>();
 	}
 	
 	public void orderStatus(KerOrderStatus status) throws KerError {
-		this.orderStatus(status);
+		this.statusKeeper.message(status.sessionId(), status);
 		this.sessionWriter.write(status);
 	}
 	
-	public KerOrderStatus orderStatus(String sid) {
-		return this.statusKeeper.getStatus(sid);
+	public List<KerOrderStatus> orderStatus(String sid) throws KerError {
+		return this.statusKeeper.messages(sid);
 	}
 	
 	public String accountId() {
@@ -80,8 +81,8 @@ public class InvestorAccount {
 		this.accountManager.init();
 	}
 	
-	public Collection<KerTradeReport> trades(String sid) throws KerError {
-		return this.tradeKeeper.tradeReports(sid);
+	public List<KerTradeReport> trades(String sid) throws KerError {
+		return this.tradeKeeper.messages(sid);
 	}
 
 	public void trade(KerTradeReport rep) throws KerError {
@@ -108,7 +109,7 @@ public class InvestorAccount {
 		}
 		
 		// Save trades.
-		this.tradeKeeper.addTradeReport(rep);
+		this.tradeKeeper.message(rep.sessionId(), rep);
 		this.sessionWriter.write(rep);
 	}
 	

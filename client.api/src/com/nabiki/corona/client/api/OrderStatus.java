@@ -14,6 +14,11 @@ public interface OrderStatus {
 
 	String orderId();
 	
+	/**
+	 * Trade session ID of this order status.
+	 * 
+	 * @return trade session ID
+	 */
 	String sessionId();
 
 	char priceType();

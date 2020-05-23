@@ -2,6 +2,7 @@ package com.nabiki.corona.system.biz.api;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
 import com.nabiki.corona.system.api.CashMoveCommand;
 import com.nabiki.corona.system.api.KerAccount;
@@ -53,17 +54,17 @@ public interface TradeLocal {
 	 * Query latest order status of the given trade session ID.
 	 * 
 	 * @param sid trade session ID
-	 * @return order status
+	 * @return list of order status sorted by update time for early to late
 	 */
-	KerOrderStatus orderStatus(String sid);
+	List<KerOrderStatus> orderStatus(String sid);
 
 	/**
 	 * Query all received trade report of the given trade session ID.
 	 * 
 	 * @param sid trade session ID.
-	 * @return collection of trade reports.
+	 * @return list of trade reports sorted by update time for early to late
 	 */
-	Collection<KerTradeReport> tradeReports(String sid);
+	List<KerTradeReport> tradeReport(String sid);
 
 	/**
 	 * Update order status into account.

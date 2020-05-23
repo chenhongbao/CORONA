@@ -18,7 +18,6 @@ import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.object.DefaultDataFactory;
-import com.nabiki.corona.system.api.CashMoveCommand;
 import com.nabiki.corona.system.biz.api.TradeLocal;
 import com.nabiki.corona.trade.core.*;
 
@@ -286,16 +285,21 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public KerOrderStatus orderStatus(String sid) {
+	public List<KerOrderStatus> orderStatus(String sid) {
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;
 
-		return investor.orderStatus(sid);
+		try {
+			return investor.orderStatus(sid);
+		} catch (KerError e) {
+			this.log.error("Fail retriving order status under session ID: {}. {}", sid, e.message(), e);
+			return null;
+		}
 	}
 
 	@Override
-	public Collection<KerTradeReport> tradeReports(String sid) {
+	public List<KerTradeReport> tradeReport(String sid) {
 		var investor = investorWithSessionId(sid);
 		if (investor == null)
 			return null;

@@ -1,6 +1,6 @@
 package com.nabiki.corona.client.api;
 
-import java.util.Collection;
+import java.util.List;
 
 public interface Trade {
 	String sessionId();
@@ -11,11 +11,7 @@ public interface Trade {
 	
 	void cancel();
 
-	OrderStatus status();
+	List<OrderStatus> status();
 
-	Collection<OrderStatus> statuses();
-
-	TradeReport tradeReport();
-
-	Collection<TradeReport> tradeReports();
+	List<TradeReport> tradeReport();
 }
