@@ -5,8 +5,8 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 
-import com.nabiki.corona.api.Candle;
-import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.client.api.Candle;
+import com.nabiki.corona.client.api.Tick;
 import com.nabiki.corona.system.biz.api.TickCandleForwarder;
 
 @Component

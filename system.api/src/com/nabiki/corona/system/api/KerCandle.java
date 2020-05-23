@@ -3,7 +3,7 @@ package com.nabiki.corona.system.api;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Candle;
+import com.nabiki.corona.client.api.Candle;
 
 public interface KerCandle extends Candle {
 	void symbol(String s);

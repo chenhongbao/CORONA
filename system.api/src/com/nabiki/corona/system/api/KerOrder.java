@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Order;
+import com.nabiki.corona.client.api.Order;
 
 /**
  * Internally used order with full attributes.

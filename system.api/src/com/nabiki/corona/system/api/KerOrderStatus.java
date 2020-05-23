@@ -3,7 +3,7 @@ package com.nabiki.corona.system.api;
 import java.time.Instant;
 import java.util.Date;
 
-import com.nabiki.corona.api.OrderStatus;
+import com.nabiki.corona.client.api.OrderStatus;
 
 /**
  * Internal used order report with full attributes.

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.ErrorCode;
-import com.nabiki.corona.api.CandleMinute;
+import com.nabiki.corona.client.api.CandleMinute;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;

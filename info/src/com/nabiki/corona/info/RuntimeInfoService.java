@@ -18,7 +18,7 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ProductClass;
-import com.nabiki.corona.api.CandleMinute;
+import com.nabiki.corona.client.api.CandleMinute;
 import com.nabiki.corona.info.data.CandleTime;
 import com.nabiki.corona.object.DefaultDataCodec;
 import com.nabiki.corona.system.api.*;

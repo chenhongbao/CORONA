@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.util.Collection;
 
-import com.nabiki.corona.api.MarketDataSession;
+import com.nabiki.corona.client.api.MarketDataSession;
 
 /**
  * @author Hongbao Chen

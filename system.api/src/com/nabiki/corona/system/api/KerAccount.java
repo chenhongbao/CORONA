@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Account;
+import com.nabiki.corona.client.api.Account;
 
 /**
  * Internally used account with full getters.

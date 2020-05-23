@@ -1,7 +1,7 @@
 package com.nabiki.corona.system.biz.api;
 
-import com.nabiki.corona.api.Candle;
-import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.client.api.Candle;
+import com.nabiki.corona.client.api.Tick;
 
 public interface TickCandleForwarder {
 	String name();

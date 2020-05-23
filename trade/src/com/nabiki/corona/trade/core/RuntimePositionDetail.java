@@ -8,7 +8,7 @@ import java.util.List;
 import com.nabiki.corona.DirectionFlag;
 import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.system.Utils;
-import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.client.api.Tick;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 

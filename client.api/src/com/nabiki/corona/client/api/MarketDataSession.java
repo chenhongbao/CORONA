@@ -11,5 +11,5 @@ public interface MarketDataSession {
 
 	MarketDataSubscriber marketDataSubscriber();
 
-	Error lastError();
+	Error error();
 }

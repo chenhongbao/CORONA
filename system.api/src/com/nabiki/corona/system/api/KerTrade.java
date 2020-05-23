@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.util.Collection;
 
-import com.nabiki.corona.api.Trade;
+import com.nabiki.corona.client.api.Trade;
 
 public interface KerTrade extends Trade {
 	KerOrderStatus kerSendAndWait(KerOrder order);

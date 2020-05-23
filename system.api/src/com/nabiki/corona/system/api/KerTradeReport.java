@@ -3,7 +3,7 @@ package com.nabiki.corona.system.api;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.TradeReport;
+import com.nabiki.corona.client.api.TradeReport;
 
 /**
  * Internally used trade report with full attributes.

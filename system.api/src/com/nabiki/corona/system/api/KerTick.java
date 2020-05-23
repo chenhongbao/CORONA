@@ -3,7 +3,7 @@ package com.nabiki.corona.system.api;
 import java.time.Instant;
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.Tick;
+import com.nabiki.corona.client.api.Tick;
 
 public interface KerTick extends Tick {
 	void symbol(String s);

@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.time.LocalDate;
 
-import com.nabiki.corona.api.PositionDetail;
+import com.nabiki.corona.client.api.PositionDetail;
 
 /**
  * Position detail with full attributes and getters.

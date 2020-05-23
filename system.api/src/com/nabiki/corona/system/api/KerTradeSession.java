@@ -2,7 +2,7 @@ package com.nabiki.corona.system.api;
 
 import java.util.Collection;
 
-import com.nabiki.corona.api.TradeSession;
+import com.nabiki.corona.client.api.TradeSession;
 
 public interface KerTradeSession extends TradeSession {
 	KerTrade newKerTrade();

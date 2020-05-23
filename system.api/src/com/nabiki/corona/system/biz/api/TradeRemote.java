@@ -24,7 +24,7 @@ public interface TradeRemote {
 	 * Cancel orders denoted by given order ID.
 	 * 
 	 * @param action action
-	 * @return number of pending action request in queue
+	 * @return number of pending action request in queue, or -1 on error.
 	 */
 	int action(KerAction action);
 
@@ -33,7 +33,7 @@ public interface TradeRemote {
 	 * query requests in queue.
 	 * 
 	 * @param symbol symbol
-	 * @return the number of currently pending query in queue
+	 * @return the number of currently pending query in queue, or -1 on error.
 	 */
 	int instrument(String symbol);
 
@@ -42,7 +42,7 @@ public interface TradeRemote {
 	 * requests in queue.
 	 * 
 	 * @param symbol symbol
-	 * @return the number of currently pending query in queue
+	 * @return the number of currently pending query in queue, or -1 on error.
 	 */
 	int margin(String symbol);
 
@@ -51,7 +51,7 @@ public interface TradeRemote {
 	 * query requests in queue.
 	 * 
 	 * @param symbol symbol
-	 * @return the number of currently pending query in queue
+	 * @return the number of currently pending query in queue, or -1 on error.
 	 */
 	int commission(String symbol);
 

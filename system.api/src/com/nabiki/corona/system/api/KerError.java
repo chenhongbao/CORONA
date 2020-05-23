@@ -1,6 +1,6 @@
 package com.nabiki.corona.system.api;
 
-import com.nabiki.corona.api.Error;
+import com.nabiki.corona.client.api.Error;
 
 public class KerError extends Throwable implements Error {
 	private static final long serialVersionUID = 1L;
