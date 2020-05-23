@@ -15,9 +15,7 @@ import org.osgi.service.log.LogReaderService;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.info.log.CacheErrorListener;
-import com.nabiki.corona.info.log.LogCache;
-import com.nabiki.corona.info.log.LogWriter;
+import com.nabiki.corona.info.log.*;
 import com.nabiki.corona.system.biz.api.LogQuery;
 import com.nabiki.corona.system.api.KerError;
 
