@@ -4,14 +4,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
-import com.nabiki.corona.system.api.CashMoveCommand;
-import com.nabiki.corona.system.api.KerAccount;
-import com.nabiki.corona.system.api.KerOrderEvalue;
-import com.nabiki.corona.system.api.KerOrder;
-import com.nabiki.corona.system.api.KerOrderStatus;
-import com.nabiki.corona.system.api.KerPositionDetail;
-import com.nabiki.corona.system.api.KerRemoteLoginReport;
-import com.nabiki.corona.system.api.KerTradeReport;
+import com.nabiki.corona.system.api.*;
 
 public interface TradeLocal {
 	String name();
