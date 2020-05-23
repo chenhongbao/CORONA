@@ -7,7 +7,7 @@ import org.osgi.service.component.annotations.Deactivate;
 
 import com.nabiki.corona.api.Candle;
 import com.nabiki.corona.api.Tick;
-import com.nabiki.corona.kernel.biz.api.TickCandleForwarder;
+import com.nabiki.corona.system.biz.api.TickCandleForwarder;
 
 @Component
 public class TickCandlePortal implements TickCandleForwarder {

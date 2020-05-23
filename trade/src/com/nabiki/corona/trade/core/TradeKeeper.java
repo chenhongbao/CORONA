@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.api.KerTradeReport;
 
 public class TradeKeeper {
 	private final Map<String, Set<KerTradeReport>> trades = new ConcurrentHashMap<>();

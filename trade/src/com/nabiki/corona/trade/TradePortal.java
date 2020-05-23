@@ -9,8 +9,8 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.kernel.biz.api.TradeLocal;
-import com.nabiki.corona.kernel.biz.api.TradeRemote;
+import com.nabiki.corona.system.biz.api.TradeLocal;
+import com.nabiki.corona.system.biz.api.TradeRemote;
 
 @Component(service = {})
 public class TradePortal {

@@ -12,9 +12,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
-import com.nabiki.corona.kernel.DefaultDataCodec;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.settings.api.ProductTradingTimeSet;
+import com.nabiki.corona.object.DefaultDataCodec;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.info.api.ProductTradingTimeSet;
 
 public class CandleTime {
 	// Global setting.

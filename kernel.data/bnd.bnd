@@ -1,8 +1,0 @@
--buildpath: system.api;version=latest
-Export-Package: \
-	com.nabiki.corona.kernel,\
-	com.nabiki.corona.kernel.tools,\
-	com.nabiki.corona.kernel.biz,\
-	com.nabiki.corona.kernel.settings,\
-	com.nabiki.corona.kernel.packet
--runrequires: bnd.identity;id='jsonb'

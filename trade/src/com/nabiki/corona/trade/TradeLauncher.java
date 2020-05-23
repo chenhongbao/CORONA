@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import org.osgi.service.component.annotations.Component;
 
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.trade.core.TradeEngine;
 import com.nabiki.corona.trade.core.TradeEngine.State;
 import com.nabiki.corona.trade.core.TradeEngineErrorListener;

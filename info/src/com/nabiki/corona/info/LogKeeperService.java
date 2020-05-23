@@ -18,8 +18,8 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.info.log.CacheErrorListener;
 import com.nabiki.corona.info.log.LogCache;
 import com.nabiki.corona.info.log.LogWriter;
-import com.nabiki.corona.kernel.biz.api.LogQuery;
-import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.system.biz.api.LogQuery;
+import com.nabiki.corona.system.api.KerError;
 
 @Component
 public class LogKeeperService implements LogQuery {

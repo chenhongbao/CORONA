@@ -4,8 +4,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.tools.Packet;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.object.tool.Packet;
 import com.nabiki.corona.trade.TradeLauncher;
 
 public class PacketQueue implements Runnable {

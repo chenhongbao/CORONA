@@ -4,13 +4,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nabiki.corona.kernel.api.KerOrder;
-import com.nabiki.corona.kernel.api.KerPositionDetail;
-import com.nabiki.corona.kernel.api.KerTradeReport;
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.system.api.KerOrder;
+import com.nabiki.corona.system.api.KerPositionDetail;
+import com.nabiki.corona.system.api.KerTradeReport;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.OffsetFlag;
-import com.nabiki.corona.kernel.api.DataFactory;
-import com.nabiki.corona.kernel.api.KerError;
+import com.nabiki.corona.system.api.DataFactory;
+import com.nabiki.corona.system.api.KerError;
 
 public class PositionEngine {
 	private boolean isSettled;

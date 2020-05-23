@@ -7,10 +7,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.kernel.api.KerCandle;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerTick;
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.system.api.KerCandle;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.api.KerTick;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class CandleEngine implements Runnable {
 

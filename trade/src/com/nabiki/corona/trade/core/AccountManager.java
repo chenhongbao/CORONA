@@ -5,13 +5,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import com.nabiki.corona.Utils;
-import com.nabiki.corona.kernel.DefaultDataCodec;
-import com.nabiki.corona.kernel.api.DataCodec;
-import com.nabiki.corona.kernel.api.DataFactory;
-import com.nabiki.corona.kernel.api.KerAccount;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.system.Utils;
+import com.nabiki.corona.system.api.*;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
+import com.nabiki.corona.object.DefaultDataCodec;
 
 public class AccountManager {
 	private final Path root;

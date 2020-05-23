@@ -3,7 +3,8 @@
 	osgi.core;version=7.0.0,\
 	osgi.cmpn;version=7.0.0,\
 	system.api;version=latest,\
-	kernel.data;version=latest
+	client.api;version=latest,\
+	object;version=latest
 
 -testpath: \
 	${junit},\

@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.kernel.settings.api.TimeRange;
+import com.nabiki.corona.system.info.api.TimeRange;
 
 public class TimeList {
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,

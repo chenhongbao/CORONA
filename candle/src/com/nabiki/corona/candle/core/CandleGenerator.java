@@ -5,14 +5,14 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.nabiki.corona.Utils;
 import com.nabiki.corona.api.CandleMinute;
-import com.nabiki.corona.kernel.DefaultDataFactory;
-import com.nabiki.corona.kernel.api.DataFactory;
-import com.nabiki.corona.kernel.api.KerCandle;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerTick;
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.object.DefaultDataFactory;
+import com.nabiki.corona.system.Utils;
+import com.nabiki.corona.system.api.DataFactory;
+import com.nabiki.corona.system.api.KerCandle;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.api.KerTick;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class CandleGenerator {
 	private final String symbol;

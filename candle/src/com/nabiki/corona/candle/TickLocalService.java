@@ -14,12 +14,12 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
-import com.nabiki.corona.kernel.api.KerCandle;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerTick;
-import com.nabiki.corona.kernel.biz.api.TickCandleForwarder;
-import com.nabiki.corona.kernel.biz.api.TickLocal;
-import com.nabiki.corona.kernel.settings.api.RuntimeInfo;
+import com.nabiki.corona.system.api.KerCandle;
+import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.api.KerTick;
+import com.nabiki.corona.system.biz.api.TickCandleForwarder;
+import com.nabiki.corona.system.biz.api.TickLocal;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 /**
  * Process tick into candle, and re-forward ticks and candles to client.

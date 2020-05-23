@@ -1,16 +1,6 @@
 package com.nabiki.corona.trade.core;
 
-import com.nabiki.corona.kernel.api.KerAccount;
-import com.nabiki.corona.kernel.api.KerAction;
-import com.nabiki.corona.kernel.api.KerCommission;
-import com.nabiki.corona.kernel.api.KerError;
-import com.nabiki.corona.kernel.api.KerInstrument;
-import com.nabiki.corona.kernel.api.KerMargin;
-import com.nabiki.corona.kernel.api.KerOrder;
-import com.nabiki.corona.kernel.api.KerOrderStatus;
-import com.nabiki.corona.kernel.api.KerPositionDetail;
-import com.nabiki.corona.kernel.api.KerRemoteLoginReport;
-import com.nabiki.corona.kernel.api.KerTradeReport;
+import com.nabiki.corona.system.api.*;
 
 public interface TradeEngineListener {
 	void orderStatus(KerOrderStatus status);

@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.nabiki.corona.Utils;
+import com.nabiki.corona.system.Utils;
 
 public class IdKeeper {
 	// Order ID -> Session ID.

@@ -1,0 +1,16 @@
+-buildpath: \
+	osgi.annotation;version=7.0.0,\
+	osgi.core;version=7.0.0,\
+	osgi.cmpn;version=7.0.0,\
+	client.api;version=latest,\
+	system.api;version=latest
+
+-testpath: \
+	${junit},\
+	${mockito},\
+	${mockito-deps}
+
+Bundle-Version: 0.0.0.${tstamp}
+Export-Package: \
+	com.nabiki.corona.object,\
+	com.nabiki.corona.object.tool
