@@ -1,6 +1,4 @@
--buildpath: \
-	system.api;version=latest,\
-	jsonb;version=latest
+-buildpath: system.api;version=latest
 Export-Package: \
 	com.nabiki.corona.kernel,\
 	com.nabiki.corona.kernel.tools,\
