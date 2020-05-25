@@ -2,6 +2,7 @@ package com.nabiki.corona.candle.core;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,7 +15,7 @@ import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 
-public class CandleEngine implements Runnable {
+public class CandleEngine extends TimerTask {
 
 	public final static int DEFAULT_PERIOD_MILLIS = 60 * 1000;
 

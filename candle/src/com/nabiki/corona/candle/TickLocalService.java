@@ -1,10 +1,9 @@
 package com.nabiki.corona.candle;
 
 import java.util.Collection;
+import java.util.Timer;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.*;
@@ -91,7 +90,9 @@ public class TickLocalService implements TickLocal {
 	}
 
 	// Candle engine.
-	private ScheduledThreadPoolExecutor executor;
+	// Use timer because the scheduleAtFixedRate will concurrently execute tasks if previous task takes longer than
+	// period to finish.
+	private Timer timer;
 	private CandleEngine engine;
 	
 	public TickLocalService() {
@@ -106,7 +107,7 @@ public class TickLocalService implements TickLocal {
 			return;
 		}
 		
-		this.executor = new ScheduledThreadPoolExecutor(4);
+		this.timer = new Timer(true);
 
 		// Delayed until next minute
 		long remainMsInCurMin = 0;
@@ -114,8 +115,7 @@ public class TickLocalService implements TickLocal {
 		remainMsInCurMin = CandleEngine.DEFAULT_PERIOD_MILLIS - elapseMsInCurMin;
 
 		try {
-			this.executor.scheduleAtFixedRate(this.engine, remainMsInCurMin, CandleEngine.DEFAULT_PERIOD_MILLIS,
-					TimeUnit.MILLISECONDS);
+			this.timer.scheduleAtFixedRate(this.engine, remainMsInCurMin, CandleEngine.DEFAULT_PERIOD_MILLIS);
 			this.log.info("Schedule candle engine.");
 		} catch (RejectedExecutionException e) {
 			this.log.warn("Fail scheduling candle engine. {}", e.getMessage());
@@ -124,16 +124,8 @@ public class TickLocalService implements TickLocal {
 
 	@Deactivate
 	public void stop(ComponentContext ctx) {
-		this.executor.remove(this.engine);
-
-		try {
-			this.executor.shutdown();
-			if (!this.executor.awaitTermination(60, TimeUnit.SECONDS))
-				this.log.warn("Timeout candle engine threadpool shutdown.");
-		} catch (InterruptedException | SecurityException e) {
-			this.log.warn("Fail shuting down candle engine threadpool.");
-		}
-
+		this.timer.cancel();
+		this.timer.purge();
 		this.log.info("Stop candle engine.");
 	}
 
