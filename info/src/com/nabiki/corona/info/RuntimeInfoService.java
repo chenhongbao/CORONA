@@ -74,7 +74,7 @@ public class RuntimeInfoService implements RuntimeInfo {
 	private MarketTimeSet loadMarketTime(Path root) {
 		var fp = Path.of(RuntimeInfoService.configRoot.toAbsolutePath().toString(), RuntimeInfoService.mktTimeFile);
 		 try (InputStream is = new FileInputStream(fp.toFile())) {
-			 return  DefaultDataCodec.create().decode(is.readAllBytes(), MarketTimeSet.class);
+			 return  this.codec.decode(is.readAllBytes(), MarketTimeSet.class);
 		 } catch (KerError | IOException e) {
 			this.log.warn("Fail loading market time config: {}. {}", fp.toAbsolutePath().toString(), e.getMessage(), e);
 			return null;

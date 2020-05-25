@@ -23,12 +23,14 @@ public class InvestorAccount {
 	private final String accountId;
 	private final Path directory;
 	private final RuntimeInfo info;
+	private final DataCodec codec;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, DataFactory factory, IdKeeper keeper) throws KerError {
+	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, IdKeeper keeper, DataCodec codec, DataFactory factory) throws KerError {
 		this.accountId = accountId;
 		this.info = info;
 		this.directory= dir;
+		this.codec = codec;
 		this.factory = factory;
 		
 		// Build directory to keep data files.
@@ -39,9 +41,9 @@ public class InvestorAccount {
 		
 		// Create instances of data.
 		this.idKeeper = keeper;
-		this.positionManager = new PositionManager(positionDir, this.info, this.factory);
-		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.factory);
-		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"));
+		this.positionManager = new PositionManager(positionDir, this.info, this.codec, this.factory);
+		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.codec, this.factory);
+		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"), this.codec);
 		this.tradeKeeper = new MessageKeeper<>();
 		this.statusKeeper = new MessageKeeper<>();
 	}

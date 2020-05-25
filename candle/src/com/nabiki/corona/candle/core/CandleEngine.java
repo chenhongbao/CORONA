@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.client.api.CandleMinute;
+import com.nabiki.corona.object.DefaultDataFactory;
+import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
@@ -18,6 +20,7 @@ public class CandleEngine implements Runnable {
 
 	private final RuntimeInfo runtime;
 	private final CandleEngineListener listener;
+	private final DataFactory factory = DefaultDataFactory.create();
 
 	// Candle periods.
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
@@ -41,7 +44,7 @@ public class CandleEngine implements Runnable {
 	private void initCandleGen() throws KerError {
 		// Create candle generators.
 		for (var s : this.runtime.symbols()) {
-			this.candles.put(s, new CandleGenerator(s, this.runtime));
+			this.candles.put(s, new CandleGenerator(s, this.runtime, this.factory));
 		}
 	}
 	

@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
-import com.nabiki.corona.object.DefaultDataCodec;
 
 public class AccountManager {
 	private final Path root;
@@ -16,12 +15,13 @@ public class AccountManager {
 	private final RuntimeInfo runtime;
 	private final PositionManager positions;
 	private final DataFactory factory;
-	private final DataCodec codec = DefaultDataCodec.create();
+	private final DataCodec codec;
 
-	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataFactory factory) throws KerError {
+	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataCodec codec, DataFactory factory) throws KerError {
 		this.root = path;
 		this.runtime = runtime;
 		this.positions = pos;
+		this.codec = codec;
 		this.factory = factory;
 		
 		// Try loading account from disk.

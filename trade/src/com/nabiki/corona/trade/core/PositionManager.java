@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.system.Utils;
+import com.nabiki.corona.system.api.DataCodec;
 import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
@@ -18,14 +19,16 @@ public class PositionManager {
 	private final Map<String, PositionEngine> positions = new ConcurrentHashMap<>();
 	private final Path directory;
 	private final RuntimeInfo runtime;
+	private final DataCodec codec;
 	private final DataFactory factory;
 	
 	// Settlement mark.
 	private boolean isSettled = false;
 	
-	public PositionManager(Path dir, RuntimeInfo runtime, DataFactory factory) throws KerError {
+	public PositionManager(Path dir, RuntimeInfo runtime, DataCodec codec, DataFactory factory) throws KerError {
 		this.directory = dir;
 		this.runtime = runtime;
+		this.codec = codec;
 		this.factory = factory;
 		
 		// Load settled position manager in constructor.
@@ -78,7 +81,7 @@ public class PositionManager {
 		var dirDate = subDirByDate(this.directory);
 		for (var p : this.positions.values()) {
 			p.settle(this.runtime.lastTick(p.symbol()).settlementPrice());
-			p.write(new PositionFile(p.symbol(), subDirBySymbol(dirDate, p.symbol()), this.runtime, this.factory));
+			p.write(new PositionFile(p.symbol(), subDirBySymbol(dirDate, p.symbol()), this.runtime, this.codec, this.factory));
 		}
 		
 		this.isSettled = true;
@@ -122,7 +125,7 @@ public class PositionManager {
 		var symbols = Utils.getFileNames(dir, false);	
 		for (var m : symbols) {
 			// Read settled positions.
-			var file = new PositionFile(m, subDirBySymbol(dir, m), this.runtime, this.factory);
+			var file = new PositionFile(m, subDirBySymbol(dir, m), this.runtime, this.codec, this.factory);
 			var init = file.read();
 			
 			// Save position engines.

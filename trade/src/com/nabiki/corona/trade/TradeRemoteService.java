@@ -193,10 +193,8 @@ public class TradeRemoteService implements TradeRemote {
 	private ScheduledThreadPoolExecutor executor;
 	private final static int MINUTE_MILLIS = 60 * 1000;
 
-	// Data factory.
+	// Data factory and codec.
 	private final DataFactory factory = DefaultDataFactory.create();
-
-	// Codec.
 	private final DataCodec codec = DefaultDataCodec.create();
 
 	// Remote login rsp.

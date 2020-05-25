@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.client.api.CandleMinute;
-import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
@@ -14,18 +13,20 @@ import com.nabiki.corona.system.info.api.RuntimeInfo;
 public class CandleGenerator {
 	private final String symbol;
 	private final RuntimeInfo info;
+	private final DataFactory factory;
 	private final Map<Integer, RuntimeCandle> candles = new ConcurrentHashMap<>();
 	
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
 			CandleMinute.HALF_HOUR, CandleMinute.HALF_QUADTER_HOUR, CandleMinute.HOUR, CandleMinute.TWO_HOUR};
 	
-	public CandleGenerator(String symbol, RuntimeInfo info) throws KerError {
+	public CandleGenerator(String symbol, RuntimeInfo info, DataFactory factory) throws KerError {
 		this.symbol = symbol;
 		this.info = info;
+		this.factory = factory;
 		
 		// Initialize runtime candles.
 		for(var p : CandleGenerator.periods)
-			this.candles.put(p, new RuntimeCandle(this.symbol, p));
+			this.candles.put(p, new RuntimeCandle(this.symbol, p, this.factory));
 	}
 	
 	public void tick(KerTick tick) {
@@ -55,7 +56,7 @@ public class CandleGenerator {
 	private class RuntimeCandle {
 		private final int min;
 		private final String symbol;
-		private final DataFactory factory = DefaultDataFactory.create();
+		private final DataFactory factory;
 		
 		// Candle info.
 		private KerCandle rtCandle;
@@ -64,8 +65,9 @@ public class CandleGenerator {
 		private LocalDate tradingDay;
 		private boolean popped;
 		
-		RuntimeCandle(String symbol, int min) throws KerError {
+		RuntimeCandle(String symbol, int min, DataFactory factory) throws KerError {
 			this.min = min;
+			this.factory = factory;
 			this.popped = true;
 			this.symbol = symbol;
 			this.rtCandle = this.factory.create(KerCandle.class);

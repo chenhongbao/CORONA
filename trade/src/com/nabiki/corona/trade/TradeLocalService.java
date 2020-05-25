@@ -18,6 +18,7 @@ import com.nabiki.corona.OrderStatus;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
+import com.nabiki.corona.object.DefaultDataCodec;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.biz.api.TradeLocal;
 import com.nabiki.corona.trade.core.*;
@@ -39,7 +40,7 @@ public class TradeLocalService implements TradeLocal {
 
 		// Create investor manager.
 		try {
-			this.investors = new InvestorManager(this.info, this.factory, this.idKeeper);
+			this.investors = new InvestorManager(this.info, this.idKeeper, this.codec, this.factory);
 			this.log.info("Initialize investors.");
 
 			// If there are reports coming in before investors are ready, execute them.
@@ -57,6 +58,7 @@ public class TradeLocalService implements TradeLocal {
 		this.log.info("Unbind runtime info.");
 	}
 
+	private final DataCodec codec = DefaultDataCodec.create();
 	private final DataFactory factory = DefaultDataFactory.create();
 	private final IdKeeper idKeeper = new IdKeeper();
 
@@ -188,9 +190,8 @@ public class TradeLocalService implements TradeLocal {
 			this.remotePositions.add(this.factory.create(KerPositionDetail.class, p));
 			this.remotePosLast = last;
 			
-			if (this.remotePosLast) {
-				// TODO check the consistency of remote position and local position.
-			}
+			if (this.remotePosLast && !this.investors.checkPosition(remotePositions))
+				this.log.warn("Incorrect position, check data files for details.");
 		} catch (KerError e) {
 			this.log.error("fail adding remote position. {}", e.getMessage(), e);
 		}
@@ -200,6 +201,8 @@ public class TradeLocalService implements TradeLocal {
 	public void account(KerAccount a) {
 		try {
 			this.account = this.factory.create(KerAccount.class, a);
+			if (!this.investors.checkAccount(a))
+				this.log.warn("Inconsistent account, check data files for details.");
 		} catch (KerError e) {
 			this.log.error("Factory fail creating account instance. {}", e.getMessage(), e);
 		}

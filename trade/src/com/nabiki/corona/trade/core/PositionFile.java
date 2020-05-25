@@ -9,7 +9,6 @@ import java.util.List;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
-import com.nabiki.corona.object.DefaultDataCodec;
 
 public class PositionFile {
 	private final String symbol;
@@ -18,12 +17,13 @@ public class PositionFile {
 	private final DataFactory factory;
 
 	// Data codec.
-	private final DataCodec codec = DefaultDataCodec.create();
+	private final DataCodec codec;
 
-	public PositionFile(String symbol, Path dir, RuntimeInfo info, DataFactory factory) {
+	public PositionFile(String symbol, Path dir, RuntimeInfo info, DataCodec codec, DataFactory factory) {
 		this.symbol = symbol;
 		this.directory = dir;
 		this.runtime = info;
+		this.codec = codec;
 		this.factory = factory;
 	}
 

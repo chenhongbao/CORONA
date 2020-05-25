@@ -10,14 +10,15 @@ import java.time.format.DateTimeFormatter;
 
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.object.DefaultDataCodec;
 
 public class SessionWriter {
 	private final Path root;
-	private final DataCodec codec = DefaultDataCodec.create();
+	private final DataCodec codec;
 	
-	public SessionWriter(Path root) {
+	public SessionWriter(Path root, DataCodec codec) {
 		this.root = root;
+		this.codec = codec;
+		
 		try {
 			Utils.ensureDir(this.root);
 		} catch (KerError e) {}
