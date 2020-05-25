@@ -4,9 +4,9 @@ import java.net.Socket;
 
 import com.nabiki.corona.system.api.KerError;
 
-public class PacketClientService extends PacketService implements Runnable {
+public class ClientService extends PacketService implements Runnable {
 
-	public PacketClientService(Socket client, ClientInputExecutor exec) throws KerError {
+	public ClientService(Socket client, ClientInputExecutor exec) throws KerError {
 		super(client, exec);
 	}
 

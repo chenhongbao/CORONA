@@ -245,6 +245,9 @@ public class ClientInputExecutor implements Runnable {
 					// Close the connection immediately.
 					stopped = true;
 					in.service.close();
+					// Remove all pending input.
+					remove(in.service);
+					// Set current input's ref to null.
 					in.service = null;
 					break;
 				}
