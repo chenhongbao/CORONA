@@ -131,7 +131,7 @@ public interface TradeLocal {
 	 * 
 	 * @param cmd cash move command
 	 */
-	void moveCash(CashMoveCommand cmd);
+	void moveCash(CashMove cmd);
 
 	/**
 	 * Get remote counter account.

@@ -18,15 +18,19 @@ public class PacketService {
 		this.executor = exec;
 	}
 	
-	protected void send(short type, byte[] bytes, int offset, int length) throws KerError {
+	public void send(short type, byte[] bytes, int offset, int length) throws KerError {
 		this.client.send(type, bytes, offset, length);
 	}
 	
-	protected Packet receive() throws KerError {
+	public Packet receive() throws KerError {
 		return this.client.receive();
 	}
 	
-	protected void execute(Packet input) {
+	public void execute(Packet input) {
 		this.executor.input(input, this);
+	}
+	
+	public void close() {
+		this.client.close();
 	}
 }

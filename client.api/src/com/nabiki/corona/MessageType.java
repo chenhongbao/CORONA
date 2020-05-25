@@ -14,8 +14,11 @@ public class MessageType {
 	public final static short RX_POSITION_DETAIL = 10;
 	public final static short RX_TICK = 11;
 	public final static short RX_TRADE_REPORT = 12;
+	public final static short RX_SUBSCRIBE_SYMBOL = 13;
 	public final static short RX_LIST_ACCOUNT_ID = 21;
 	public final static short RX_LIST_SESSION_ID = 22;
+	public final static short RX_SET_NEW_ACCOUNT = 23;
+	public final static short RX_CASH_MOVE = 24;
 	
 	// Sent query, ID range: [101, 200]
 	public final static short TX_QUERY_ACCOUNT = 101;
@@ -45,8 +48,7 @@ public class MessageType {
 	public final static short TX_SET_SUBSCRIBE_SYMBOLS = 301;
 	public final static short TX_SET_CLIENT_SUBSCRIBE_SYMBOLS = 311;
 	public final static short TX_SET_ADMIN_NEW_ACCOUNT = 331;
-	public final static short TX_SET_ADMIN_DEPOSIT = 332;
-	public final static short TX_SET_ADMIN_WITHDRAW = 333;
+	public final static short TX_SET_ADMIN_CASH_MOVE = 332;
 	
 	// Connection management, ID range: [1001, 1200]
 	public final static short TX_MGR_OPEN_CONN = 1001;

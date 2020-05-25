@@ -1,6 +1,6 @@
 package com.nabiki.corona.system.api;
 
-public interface CashMoveCommand {
+public interface CashMove {
 	String accountId();
 	
 	CashMoveType type();

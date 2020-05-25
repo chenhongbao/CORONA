@@ -346,7 +346,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public void moveCash(CashMoveCommand cmd) {
+	public void moveCash(CashMove cmd) {
 		if (cmd == null) {
 			this.log.warn("Cash move command null pointer.");
 			return;

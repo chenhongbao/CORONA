@@ -169,7 +169,7 @@ public class TradeEngine implements Runnable {
 			this.listener.account(account.value(0));
 			break;
 		case MessageType.RX_ACTION_ERROR:
-			var actError = this.codec.decode(packet.bytes(), RxActionErrorMessage.class);
+			var actError = this.codec.decode(packet.bytes(), RxErrorMessage.class);
 			for (var error : actError.values())
 				this.listener.error(error);
 

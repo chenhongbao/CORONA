@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.nabiki.corona.DirectionFlag;
 import com.nabiki.corona.system.api.KerError;
@@ -56,6 +57,13 @@ public class Utils {
 				.format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss.SSS")).concat(".");
 		var id = UUID.randomUUID().toString();
 		return timeStamp.concat(id.substring(0, id.indexOf('-')));
+	}
+	
+	private static AtomicInteger incId = new AtomicInteger(0);
+	public static int increaseGet() {
+		if (incId.get() == Integer.MAX_VALUE)
+			incId.set(0);
+		return incId.incrementAndGet();
 	}
 
 	/**

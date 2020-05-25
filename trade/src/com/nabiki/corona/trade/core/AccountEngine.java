@@ -63,8 +63,8 @@ public class AccountEngine {
 	private final List<RuntimeLockMoney> locked = new LinkedList<>();
 
 	// Deposit/withdraw(management).
-	private final List<CashMoveCommand> deposits = new LinkedList<>();
-	private final List<CashMoveCommand> withdraws = new LinkedList<>();
+	private final List<CashMove> deposits = new LinkedList<>();
+	private final List<CashMove> withdraws = new LinkedList<>();
 
 	public AccountEngine(KerAccount init, RuntimeInfo info, PositionManager pos, DataFactory factory) throws KerError {
 		this.info = info;
@@ -87,7 +87,7 @@ public class AccountEngine {
 		return this.factory.create(KerAccount.class, this.origin);
 	}
 	
-	public void moveCash(CashMoveCommand cmd) throws KerError {
+	public void moveCash(CashMove cmd) throws KerError {
 		if (cmd == null)
 			throw new KerError("Cash move command null pointer.");
 		if (cmd.type() == null)
@@ -99,7 +99,7 @@ public class AccountEngine {
 			withdraw(cmd);
 	}
 
-	private void deposit(CashMoveCommand cmd) throws KerError {
+	private void deposit(CashMove cmd) throws KerError {
 		if (cmd == null)
 			throw new KerError("Cash command null pointer.");
 		if (cmd.amount() <= 0)
@@ -108,7 +108,7 @@ public class AccountEngine {
 		this.deposits.add(cmd);
 	}
 
-	private void withdraw(CashMoveCommand cmd) throws KerError {
+	private void withdraw(CashMove cmd) throws KerError {
 		if (cmd == null)
 			throw new KerError("Cash command null pointer.");
 		if (cmd.amount() <= 0)

@@ -65,7 +65,7 @@ public class InvestorAccount {
 		return this.accountManager;
 	}
 	
-	public void moveCash(CashMoveCommand cmd) throws KerError {
+	public void moveCash(CashMove cmd) throws KerError {
 		this.accountManager.accountEngine().moveCash(cmd);
 	}
 	

@@ -11,14 +11,14 @@ public interface PacketMessage<T> {
 	 * 
 	 * @return request id
 	 */
-	int requestId();
+	int requestSeq();
 	
 	/**
 	 * Set request ID for the request if it is.
 	 * 
 	 * @param id request id
 	 */
-	void requestId(int id);
+	void requestSeq(int id);
 	
 	/**
 	 * Unique ID denoting the response if it is. Every unique ID is distinguished from the other. There
@@ -26,14 +26,14 @@ public interface PacketMessage<T> {
 	 * 
 	 * @return response id
 	 */
-	int responseId();
+	int responseSeq();
 	
 	/**
 	 * Set response ID for the response if it is.
 	 * 
 	 * @param id response id
 	 */
-	void responseId(int id);
+	void responseSeq(int id);
 	
 	/**
 	 * Time stamp when this message is sent.
