@@ -59,7 +59,8 @@ public class InvestorManager {
 
 	public boolean checkPosition(List<KerPositionDetail> remote) throws KerError {
 		writeAdminPosition(remote, InvestorManager.adminRoot);
-		// TODO Check consistency of positions.
+		// TODO Check consistency of positions. Consider whether need to check here.
+		//      If there are more than on environment sharing the same account, mustn't be matched.
 		return true;
 	}
 
