@@ -3,6 +3,7 @@ package com.nabiki.corona.object.tool;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.nabiki.corona.system.api.KerError;
 
-public class PacketConnector {
+public class PacketClient {
 	private enum SocketState {
 		OPENING, OPEN, CLOSING, CLOSED
 	}
@@ -42,7 +43,7 @@ public class PacketConnector {
 	private Lock lck;
 	private Condition condition;
 
-	public PacketConnector(Socket connection) throws KerError {
+	public PacketClient(Socket connection) throws KerError {
 		this.remote = new PacketSocket(connection);
 		this.state = new AtomicReference<>(SocketState.OPEN);
 		this.openTime = Instant.now();
@@ -62,6 +63,12 @@ public class PacketConnector {
 						switch (state.get()) {
 						case OPENING:
 							openSocket();
+							if (state.get() != SocketState.OPEN)
+								// Need to wait some time, don't be busy connecting.
+								try {
+									Thread.sleep(Duration.ofSeconds(5).toMillis());
+								} catch (InterruptedException e1) {
+								}
 							break;
 						case CLOSING:
 							closeSocket();
@@ -108,13 +115,12 @@ public class PacketConnector {
 
 	private void closeSocket() {
 		this.closeTime = Instant.now();
-		this.state.set(SocketState.CLOSED);
-
 		// Validate state.
 		if (this.remote == null || this.remote.socket().isClosed() || !this.remote.socket().isConnected())
 			return;
 		// Close.
 		this.remote.close();
+		this.state.set(SocketState.CLOSED);
 	}
 
 	private void openSocket() {
@@ -130,11 +136,12 @@ public class PacketConnector {
 		while (this.queue.size() > 0) {
 			var c = this.queue.poll();
 			try {
-				send(c.type, c.bytes, 0, c.bytes.length);
+				// Use packet client's send method. Don't use class method because it sets the socket
+				// state in a different way.
+				this.remote.send(c.type, c.bytes, 0, c.bytes.length);
 			} catch (KerError e) {
 				System.err.println(
-						"Socket sending failure, inconsistent state, found OPEN. " + e.message());
-				
+						"Socket sending failure, inconsistent state, found OPEN. " + e.message());				
 				// Mark state as OPENING so it will reconnect at next sending.
 				this.state.set(SocketState.OPENING);
 				return false;
@@ -153,6 +160,11 @@ public class PacketConnector {
 	}
 
 	public synchronized void send(short type, byte[] bytes, int offset, int length) throws KerError {
+		// Silently return because it is verification error.
+		// Here any exception is taken as IO-related error.
+		if (bytes == null || bytes.length < offset + length)
+			return;
+		
 		if (available()) {
 			try {
 				this.remote.send(type, bytes, offset, length);
@@ -161,6 +173,8 @@ public class PacketConnector {
 				// Notify reconnecting.
 				this.state.set(SocketState.OPENING);
 				this.condition.signal();
+				// Re-throw exception to notify caller about error.
+				throw e;
 			}
 		} else if (this.state.get() == SocketState.OPENING) {
 			cache(type, bytes, offset, length);
@@ -169,10 +183,7 @@ public class PacketConnector {
 		}
 	}
 
-	private void cache(short type, byte[] payload, int offset, int length) throws KerError {
-		if (payload == null || payload.length < offset + length)
-			throw new KerError("Invalid parameter, nullpointer or not enough payload.");
-
+	private void cache(short type, byte[] payload, int offset, int length) {
 		// Create new byte array because the original array may be used elsewhere.
 		ByteBuffer bb = ByteBuffer.allocate(length);
 		bb.put(payload, offset, length);
