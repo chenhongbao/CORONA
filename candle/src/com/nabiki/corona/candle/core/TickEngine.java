@@ -10,15 +10,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import com.nabiki.corona.MessageType;
-import com.nabiki.corona.object.DefaultDataCodec;
-import com.nabiki.corona.object.DefaultDataFactory;
-import com.nabiki.corona.object.tool.Packet;
-import com.nabiki.corona.object.tool.PacketClient;
+import com.nabiki.corona.object.*;
+import com.nabiki.corona.object.tool.*;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RemoteConfig;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
-import com.nabiki.corona.system.packet.api.RxTickMessage;
-import com.nabiki.corona.system.packet.api.TxSubscribeSymbolMessage;
+import com.nabiki.corona.system.info.api.*;
+import com.nabiki.corona.system.packet.api.*;
 
 public class TickEngine implements Runnable {
 	private EngineState state = EngineState.STOPPED;
@@ -39,7 +35,7 @@ public class TickEngine implements Runnable {
 	}
 	
 	public void sendSymbols() throws KerError {
-		var symbols = this.factory.create(TxSubscribeSymbolMessage.class);
+		var symbols = this.factory.create(StringMessage.class);
 		symbols.values(this.runtime.symbols());
 		symbols.last(true);
 		
