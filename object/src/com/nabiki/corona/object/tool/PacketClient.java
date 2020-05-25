@@ -88,6 +88,8 @@ public class PacketClient {
 
 		});
 
+		this.queueDaemon.start();
+		this.queueDaemon.setDaemon(true);
 	}
 	
 	public Packet receive() throws KerError {

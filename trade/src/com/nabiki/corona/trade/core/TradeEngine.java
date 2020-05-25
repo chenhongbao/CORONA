@@ -16,7 +16,7 @@ import com.nabiki.corona.system.info.api.RemoteConfig;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.object.DefaultDataCodec;
 import com.nabiki.corona.object.tool.Packet;
-import com.nabiki.corona.object.tool.PacketConnector;
+import com.nabiki.corona.object.tool.PacketClient;
 
 public class TradeEngine implements Runnable {
 	public enum State {
@@ -29,7 +29,7 @@ public class TradeEngine implements Runnable {
 
 	// Socket connection.
 	private State state = State.STOPPED;
-	private PacketConnector connection;
+	private PacketClient connection;
 
 	// Data queue.
 	private Thread queDaemon;
@@ -81,6 +81,9 @@ public class TradeEngine implements Runnable {
 				}
 			}
 		});
+		
+		this.queDaemon.start();
+		this.queDaemon.setDaemon(true);
 
 		// Connect.
 		try {
@@ -119,7 +122,7 @@ public class TradeEngine implements Runnable {
 		this.state = State.STOPPED;
 	}
 
-	private PacketConnector connect() throws KerError {
+	private PacketClient connect() throws KerError {
 		// Find connection config to remote.
 		RemoteConfig conf = null;
 		for (var c : this.runtime.remoteConfig().configs()) {
@@ -140,7 +143,7 @@ public class TradeEngine implements Runnable {
 			connection.connect(address);
 
 			// Wrap connection into packet socket.
-			return new PacketConnector(connection);
+			return new PacketClient(connection);
 		} catch (UnknownHostException e) {
 			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
 		} catch (IOException e) {

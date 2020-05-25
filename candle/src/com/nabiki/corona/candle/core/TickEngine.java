@@ -13,7 +13,7 @@ import com.nabiki.corona.MessageType;
 import com.nabiki.corona.object.DefaultDataCodec;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.object.tool.Packet;
-import com.nabiki.corona.object.tool.PacketConnector;
+import com.nabiki.corona.object.tool.PacketClient;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
@@ -22,7 +22,7 @@ import com.nabiki.corona.system.packet.api.TxSubscribeSymbolMessage;
 
 public class TickEngine implements Runnable {
 	private EngineState state = EngineState.STOPPED;
-	private PacketConnector remote;
+	private PacketClient remote;
 	
 	private final RuntimeInfo runtime;
 	private final TickEngineListener listener;
@@ -72,6 +72,9 @@ public class TickEngine implements Runnable {
 			}
 		});
 		
+		this.queDaemon.start();
+		this.queDaemon.setDaemon(true);
+		
 		// Connect remote.
 		try {
 			this.remote = connect();
@@ -109,7 +112,7 @@ public class TickEngine implements Runnable {
 		callListener(this.state);
 	}
 	
-	private PacketConnector connect() throws KerError{
+	private PacketClient connect() throws KerError{
 		// Find connection config to remote.
 		RemoteConfig conf = null;
 		for (var c : this.runtime.remoteConfig().configs()) {
@@ -131,7 +134,7 @@ public class TickEngine implements Runnable {
 			connection.connect(address);
 			
 			// Wrap connection into packet socket.
-			return new PacketConnector(connection);
+			return new PacketClient(connection);
 		} catch (UnknownHostException e) {
 			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
 		} catch (IOException e) {

@@ -187,6 +187,10 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			this.remotePositions.add(this.factory.create(KerPositionDetail.class, p));
 			this.remotePosLast = last;
+			
+			if (this.remotePosLast) {
+				// TODO check the consistency of remote position and local position.
+			}
 		} catch (KerError e) {
 			this.log.error("fail adding remote position. {}", e.getMessage(), e);
 		}
