@@ -15,11 +15,11 @@ import com.nabiki.corona.system.packet.api.RxErrorMessage;
 /**
  * Provide common operations on client input and output.
  */
-public class PacketService {
+public class PacketServer {
 	private final PacketSocket client;
 	private final ClientInputExecutor executor;
 	
-	public PacketService(Socket client, ClientInputExecutor exec) throws KerError {
+	public PacketServer(Socket client, ClientInputExecutor exec) throws KerError {
 		this.client = new PacketSocket(client);
 		this.executor = exec;
 	}

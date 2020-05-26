@@ -5,9 +5,9 @@ import java.net.Socket;
 import com.nabiki.corona.MessageType;
 import com.nabiki.corona.system.api.KerError;
 
-public class MdService extends PacketService implements Runnable {
+public class ClientTradeServer extends PacketServer implements Runnable {
 
-	public MdService(Socket client, ClientInputExecutor exec) throws KerError {
+	public ClientTradeServer(Socket client, ClientInputExecutor exec) throws KerError {
 		super(client, exec);
 	}
 
@@ -17,7 +17,12 @@ public class MdService extends PacketService implements Runnable {
 			try {
 				var packet = super.receive();
 				switch (packet.type()) {
-				case MessageType.TX_SET_CLIENT_SUBSCRIBE_SYMBOLS:
+				case MessageType.TX_QUERY_CLIENT_ACCOUNT:
+				case MessageType.TX_QUERY_CLIENT_ORDER_STATUS:
+				case MessageType.TX_QUERY_CLIENT_POSITION_DETAIL:
+				case MessageType.TX_QUERY_CLIENT_LIST_SESSION_ID:
+				case MessageType.TX_REQUEST_CLIENT_ACTION:
+				case MessageType.TX_REQUEST_CLIENT_ORDER:
 					this.execute(packet);
 					break;
 				default:
@@ -33,5 +38,4 @@ public class MdService extends PacketService implements Runnable {
 		if (!super.isClosed())
 			super.close();
 	}
-
 }

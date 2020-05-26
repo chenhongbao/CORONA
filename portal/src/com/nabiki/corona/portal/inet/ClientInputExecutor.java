@@ -16,9 +16,9 @@ public class ClientInputExecutor implements Runnable {
 	// Client input information keeper.
 	public class ClientInput {
 		public Packet input;
-		public PacketService service;
+		public PacketServer service;
 		
-		ClientInput(Packet input, PacketService service) {
+		ClientInput(Packet input, PacketServer service) {
 			this.input = input;
 			this.service = service;
 		}
@@ -38,7 +38,7 @@ public class ClientInputExecutor implements Runnable {
 		this.adaptor = adaptor;
 	}
 	
-	public void input(Packet input, PacketService service) {
+	public void input(Packet input, PacketServer service) {
 		this.queue.offer(new ClientInput(input, service));
 	}
 	
@@ -49,7 +49,7 @@ public class ClientInputExecutor implements Runnable {
 	 * @param service service
 	 * @return number of removed inputs
 	 */
-	public int remove(PacketService service) {
+	public int remove(PacketServer service) {
 		int count = 0;
 		for (var inp : this.queue) {
 			if (inp.service != service)

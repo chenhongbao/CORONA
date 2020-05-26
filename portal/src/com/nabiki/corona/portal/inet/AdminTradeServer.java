@@ -5,9 +5,9 @@ import java.net.Socket;
 import com.nabiki.corona.MessageType;
 import com.nabiki.corona.system.api.KerError;
 
-public class ClientService extends PacketService implements Runnable {
+public class AdminTradeServer extends PacketServer implements Runnable {
 
-	public ClientService(Socket client, ClientInputExecutor exec) throws KerError {
+	public AdminTradeServer(Socket client, ClientInputExecutor exec) throws KerError {
 		super(client, exec);
 	}
 
@@ -17,13 +17,15 @@ public class ClientService extends PacketService implements Runnable {
 			try {
 				var packet = super.receive();
 				switch (packet.type()) {
-				case MessageType.TX_QUERY_CLIENT_ACCOUNT:
-				case MessageType.TX_QUERY_CLIENT_ORDER_STATUS:
-				case MessageType.TX_QUERY_CLIENT_POSITION_DETAIL:
-				case MessageType.TX_QUERY_CLIENT_LIST_SESSION_ID:
-				case MessageType.TX_REQUEST_CLIENT_ACTION:
-				case MessageType.TX_REQUEST_CLIENT_ORDER:
-				case MessageType.TX_SET_CLIENT_SUBSCRIBE_SYMBOLS:
+				case MessageType.TX_QUERY_ADMIN_ACCOUNT:
+				case MessageType.TX_QUERY_ADMIN_LIST_ACCOUNT_ID:
+				case MessageType.TX_QUERY_ADMIN_ORDER_STATUS:
+				case MessageType.TX_QUERY_ADMIN_POSITION_DETAIL:
+				case MessageType.TX_QUERY_ADMIN_LIST_SESSION_ID:
+				case MessageType.TX_REQUEST_ADMIN_ACTION:
+				case MessageType.TX_REQUEST_ADMIN_ORDER:
+				case MessageType.TX_SET_ADMIN_NEW_ACCOUNT:
+				case MessageType.TX_SET_ADMIN_CASH_MOVE:
 					this.execute(packet);
 					break;
 				default:
