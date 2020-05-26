@@ -6,8 +6,8 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.nabiki.corona.CandleMinute;
 import com.nabiki.corona.ErrorCode;
-import com.nabiki.corona.client.api.CandleMinute;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerCandle;

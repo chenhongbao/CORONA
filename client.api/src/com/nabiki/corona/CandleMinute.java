@@ -1,4 +1,4 @@
-package com.nabiki.corona.client.api;
+package com.nabiki.corona;
 
 public class CandleMinute {
 	public static final int MINUTE = 1;

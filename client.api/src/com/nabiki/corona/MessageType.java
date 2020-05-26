@@ -5,20 +5,21 @@ public class MessageType {
 	public final static short RX_ACCOUNT = 1;
 	public final static short RX_ACTION_ERROR = 2;
 	public final static short RX_CANDLE = 3;
-	public final static short RX_COMMISSION = 4;
-	public final static short RX_ERROR = 5;
-	public final static short RX_INSTRUMENT = 6;
-	public final static short RX_MARGIN = 7;
-	public final static short RX_ORDER_ERROR = 8;
-	public final static short RX_ORDER_STATUS = 9;
-	public final static short RX_POSITION_DETAIL = 10;
-	public final static short RX_TICK = 11;
-	public final static short RX_TRADE_REPORT = 12;
-	public final static short RX_SUBSCRIBE_SYMBOL = 13;
-	public final static short RX_LIST_ACCOUNT_ID = 21;
-	public final static short RX_LIST_SESSION_ID = 22;
-	public final static short RX_SET_NEW_ACCOUNT = 23;
-	public final static short RX_CASH_MOVE = 24;
+	public final static short RX_HISTORY_CANDLE = 4;
+	public final static short RX_COMMISSION = 5;
+	public final static short RX_ERROR = 6;
+	public final static short RX_INSTRUMENT = 7;
+	public final static short RX_MARGIN = 8;
+	public final static short RX_ORDER_ERROR = 9;
+	public final static short RX_ORDER_STATUS = 10;
+	public final static short RX_POSITION_DETAIL = 11;
+	public final static short RX_TICK = 12;
+	public final static short RX_TRADE_REPORT = 13;
+	public final static short RX_SUBSCRIBE_SYMBOL = 14;
+	public final static short RX_LIST_ACCOUNT_ID = 31;
+	public final static short RX_LIST_SESSION_ID = 32;
+	public final static short RX_SET_NEW_ACCOUNT = 33;
+	public final static short RX_CASH_MOVE = 34;
 	
 	// Sent query, ID range: [101, 200]
 	public final static short TX_QUERY_ACCOUNT = 101;

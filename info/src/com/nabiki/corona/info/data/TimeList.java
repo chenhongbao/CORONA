@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.nabiki.corona.client.api.CandleMinute;
+import com.nabiki.corona.CandleMinute;
 import com.nabiki.corona.system.info.api.TimeRange;
 
 public class TimeList {
