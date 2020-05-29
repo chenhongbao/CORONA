@@ -103,6 +103,14 @@ public interface TradeLocal {
 	 * @return allocation report
 	 */
 	KerOrderEvalue allocateOrder(KerOrder op);
+	
+ 	/**
+-	 * Set the global account info. The account is the remote broker account. The info is used to check the consistency
+	 * of all sub-accounts.
+-	 * 
+-	 * @param a account
+-	 */
+	void account(KerAccount a);
 
 	/**
 	 * Query account with given account id.
