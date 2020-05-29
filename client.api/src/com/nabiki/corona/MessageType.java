@@ -56,4 +56,5 @@ public class MessageType {
 	public final static short TX_MGR_CLOSE_CONN = 1002;
 	public final static short TX_MGR_HEARTBEAT = 1003;
 	public final static short TX_MGR_EMPTY = 1004;
+	public final static short TX_MGR_REQUEST_LOGIN = 1005;
 }

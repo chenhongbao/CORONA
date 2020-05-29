@@ -4,7 +4,7 @@ import com.nabiki.corona.client.api.Error;
 
 public class KerError extends Throwable implements Error {
 	private static final long serialVersionUID = 1L;
-	private int code;
+	private int code = -1;
 	
 	public KerError(int code) {
 		super();

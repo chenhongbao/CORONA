@@ -13,6 +13,13 @@ public class AdminTradeServer extends PacketServer implements Runnable {
 
 	@Override
 	public void run() {
+		try {
+			super.waitLogin();
+		} catch (KerError e) {
+			super.sendError(e);
+			return;
+		}
+		
 		while (!super.isClosed()) {
 			try {
 				var packet = super.receive();
