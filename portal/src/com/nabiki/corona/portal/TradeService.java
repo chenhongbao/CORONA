@@ -19,8 +19,8 @@ import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 
 @Component(service = {})
 public class TradeService {
-	class AdminServiceAdaptor extends ClientInputAdaptor {
-		public AdminServiceAdaptor() {}
+	class ServiceAdaptor extends ClientInputAdaptor {
+		public ServiceAdaptor() {}
 		
 		private TradeLocal local() throws KerError {
 			if (local == null)

@@ -1,7 +1,11 @@
 package com.nabiki.corona.portal.inet;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import com.nabiki.corona.MessageType;
 import com.nabiki.corona.system.Utils;
@@ -21,12 +25,17 @@ public class PacketServer {
 	// Login mark.
 	private boolean logined;
 	
+	// Write packet to files.
+	private final Path root = Path.of(".", "packet");
+	private final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSSSSS");
 
 	public PacketServer(Socket client, ClientInputExecutor exec) throws KerError {
 		this.client = new PacketSocket(client);
 		this.executor = exec;
 		// Set mark.
 		this.logined = false;
+		// Create packet dir.
+		Utils.ensureDir(this.root);
 	}
 
 	public void send(short type, byte[] bytes, int offset, int length) throws KerError {
@@ -34,7 +43,11 @@ public class PacketServer {
 	}
 
 	public Packet receive() throws KerError {
-		return this.client.receive();
+		var r = this.client.receive();
+		// Write packet before input into executor.
+		// It is very important to save every received packet for future verification.
+		writePacket(r);
+		return r;
 	}
 
 	public void execute(Packet input) {
@@ -64,6 +77,16 @@ public class PacketServer {
 			var bytes = DefaultDataCodec.create().encode(r);
 			send(MessageType.RX_ERROR, bytes, 0, bytes.length);
 		} catch (KerError ex) {
+		}
+	}
+	
+	private void writePacket(Packet packet) {
+		var name = LocalDateTime.now().format(this.format) + "_" + packet.type() + ".json";
+		var file = Path.of(this.root.toAbsolutePath().toString(), name).toFile();
+		
+		try (FileOutputStream os = new FileOutputStream(file)) {
+			os.write(packet.bytes());
+		} catch (IOException e) {
 		}
 	}
 	
