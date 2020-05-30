@@ -1,7 +1,7 @@
 package com.nabiki.corona;
 
 public class AccountRole {
-	public static short SUPER = 0;
-	public static short MANAGER = 1;
-	public static short TRADER = 1;
+	public final static short ADMIN = 0;
+	public final static short MANAGER = 1;
+	public final static short TRADER = 2;
 }

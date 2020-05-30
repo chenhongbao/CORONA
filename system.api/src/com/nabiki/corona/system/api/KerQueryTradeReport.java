@@ -1,6 +1,6 @@
 package com.nabiki.corona.system.api;
 
-public interface KerQueryOrderStatus {
+public interface KerQueryTradeReport {
 	String sessionId();
 	
 	void sessionId(String id);

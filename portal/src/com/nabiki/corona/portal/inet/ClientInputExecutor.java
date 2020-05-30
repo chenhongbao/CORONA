@@ -201,7 +201,7 @@ public class ClientInputExecutor implements Runnable {
 					var reqSub = this.codec.decode(in.input.bytes(), StringMessage.class);
 					var rspSub = this.factory.create(RxErrorMessage.class);
 					for (var s : reqSub.values())
-						rspSub.value(this.adaptor.subscribeSymbol(s));
+						rspSub.value(this.adaptor.subscribeSymbol(s, in.service));
 					//
 					rspSub.requestSeq(reqSub.requestSeq());
 					rspSub.responseSeq(Utils.increaseGet());
@@ -239,6 +239,22 @@ public class ClientInputExecutor implements Runnable {
 					rspCas.last(true);
 					//
 					rspBytes = this.codec.encode(rspCas);
+					break;
+				case MessageType.TX_QUERY_ADMIN_TRADE_REPORT:
+				case MessageType.TX_QUERY_CLIENT_TRADE_REPORT:
+					rspType = MessageType.RX_TRADE_REPORT;
+					//
+					var reqTra = this.codec.decode(in.input.bytes(),  TxQueryTradeReportMessage.class);
+					var rspTra = this.factory.create(RxTradeReportMessage.class);
+					for (var q : reqTra.values())
+						rspTra.values(this.adaptor.queryTradeReport(q));
+					//
+					rspTra.requestSeq(reqTra.requestSeq());
+					rspTra.responseSeq(Utils.increaseGet());
+					rspTra.time(LocalDateTime.now());
+					rspTra.last(true);
+					//
+					rspBytes = this.codec.encode(rspTra);
 					break;
 				default:
 					// Unknown message, probably hacked.

@@ -23,6 +23,10 @@ public abstract class ClientInputAdaptor {
 		return null;
 	}
 	
+	public Collection<KerTradeReport> queryTradeReport(KerQueryTradeReport q) {
+		return null;
+	}
+	
 	public Collection<String> queryListSessionId(String accountId) {
 		return null;
 	}
@@ -39,7 +43,7 @@ public abstract class ClientInputAdaptor {
 		return null;
 	}
 	
-	public KerError subscribeSymbol(String symbol) {
+	public KerError subscribeSymbol(String symbol, PacketServer server) {
 		return null;
 	}
 	

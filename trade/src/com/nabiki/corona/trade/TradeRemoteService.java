@@ -308,8 +308,6 @@ public class TradeRemoteService implements TradeRemote {
 			var req = this.factory.create(TxQueryPositionDetailMessage.class);
 			// Set query, query all position so the symbol is empty.
 			var val = this.factory.create(KerQueryPositionDetail.class);
-			val.brokerId(this.login.brokerId());
-			val.investorId(this.login.userId());
 			// Set message.
 			req.value(val);
 			req.last(true);

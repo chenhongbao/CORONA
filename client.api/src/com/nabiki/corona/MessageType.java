@@ -31,11 +31,13 @@ public class MessageType {
 	public final static short TX_QUERY_CLIENT_ORDER_STATUS = 112;
 	public final static short TX_QUERY_CLIENT_POSITION_DETAIL = 113;
 	public final static short TX_QUERY_CLIENT_LIST_SESSION_ID = 114;
+	public final static short TX_QUERY_CLIENT_TRADE_REPORT = 115;
 	public final static short TX_QUERY_ADMIN_ACCOUNT = 131;
 	public final static short TX_QUERY_ADMIN_LIST_ACCOUNT_ID = 132;
 	public final static short TX_QUERY_ADMIN_ORDER_STATUS = 133;
 	public final static short TX_QUERY_ADMIN_POSITION_DETAIL = 134;
 	public final static short TX_QUERY_ADMIN_LIST_SESSION_ID = 135;
+	public final static short TX_QUERY_ADMIN_TRADE_REPORT = 136;
 	
 	// Sent request, ID range: [201, 300]
 	public final static short TX_REQUEST_ACTION = 201;

@@ -21,7 +21,7 @@ public class MarketDataServer extends PacketServer implements Runnable {
 					this.execute(packet);
 					break;
 				default:
-					throw new KerError("Unknown message type: " + packet.type());
+					throw new KerError("Not authorized message type: " + packet.type());
 				}
 			} catch (KerError e) {
 				// Send error message to peer and exit loop.

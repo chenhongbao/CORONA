@@ -1,6 +1,7 @@
 package com.nabiki.corona.portal;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -14,6 +15,7 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.biz.api.*;
 import com.nabiki.corona.system.info.api.*;
+import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.portal.core.LoginManager;
 import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 
@@ -36,7 +38,7 @@ public class TradeService {
 
 		@Override
 		public void error(KerError e) {
-			log.error("Trade service failed: {}.", e.message(), e);
+			log.error("Trade service failed: {}", e.message(), e);
 		}
 
 		@Override
@@ -46,38 +48,92 @@ public class TradeService {
 
 		@Override
 		public Collection<KerPositionDetail> queryPositionDetail(KerQueryPositionDetail q) {
-			// TODO position detail
-			return super.queryPositionDetail(q);
+			try {
+				return local().positionDetails(q.accountId(), q.symbol());
+			} catch (KerError e) {
+				log.error("Fail query position detail: {}", e.message(), e);
+				return new LinkedList<>();
+			}
 		}
 
 		@Override
 		public Collection<KerOrderStatus> queryOrderStatus(KerQueryOrderStatus q) {
-			// TODO order status
-			return super.queryOrderStatus(q);
+			try {
+				return local().orderStatus(q.sessionId());
+			} catch (KerError e) {
+				log.error("Fail query order status: {}", e.message(), e);
+				return new LinkedList<>();
+			}
 		}
 
 		@Override
 		public Collection<String> queryListSessionId(String accountId) {
-			// TODO list session id
-			return super.queryListSessionId(accountId);
+			try {
+				return local().sessionIdsOfAccount(accountId);
+			} catch (KerError e) {
+				log.error("Fail query session ID for account: {}. {}", accountId, e.message(), e);
+				return new LinkedList<>();
+			}
 		}
 
 		@Override
 		public Collection<String> queryListAccountId() {
-			// TODO list account id
-			return super.queryListAccountId();
+			try {
+				return local().accountIds();
+			} catch (KerError e) {
+				log.error("Fail query account ID: {}", e.message(), e);
+				return new LinkedList<>();
+			}
 		}
 
 		@Override
 		public KerOrderError requestOrder(KerOrder o) {
-			// TODO order
-			return super.requestOrder(o);
+			KerOrderError e = null;
+			
+			try {				
+				int r = remote().order(o);
+				// Create response.
+				e = factory.create(KerOrderError.class);
+				e.order(o);
+				// r < 0 is not possible currently, but it may return this value in future.
+				if (r > 0)
+					e.error(new KerError(0, "Order queueing."));
+				else if (r == 0)
+					e.error(new KerError(0, "Order sent."));
+				else
+					e.error(new KerError(r, "Order enqueue error."));
+				
+				return e;
+			} catch (KerError ex) {
+				log.error("Fail creating response for order request: {}", ex.message(), ex);
+				return null;
+			}
 		}
 
 		@Override
 		public KerError requestAction(KerAction a) {
-			// TODO action
-			return super.requestAction(a);
+			try {
+				int r = remote().action(a);
+				if (r > 0)
+					return new KerError(0, "Action queueing.");
+				else if (r == 0)
+					return new KerError(0, "Action sent.");
+				else
+					return new KerError(r, "Action enqueue error.");
+			} catch (KerError e) {
+				log.error("Fail enqueueing action. {}", e.message(), e);
+				return e;
+			}
+		}
+
+		@Override
+		public Collection<KerTradeReport> queryTradeReport(KerQueryTradeReport q) {
+			try {
+				return local().tradeReport(q.sessionId());
+			} catch (KerError e) {
+				log.error("Fail query trade reports for session: {}. {}", q.sessionId(), e.message(), e);
+				return new LinkedList<>();
+			}
 		}
 
 		@Override
@@ -97,18 +153,12 @@ public class TradeService {
 
 		@Override
 		public KerError moveCash(CashMove move) {
-			// TODO move cash
-			return super.moveCash(move);
-		}
-
-		@Activate
-		public void start(ComponentContext ctx) {
-			// TODO start
-		}
-
-		@Deactivate
-		public void stop(ComponentContext ctx) {
-			// TODO stop
+			try {
+				local().moveCash(move);
+				return new KerError(0);
+			} catch (KerError e) {
+				return e;
+			}
 		}
 	}
 	
@@ -163,5 +213,18 @@ public class TradeService {
 			this.remote = null;
 			this.log.info("Unset trade remote: {}.", remote.name());
 		}
+	}
+	
+	// Data factory.
+	private final DataFactory factory = DefaultDataFactory.create();
+	
+	@Activate
+	public void start(ComponentContext ctx) {
+		// TODO start
+	}
+
+	@Deactivate
+	public void stop(ComponentContext ctx) {
+		// TODO stop
 	}
 }

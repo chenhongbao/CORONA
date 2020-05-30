@@ -24,6 +24,7 @@ public class PacketServer {
 
 	// Login mark.
 	private boolean logined;
+	private KerLogin login;
 	
 	// Write packet to files.
 	private final Path root = Path.of(".", "packet");
@@ -80,6 +81,10 @@ public class PacketServer {
 		}
 	}
 	
+	public KerLogin getLogin() {
+		return this.login;
+	}
+	
 	private void writePacket(Packet packet) {
 		var name = LocalDateTime.now().format(this.format) + "_" + packet.type() + ".json";
 		var file = Path.of(this.root.toAbsolutePath().toString(), name).toFile();
@@ -107,6 +112,9 @@ public class PacketServer {
 				this.logined = loginOk(reqLogin.value(0));
 				if (!this.logined)
 					throw new KerError("Login incorrect.");
+				else
+					this.login = reqLogin.value(0);
+					
 			}
 		}
 	}

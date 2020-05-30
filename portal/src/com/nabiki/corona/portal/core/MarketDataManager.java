@@ -20,7 +20,7 @@ import com.nabiki.corona.MessageType;
 import com.nabiki.corona.portal.inet.PacketServer;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 
-public class MarketDataSubcriber {
+public class MarketDataManager {
 	private final RuntimeInfo runtime;
 	private final MarketDataSubscriberListener listener;
 	private final DataFactory factory = DefaultDataFactory.create();
@@ -31,7 +31,7 @@ public class MarketDataSubcriber {
 	private final CandleReader reader;
 	private final CandleWriter writer;
 
-	public MarketDataSubcriber(Path root, RuntimeInfo runtime, MarketDataSubscriberListener listener) {
+	public MarketDataManager(Path root, RuntimeInfo runtime, MarketDataSubscriberListener listener) {
 		this.runtime = runtime;
 		this.listener = listener;
 		this.reader = new CandleReader(root);
@@ -103,7 +103,7 @@ public class MarketDataSubcriber {
 			try {
 				sendTick(tick, server);
 			} catch (KerError e) {
-				this.listener.error(e);
+				this.listener.error(e, server);
 			}
 	}
 
@@ -127,7 +127,7 @@ public class MarketDataSubcriber {
 			try {
 				sendCandle(candle, server);
 			} catch (KerError e) {
-				this.listener.error(e);
+				this.listener.error(e, server);
 			}
 		// Write candle.
 		try {
@@ -149,28 +149,41 @@ public class MarketDataSubcriber {
 		server.send(MessageType.RX_CANDLE, bytes, 0, bytes.length);
 	}
 
-	public boolean subscribe(String symbol, PacketServer server) {
+	public KerError subscribe(String symbol, PacketServer server) {
 		if (symbol == null || server == null)
-			return false;
+			return new KerError("Paramter null pointer.");
 
 		// Contains method invokes string's equals that compares the ref first, then byte content if they are strings.
 		if (!this.runtime.symbols().contains(symbol))
-			return false;
+			return new KerError("Invalid symbol: " + symbol);
 
 		if (map.get(symbol) == null)
 			map.put(symbol, new ConcurrentSkipListSet<PacketServer>());
 
 		map.get(symbol).add(server);
-		return true;
+		return new KerError(0);
 	}
 
-	public boolean unSubscribe(String symbol, PacketServer server) {
-		if (symbol == null || server == null)
-			return false;
-
-		if (this.map.get(symbol) == null)
-			return false;
-
-		return this.map.get(symbol).remove(server);
+	public boolean unSubscribe(String symbol, PacketServer server) {	
+		boolean r = false;
+		if (symbol == null || symbol.trim().length() == 0) {
+			// Remove all subscriptions under given server.
+			for (var entry : this.map.entrySet()) {
+				var iter = entry.getValue().iterator();
+				while (iter.hasNext()) {
+					if (iter.next() == server) {
+						iter.remove();
+						r = true;
+					}
+				}
+			}
+			
+			return r;
+		} else {
+			if (this.map.get(symbol) == null)
+				return false;
+			else
+				return this.map.get(symbol).remove(server);
+		}
 	}
 }
