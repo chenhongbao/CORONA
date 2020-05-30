@@ -1,10 +1,13 @@
 package com.nabiki.corona.portal;
 
+import java.nio.file.Path;
+
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
@@ -16,15 +19,13 @@ import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 import com.nabiki.corona.portal.inet.PacketServer;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.biz.api.TickCandleForwarder;
+import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 @Component
 public class MarketDataService implements TickCandleForwarder {
 	
 	class MarketDataHandler extends ClientInputAdaptor implements MarketDataSubscriberListener {
-		private final MarketDataManager manager;
-		
-		public MarketDataHandler(MarketDataManager manager) {
-			this.manager = manager;
+		public MarketDataHandler() {
 		}
 
 		@Override
@@ -33,12 +34,12 @@ public class MarketDataService implements TickCandleForwarder {
 		}
 
 		@Override
-		public void error(KerError e, PacketServer server) {
+		public void error(KerError e, PacketServer server, MarketDataManager manager) {
 			// Log error.
 			if (server.isClosed()) {
 				log.error("Market data peer closed before unsubscription: {}", e.message(), e);
 				// Empty symbol removes all subscription under the given packet server.
-				this.manager.unSubscribe(null, server);
+				manager.unSubscribe(null, server);
 			}
 			else
 				log.error("Market data subscription: {}", e.message(), e);
@@ -46,14 +47,50 @@ public class MarketDataService implements TickCandleForwarder {
 
 		@Override
 		public KerError subscribeSymbol(String symbol, PacketServer server) {
-			return this.manager.subscribe(symbol, server);
+			var r = manager.subscribe(symbol, server);
+			if (r.code() == 0) {
+			// TODO try query history candles for the given symbol, and send back.
+			//      message type is MessageType.RX_HISTORY_CANDLE.
+			}
+			
+			return r;
 		}
 	}
 	
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
+	
+	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
+	private volatile RuntimeInfo info;
 
-	public MarketDataService() {}
+	public void bindRuntimeInfo(RuntimeInfo info) {
+		if (info == null)
+			return;
+
+		this.info = info;
+		this.log.info("Bind runtime info.");
+		
+		// Create market data manager.
+		this.manager = new MarketDataManager(this.root, this.info, this.handler);
+	}
+
+	public void unbindRuntimeInfo(RuntimeInfo info) {
+		if (this.info != info)
+			return;
+
+		this.info = null;
+		this.log.info("Unbind runtime info.");
+	}
+	
+	// Candle data files' root.
+	private final Path root = Path.of(".", "candle");
+	
+	// Market data.
+	private MarketDataManager manager;
+	private MarketDataHandler handler = new MarketDataHandler();
+	
+	public MarketDataService() {
+	}
 	
 	@Override
 	public String name() {
@@ -74,7 +111,7 @@ public class MarketDataService implements TickCandleForwarder {
 	}
 
 	@Activate
-	public void start(ComponentContext ctx) {
+	public void start(ComponentContext ctx) {	
 		// TODO start
 	}
 

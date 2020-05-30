@@ -159,6 +159,13 @@ public class TradeRemoteService implements TradeRemote {
 	public void setInfo(RuntimeInfo info) {
 		this.info = info;
 		this.log.info("Set runtime info: {}.", info.name());
+		
+		// Create launcher with given runtime info.
+		this.launcher = new TradeLauncher(this.engineListener, this.errorListener, this.info);
+		
+		// Create and run packet queue that schedules the packet to remote server.
+		this.packetQueue = new PacketQueue(this.launcher);
+		this.executor.execute(this.packetQueue);
 	}
 	
 	public void unsetInfo(RuntimeInfo info) {
@@ -184,10 +191,10 @@ public class TradeRemoteService implements TradeRemote {
 		}
 	}
 	
-	private final TradeEngineListener engineListener;
-	private final TradeEngineErrorListener errorListener;
-	private final TradeLauncher launcher;
-	private final PacketQueue packetQueue;
+	private TradeEngineListener engineListener = new TradeMessageHandler();
+	private TradeEngineErrorListener errorListener = new TradeErrorHandler();
+	private TradeLauncher launcher;
+	private PacketQueue packetQueue;
 
 	// Scheduled thread.
 	private ScheduledThreadPoolExecutor executor;
@@ -201,13 +208,6 @@ public class TradeRemoteService implements TradeRemote {
 	private KerRemoteLoginReport login;
 
 	public TradeRemoteService() {
-		this.engineListener = new TradeMessageHandler();
-		this.errorListener = new TradeErrorHandler();
-		this.launcher = new TradeLauncher(this.engineListener, this.errorListener, this.info);
-
-		// Create and run packet queue that schedules the packet to remote server.
-		this.packetQueue = new PacketQueue(this.launcher);
-		this.executor.execute(this.packetQueue);
 	}
 
 	@Override

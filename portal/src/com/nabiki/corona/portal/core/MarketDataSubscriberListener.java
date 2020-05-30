@@ -6,5 +6,5 @@ import com.nabiki.corona.system.api.KerError;
 public interface MarketDataSubscriberListener {
 	void error(KerError e);
 	
-	void error(KerError e, PacketServer server);
+	void error(KerError e, PacketServer server, MarketDataManager manager);
 }

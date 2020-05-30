@@ -103,7 +103,7 @@ public class MarketDataManager {
 			try {
 				sendTick(tick, server);
 			} catch (KerError e) {
-				this.listener.error(e, server);
+				this.listener.error(e, server, this);
 			}
 	}
 
@@ -127,7 +127,7 @@ public class MarketDataManager {
 			try {
 				sendCandle(candle, server);
 			} catch (KerError e) {
-				this.listener.error(e, server);
+				this.listener.error(e, server, this);
 			}
 		// Write candle.
 		try {

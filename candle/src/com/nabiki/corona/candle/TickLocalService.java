@@ -100,6 +100,12 @@ public class TickLocalService implements TickLocal {
 
 	@Activate
 	public void start(ComponentContext ctx) {
+		// TODO If I can start the engine in runtime info's setter?
+		if (this.runtime == null) {
+			this.log.error("Runtime info null pointer, can't start candle engine.");
+			return;
+		}
+		
 		try {
 			this.engine = new CandleEngine(new CandlePostListener(), this.runtime);
 		} catch (KerError e) {
