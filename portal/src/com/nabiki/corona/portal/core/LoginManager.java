@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import com.nabiki.corona.AccountRole;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerNewAccount;
 
@@ -15,7 +16,23 @@ public class LoginManager {
 	private final File loginDb = Path.of(".", "pwd").toFile();
 	private static final LoginManager mgr = new LoginManager();
 	
-	private LoginManager() {}
+	// Default admin account.
+	public final static String defaultAccountId = "A0000";
+	public final static String defaultAccountPin = "nabiki_admin_a0000";
+	public final static int defaultAccountRole = AccountRole.ADMIN;
+	
+	private LoginManager() {
+		try {
+			createDefaultAdmin();
+		} catch (KerError e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void createDefaultAdmin() throws KerError {
+		if (!this.loginDb.exists())
+			writeAccount(defaultAccountId, defaultAccountPin, defaultAccountRole);
+	}
 	
 	public static LoginManager get() {
 		return LoginManager.mgr;
@@ -38,6 +55,17 @@ public class LoginManager {
 		}
 	}
 	
+	private void writeAccount(String accountId, String pin, int role) throws KerError {
+		try (FileWriter os = new FileWriter(this.loginDb, true)) {
+			os.write(accountString(accountId, pin, role));
+			os.flush();
+		} catch (FileNotFoundException e) {
+			throw new KerError("Login db not found.", e);
+		} catch (IOException e) {
+			throw new KerError("Fail writing account information.", e);
+		}
+	}
+	
 	public void writeNewAccount(KerNewAccount acc) throws KerError {
 		if (duplicated(acc.accountId()))
 			throw new KerError("Duplicated account ID: " + acc.accountId());
@@ -53,14 +81,7 @@ public class LoginManager {
 		}
 		
 		// Write account pin info.
-		try (FileWriter os = new FileWriter(this.loginDb, true)) {
-			os.write(accountString(acc.accountId(), acc.pin(), acc.role()));
-			os.flush();
-		} catch (FileNotFoundException e) {
-			throw new KerError("Login db not found.", e);
-		} catch (IOException e) {
-			throw new KerError("Fail writing account information.", e);
-		}
+		writeAccount(acc.accountId(), acc.pin(), acc.role());
 	}
 	
 	private String accountString(String aid, String pin, int role) {
