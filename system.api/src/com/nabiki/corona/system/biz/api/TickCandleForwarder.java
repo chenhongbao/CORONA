@@ -1,12 +1,12 @@
 package com.nabiki.corona.system.biz.api;
 
-import com.nabiki.corona.client.api.Candle;
-import com.nabiki.corona.client.api.Tick;
+import com.nabiki.corona.system.api.KerCandle;
+import com.nabiki.corona.system.api.KerTick;
 
 public interface TickCandleForwarder {
 	String name();
 
-	void tick(Tick tick);
+	void tick(KerTick tick);
 
-	void candle(Candle candle);
+	void candle(KerCandle candle);
 }

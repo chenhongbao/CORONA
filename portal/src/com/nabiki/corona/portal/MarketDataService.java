@@ -1,6 +1,7 @@
 package com.nabiki.corona.portal;
 
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -11,15 +12,17 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
-import com.nabiki.corona.client.api.Candle;
-import com.nabiki.corona.client.api.Tick;
+import com.nabiki.corona.MessageType;
+import com.nabiki.corona.object.*;
 import com.nabiki.corona.portal.core.MarketDataManager;
 import com.nabiki.corona.portal.core.MarketDataSubscriberListener;
 import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 import com.nabiki.corona.portal.inet.PacketServer;
-import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.Utils;
+import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.biz.api.TickCandleForwarder;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
+import com.nabiki.corona.system.packet.api.RxCandleMessage;
 
 @Component
 public class MarketDataService implements TickCandleForwarder {
@@ -48,12 +51,31 @@ public class MarketDataService implements TickCandleForwarder {
 		@Override
 		public KerError subscribeSymbol(String symbol, PacketServer server) {
 			var r = manager.subscribe(symbol, server);
-			if (r.code() == 0) {
-			// TODO try query history candles for the given symbol, and send back.
-			//      message type is MessageType.RX_HISTORY_CANDLE.
-			}
+			if (r.code() == 0)
+				historyCandle(symbol, server);
 			
 			return r;
+		}
+		
+		private void historyCandle(String symbol, PacketServer server) {
+			try {
+				// try query history candles for the given symbol, and send back.
+				// message type is MessageType.RX_HISTORY_CANDLE.
+				var rsp = factory.create(RxCandleMessage.class);
+				var candles = manager.historyCandle(symbol);
+				if (candles != null) {
+					rsp.last(true);
+					rsp.responseSeq(Utils.increaseGet());
+					rsp.time(LocalDateTime.now());
+					rsp.values(candles);
+					// Encode.
+					var bytes = codec.encode(rsp);
+					// Send.
+					server.send(MessageType.RX_HISTORY_CANDLE, bytes, 0, bytes.length);
+				}
+			} catch (KerError e) {
+				log.error("Can't send history candles: {}. {}", symbol, e.message(), e);
+			}
 		}
 	}
 	
@@ -85,6 +107,12 @@ public class MarketDataService implements TickCandleForwarder {
 	// Candle data files' root.
 	private final Path root = Path.of(".", "candle");
 	
+	// Data factory.
+	private final DataFactory factory = DefaultDataFactory.create();
+	
+	// Data encoder.
+	private final DataCodec codec = DefaultDataCodec.create();
+	
 	// Market data.
 	private MarketDataManager manager;
 	private MarketDataHandler handler = new MarketDataHandler();
@@ -94,20 +122,17 @@ public class MarketDataService implements TickCandleForwarder {
 	
 	@Override
 	public String name() {
-		// TODO name
-		return null;
+		return "market_data_forwarder";
 	}
 
 	@Override
-	public void tick(Tick tick) {
-		// TODO tick
-
+	public void tick(KerTick tick) {
+		this.manager.dispatch(tick);
 	}
 
 	@Override
-	public void candle(Candle candle) {
-		// TODO candle
-
+	public void candle(KerCandle candle) {
+		this.manager.dispatch(candle);
 	}
 
 	@Activate

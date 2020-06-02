@@ -218,6 +218,9 @@ public class TradeService {
 	// Data factory.
 	private final DataFactory factory = DefaultDataFactory.create();
 	
+	public TradeService() {
+	}
+	
 	@Activate
 	public void start(ComponentContext ctx) {
 		// TODO start
