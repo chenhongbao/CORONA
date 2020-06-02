@@ -1,7 +1,11 @@
 package com.nabiki.corona.portal;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
@@ -13,11 +17,11 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.system.api.*;
+import com.nabiki.corona.portal.inet.*;
 import com.nabiki.corona.system.biz.api.*;
 import com.nabiki.corona.system.info.api.*;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.portal.core.LoginManager;
-import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 
 @Component(service = {})
 public class TradeService {
@@ -218,16 +222,52 @@ public class TradeService {
 	// Data factory.
 	private final DataFactory factory = DefaultDataFactory.create();
 	
+	// Adaptor.
+	private final ClientInputAdaptor adaptor = new ServiceAdaptor();
+	private final ClientInputExecutor executor = new ClientInputExecutor(this.adaptor);
+
+	// Socket thread.
+	private ServerSocket ss;
+	private final ExecutorService threads = Executors.newCachedThreadPool();
+	
+	// Default listening port.
+	public final static int port = 10689;
+	
 	public TradeService() {
 	}
 	
 	@Activate
 	public void start(ComponentContext ctx) {
-		// TODO start
+		this.threads.execute(new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					ss = new ServerSocket(TradeService.port);
+					while (!ss.isClosed()) {
+						try {
+							threads.execute(new RoleServer(ss.accept(), executor));
+						} catch (IOException e) {
+							log.warn("Fail accepting incoming connection. {}", e.getMessage(), e);
+						} catch (KerError e) {
+							log.error("Fail creating daemon for incoming connection. {}", e.message(), e);
+						}
+					}
+				} catch (IOException e) {
+					log.error("Fail listening on port: " + MarketDataService.port + ". " + e.getMessage());
+				}
+			}
+
+		}));
 	}
 
 	@Deactivate
 	public void stop(ComponentContext ctx) {
-		// TODO stop
+		if (!ss.isClosed())
+			try {
+				ss.close();
+			} catch (IOException e) {
+				log.error("Fail closing server socket."  + e.getMessage());
+			}
 	}
 }
