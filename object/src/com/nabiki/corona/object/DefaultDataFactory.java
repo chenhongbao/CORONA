@@ -5,9 +5,11 @@ import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.packet.api.RxErrorMessage;
 
 public class DefaultDataFactory implements DataFactory {
+	// Shared object.
+	private final static DataFactory factory = new DefaultDataFactory();
 
 	public static DataFactory create() {
-		return new DefaultDataFactory();
+		return factory; 
 	}
 	
 	private DefaultDataFactory() {}
