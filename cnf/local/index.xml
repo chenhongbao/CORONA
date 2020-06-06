@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1590218355274">
+<repository xmlns="http://www.osgi.org/xmlns/repository/v1.0.0" name="Local" increment="1591412021650">
   <resource>
     <capability namespace="osgi.identity">
       <attribute name="license" value="https://projects.eclipse.org/license/epl-2.0, https://projects.eclipse.org/license/secondary-gpl-2.0-cp"/>
@@ -102,6 +102,50 @@
     </requirement>
     <requirement namespace="osgi.wiring.package">
       <directive name="filter" value="(&amp;(osgi.wiring.package=javax.json.stream))"/>
+    </requirement>
+  </resource>
+  <resource>
+    <capability namespace="osgi.identity">
+      <attribute name="osgi.identity" value="com.google.gson"/>
+      <attribute name="type" value="osgi.bundle"/>
+      <attribute name="version" value="2.8.6" type="Version"/>
+    </capability>
+    <capability namespace="osgi.wiring.bundle">
+      <attribute name="bundle-version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.bundle" value="com.google.gson"/>
+    </capability>
+    <capability namespace="osgi.wiring.host">
+      <attribute name="bundle-version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.host" value="com.google.gson"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <directive name="uses" value="com.google.gson.reflect,com.google.gson.stream"/>
+      <attribute name="version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.package" value="com.google.gson"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.package" value="com.google.gson.annotations"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.package" value="com.google.gson.reflect"/>
+    </capability>
+    <capability namespace="osgi.wiring.package">
+      <attribute name="version" value="2.8.6" type="Version"/>
+      <attribute name="osgi.wiring.package" value="com.google.gson.stream"/>
+    </capability>
+    <capability namespace="osgi.content">
+      <attribute name="size" value="240255" type="Long"/>
+      <attribute name="url" value="com.google.gson/com.google.gson-2.8.6.jar"/>
+      <attribute name="mime" value="application/vnd.osgi.bundle"/>
+      <attribute name="osgi.content" value="C8FB4839054D280B3033F800D1F5A97DE2F028EB8BA2EB458AD287E536F3F25F"/>
+    </capability>
+    <requirement namespace="osgi.wiring.package">
+      <directive name="filter" value="(&amp;(osgi.wiring.package=com.google.gson.annotations))"/>
+    </requirement>
+    <requirement namespace="osgi.ee">
+      <directive name="filter" value="(&amp;(osgi.ee=JavaSE)(version=9.0))"/>
     </requirement>
   </resource>
   <resource>

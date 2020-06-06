@@ -3,7 +3,8 @@
 	osgi.core;version=7.0.0,\
 	osgi.cmpn;version=7.0.0,\
 	client.api;version=latest,\
-	system.api;version=latest
+	system.api;version=latest,\
+	com.google.gson
 
 -testpath: \
 	${junit},\
@@ -14,3 +15,5 @@ Bundle-Version: 0.0.0.${tstamp}
 Export-Package: \
 	com.nabiki.corona.object,\
 	com.nabiki.corona.object.tool
+-runrequires: bnd.identity;id='com.google.gson'
+-runfw: org.eclipse.osgi;version='[3.13.100.v20180827-1536,3.13.100.v20180827-1536]'

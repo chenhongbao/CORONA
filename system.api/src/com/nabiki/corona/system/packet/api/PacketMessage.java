@@ -16,9 +16,9 @@ public interface PacketMessage<T> {
 	/**
 	 * Set request ID for the request if it is.
 	 * 
-	 * @param id request id
+	 * @param seq request id
 	 */
-	void requestSeq(int id);
+	void requestSeq(int seq);
 	
 	/**
 	 * Unique ID denoting the response if it is. Every unique ID is distinguished from the other. There
@@ -31,9 +31,9 @@ public interface PacketMessage<T> {
 	/**
 	 * Set response ID for the response if it is.
 	 * 
-	 * @param id response id
+	 * @param seq response id
 	 */
-	void responseSeq(int id);
+	void responseSeq(int seq);
 	
 	/**
 	 * Time stamp when this message is sent.
