@@ -30,7 +30,7 @@ public interface KerCandle extends Candle {
 
 	void updateTime(Instant i);
 
-	LocalDate tradingDay(LocalDate d);
+	void tradingDay(LocalDate d);
 
-	LocalDate actionDay(LocalDate d);
+	void actionDay(LocalDate d);
 }

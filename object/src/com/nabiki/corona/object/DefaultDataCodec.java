@@ -6,10 +6,13 @@ import java.nio.charset.StandardCharsets;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.nabiki.corona.client.api.Candle;
+import com.nabiki.corona.object.gson.KerCandleGson;
 import com.nabiki.corona.object.gson.info.MarketTimeSetGson;
 import com.nabiki.corona.object.gson.packet.RxErrorMessageGson;
 import com.nabiki.corona.system.api.DataCodec;
 import com.nabiki.corona.system.api.DataFactory;
+import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.info.api.MarketTimeSet;
 import com.nabiki.corona.system.packet.api.RxErrorMessage;
@@ -37,7 +40,10 @@ public class DefaultDataCodec implements DataCodec {
 		if (a instanceof RxErrorMessage) { 
 			var proxy = serializeProxy((RxErrorMessage)a);
 			return this.gson.toJson(proxy,  proxy.getClass()).getBytes(this.charset);
-		} else
+		} else if (a instanceof Candle || a instanceof KerCandle) {
+			return this.gson.toJson(a,  KerCandleGson.class).getBytes(this.charset);
+		}
+		else
 			throw new KerError("Unsupported type: " + a.getClass().getCanonicalName());
 	}
 
@@ -48,7 +54,10 @@ public class DefaultDataCodec implements DataCodec {
 			return (T) deserializeProxy(this.gson.fromJson(new String(b, this.charset), RxErrorMessageGson.class));
 		} if(clz.equals(MarketTimeSet.class)) {
 			return (T) this.gson.fromJson(new String(b, this.charset), MarketTimeSetGson.class);
-		} else
+		} else if (clz.equals(KerCandle.class) || clz.equals(Candle.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerCandleGson.class);
+		}
+		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
 	}
 
