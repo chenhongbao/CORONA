@@ -6,10 +6,12 @@ import java.nio.charset.StandardCharsets;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.nabiki.corona.object.gson.RxErrorMessageGson;
+import com.nabiki.corona.object.gson.info.MarketTimeSetGson;
+import com.nabiki.corona.object.gson.packet.RxErrorMessageGson;
 import com.nabiki.corona.system.api.DataCodec;
 import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.system.info.api.MarketTimeSet;
 import com.nabiki.corona.system.packet.api.RxErrorMessage;
 
 public class DefaultDataCodec implements DataCodec {
@@ -43,12 +45,13 @@ public class DefaultDataCodec implements DataCodec {
 	@Override
 	public <T> T decode(byte[] b, Class<T> clz) throws KerError {
 		if (clz.equals(RxErrorMessage.class)) {
-			var r = this.gson.fromJson(new String(b, this.charset), RxErrorMessageGson.class);
-			return (T) deserializeProxy(r);
+			return (T) deserializeProxy(this.gson.fromJson(new String(b, this.charset), RxErrorMessageGson.class));
+		} if(clz.equals(MarketTimeSet.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), MarketTimeSetGson.class);
 		} else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
 	}
-	
+
 	private RxErrorMessageGson serializeProxy(RxErrorMessage msg) {
 		var r = new RxErrorMessageGson();
 		r.error = msg.error();

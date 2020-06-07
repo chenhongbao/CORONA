@@ -1,4 +1,4 @@
-package com.nabiki.corona.object.gson;
+package com.nabiki.corona.object.gson.packet;
 
 import java.util.Collection;
 import java.util.LinkedList;
