@@ -71,7 +71,7 @@ public class PacketServer {
 			r.value(e);
 			r.last(true);
 			r.time(LocalDateTime.now());
-			r.error(new KerError("Connection closed due to error."));
+			r.error(new KerError("Please check payload for error details."));
 			r.responseSeq(Utils.increaseGet());
 
 			// Encode.

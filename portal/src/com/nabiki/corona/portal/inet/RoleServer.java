@@ -15,38 +15,41 @@ public class RoleServer extends PacketServer implements Runnable {
 
 	@Override
 	public void run() {
-		try {
-			super.waitLogin();
-		} catch (KerError e) {
-			super.sendError(e);
-			return;
-		}
-
-		// Check the availability of login info.
-		if (super.getLogin() == null)
-			return;
-
-		while (!super.isClosed()) {
+		while (true) {
 			try {
-				var packet = super.receive();
-				switch (super.getLogin().role()) {
-				case AccountRole.ADMIN:
-					processAdmin(packet);
-					break;
-				case AccountRole.MANAGER:
-					processManager(packet);
-					break;
-				case AccountRole.TRADER:
-					processTrader(packet);
-					break;
-				default:
-					throw new KerError("Unknown account role: " + super.getLogin().role());
-				}
+				super.waitLogin();
 			} catch (KerError e) {
-				// Send error message to peer and exit loop.
 				super.sendError(e);
 				break;
 			}
+
+			// Check the availability of login info.
+			if (super.getLogin() == null)
+				break;
+
+			while (!super.isClosed()) {
+				try {
+					var packet = super.receive();
+					switch (super.getLogin().role()) {
+					case AccountRole.ADMIN:
+						processAdmin(packet);
+						break;
+					case AccountRole.MANAGER:
+						processManager(packet);
+						break;
+					case AccountRole.TRADER:
+						processTrader(packet);
+						break;
+					default:
+						throw new KerError("Unknown account role: " + super.getLogin().role());
+					}
+				} catch (KerError e) {
+					// Send error message to peer and exit loop.
+					super.sendError(e);
+					break;
+				}
+			}
+			break;
 		}
 
 		if (!super.isClosed())
