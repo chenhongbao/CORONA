@@ -3,10 +3,10 @@ package com.nabiki.corona.candle.core;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 
-public class ServiceContext {
+public class CandleServiceContext {
 	private RuntimeInfo info;
 	
-	public ServiceContext() {}
+	public CandleServiceContext() {}
 	
 	public void info(RuntimeInfo info) {
 		this.info = info;

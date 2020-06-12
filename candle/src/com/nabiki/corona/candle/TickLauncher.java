@@ -54,7 +54,7 @@ public class TickLauncher implements Runnable {
 	}
 
 	// Runtime info.
-	private ServiceContext context = new ServiceContext();
+	private CandleServiceContext context = new CandleServiceContext();
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {

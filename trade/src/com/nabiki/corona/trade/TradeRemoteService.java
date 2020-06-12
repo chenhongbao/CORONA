@@ -25,8 +25,7 @@ import com.nabiki.corona.system.biz.api.TradeLocal;
 import com.nabiki.corona.system.biz.api.TradeRemote;
 import com.nabiki.corona.system.packet.api.*;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
-import com.nabiki.corona.object.DefaultDataCodec;
-import com.nabiki.corona.object.DefaultDataFactory;
+import com.nabiki.corona.object.*;
 import com.nabiki.corona.object.tool.Packet;
 import com.nabiki.corona.trade.core.*;
 
@@ -65,20 +64,20 @@ public class TradeRemoteService implements TradeRemote {
 		@Override
 		public void error(KerOrder order, KerError error) {
 			log.error("Order request error({}): {}", error.code(), error.message(), error);
-			
+
 			// Cancel order.
 			try {
 				var status = factory.create(KerOrderStatus.class);
-				
+
 				// Build order status for the failed order.
 				status.orderId(order.orderId());
 				status.originalVolume(order.volume());
 				status.tradedVolume(0);
 				status.price(0.0D);
 				status.updateTime(Instant.now());
-				status.orderStatus((char)OrderStatus.CANCELED);
-				status.orderSubmitStatus((char)OrderSubmitStatus.INSERT_REJECTED);
-				
+				status.orderStatus((char) OrderStatus.CANCELED);
+				status.orderSubmitStatus((char) OrderSubmitStatus.INSERT_REJECTED);
+
 				// Call method.
 				local.orderStatus(status);
 			} catch (KerError e) {
@@ -91,7 +90,7 @@ public class TradeRemoteService implements TradeRemote {
 			// Repeatedly login on the same trading day, don't update.
 			if (Utils.same(rep.tradingDay(), login.tradingDay()))
 				return;
-			
+
 			login = rep;
 			local.remoteLogin(rep);
 		}
@@ -103,7 +102,7 @@ public class TradeRemoteService implements TradeRemote {
 
 		@Override
 		public void error(KerAction action, KerError error) {
-			log.error("Action failed for order: {}. [{}]{}", action.orderId(), error.code(), error.message(), error);		
+			log.error("Action failed for order: {}. [{}]{}", action.orderId(), error.code(), error.message(), error);
 		}
 
 		@Override
@@ -111,86 +110,96 @@ public class TradeRemoteService implements TradeRemote {
 			// Clear old data.
 			if (this.instLast)
 				this.insts.clear();
-		
+
 			this.instLast = last;
 			this.insts.add(in);
-			
+
 			// If data all ready, last bit is true, call the setter.
-			if (this.instLast && this.insts.size() > 0) {
-				while (this.insts.size() > 1) {
-					info.instrument(this.insts.poll(), false);
+			try {
+				if (this.instLast && this.insts.size() > 0) {
+					while (this.insts.size() > 1) {
+						context.info().instrument(this.insts.poll(), false);
+					}
+
+					// Set the last piece of data with last bit set true.
+					context.info().instrument(this.insts.poll(), true);
 				}
-				
-				// Set the last piece of data with last bit set true.
-				info.instrument(this.insts.poll(), true);
+			} catch (KerError e) {
+				log.error("Fail setting instruments in runtime info. {}", e.message(), e);
 			}
 		}
 
 		@Override
-		public void margin(KerMargin m) {		
-			info.margin(m);
+		public void margin(KerMargin m) {
+			try {
+				context.info().margin(m);
+			} catch (KerError e) {
+				log.error("Fail setting margins in runtime info. {}", e.message(), e);
+			}
 		}
 
 		@Override
 		public void commission(KerCommission c) {
-			info.commission(c);
+			try {
+				context.info().commission(c);
+			} catch (KerError e) {
+				log.error("Fail setting commissions in runtime info. {}", e.message(), e);
+			}
 		}
 
 	}
-	
+
 	private class TradeErrorHandler implements TradeEngineErrorListener {
-		public TradeErrorHandler() {}
+		public TradeErrorHandler() {
+		}
 
 		@Override
 		public void error(KerError e) {
 			log.error("Trade engine error: {}.", e.message(), e);
 		}
-		
+
 	}
 
 	// Use OSGi logging service
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
-	
+
 	// Runtime info.
-	private volatile RuntimeInfo info;
-	
+	private TradeServiceContext context;
+
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setInfo(RuntimeInfo info) {
-		this.info = info;
+		this.context.info(info);
 		this.log.info("Set runtime info: {}.", info.name());
-		
-		// Create launcher with given runtime info.
-		this.launcher = new TradeLauncher(this.engineListener, this.errorListener, this.info);
-		
-		// Create and run packet queue that schedules the packet to remote server.
-		this.packetQueue = new PacketQueue(this.launcher);
-		this.executor.execute(this.packetQueue);
 	}
-	
+
 	public void unsetInfo(RuntimeInfo info) {
-		if (this.info == info) {
-			this.info = null;
-			this.log.info("Unset runtime info: {}.", info.name());
+		try {
+			if (this.context.info() == info) {
+				this.context.info(null);
+				this.log.info("Unset runtime info: {}.", info.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail checking runtime info. {}", e.message(), e);
 		}
 	}
-	
+
 	// Trade local service.
 	private volatile TradeLocal local;
-	
+
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setTradeLocal(TradeLocal local) {
 		this.local = local;
 		this.log.info("Set trade local: {}.", local.name());
 	}
-	
+
 	public void unsetTradeLocal(TradeLocal local) {
 		if (local == this.local) {
 			this.local = null;
 			this.log.info("Unset trade local: {}.", local.name());
 		}
 	}
-	
+
 	private TradeEngineListener engineListener = new TradeMessageHandler();
 	private TradeEngineErrorListener errorListener = new TradeErrorHandler();
 	private TradeLauncher launcher;
@@ -299,7 +308,7 @@ public class TradeRemoteService implements TradeRemote {
 			this.packetQueue.enqueue(new Packet(MessageType.TX_QUERY_ACCOUNT, this.codec.encode(req)));
 		} catch (KerError e) {
 			this.log.error("Fail sending query account. {}", e.message(), e);
-		}	
+		}
 	}
 
 	@Override
@@ -332,6 +341,13 @@ public class TradeRemoteService implements TradeRemote {
 
 	@Activate
 	public void start(ComponentContext ctx) {
+		// Create launcher with given runtime info.
+		this.launcher = new TradeLauncher(this.engineListener, this.errorListener, this.context);
+
+		// Create and run packet queue that schedules the packet to remote server.
+		this.packetQueue = new PacketQueue(this.launcher);
+		this.executor.execute(this.packetQueue);
+
 		// Delayed until next minute
 		var msToWait = TradeRemoteService.MINUTE_MILLIS
 				- System.currentTimeMillis() % (TradeRemoteService.MINUTE_MILLIS);
@@ -348,7 +364,7 @@ public class TradeRemoteService implements TradeRemote {
 	@Deactivate
 	public void stop(ComponentContext ctx) {
 		this.executor.remove(this.launcher);
-		
+
 		// Stop packet queue.
 		this.packetQueue.tellStop();
 		this.executor.remove(this.packetQueue);

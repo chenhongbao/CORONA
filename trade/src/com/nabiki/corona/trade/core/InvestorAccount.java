@@ -8,7 +8,6 @@ import com.nabiki.corona.ErrorMessage;
 import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class InvestorAccount {
 	private final AccountManager accountManager;
@@ -22,13 +21,13 @@ public class InvestorAccount {
 
 	private final String accountId;
 	private final Path directory;
-	private final RuntimeInfo info;
+	private final TradeServiceContext context;
 	private final DataCodec codec;
 	private final DataFactory factory;
 
-	public InvestorAccount(String accountId, Path dir, RuntimeInfo info, IdKeeper keeper, DataCodec codec, DataFactory factory) throws KerError {
+	public InvestorAccount(String accountId, Path dir, TradeServiceContext context, IdKeeper keeper, DataCodec codec, DataFactory factory) throws KerError {
 		this.accountId = accountId;
-		this.info = info;
+		this.context = context;
 		this.directory= dir;
 		this.codec = codec;
 		this.factory = factory;
@@ -41,8 +40,8 @@ public class InvestorAccount {
 		
 		// Create instances of data.
 		this.idKeeper = keeper;
-		this.positionManager = new PositionManager(positionDir, this.info, this.codec, this.factory);
-		this.accountManager = new AccountManager(accountDir, this.info, this.positionManager, this.codec, this.factory);
+		this.positionManager = new PositionManager(positionDir, this.context, this.codec, this.factory);
+		this.accountManager = new AccountManager(accountDir, this.context, this.positionManager, this.codec, this.factory);
 		this.sessionWriter = new SessionWriter(Path.of(this.directory.toAbsolutePath().toString(), "sessions"), this.codec);
 		this.tradeKeeper = new MessageKeeper<>();
 		this.statusKeeper = new MessageKeeper<>();
@@ -146,7 +145,7 @@ public class InvestorAccount {
 			throw new KerError("Can't allocate for order of null pointer.");
 		}
 		// Don't insert order if the information for the denoted instrument is not ready.
-		if (!this.info.ready(order.symbol)) {
+		if (!this.context.info().ready(order.symbol)) {
 			var r = this.factory.create(KerOrderEvalue.class);
 			r.error(new KerError(ErrorCode.NOT_INITED, ErrorMessage.NOT_INITED));
 			return r;

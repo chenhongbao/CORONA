@@ -7,25 +7,24 @@ import java.nio.file.Path;
 
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class AccountManager {
 	private final Path root;
 	private AccountEngine account;
-	private final RuntimeInfo runtime;
+	private final TradeServiceContext context;
 	private final PositionManager positions;
 	private final DataFactory factory;
 	private final DataCodec codec;
 
-	public AccountManager(Path path, RuntimeInfo runtime, PositionManager pos, DataCodec codec, DataFactory factory) throws KerError {
+	public AccountManager(Path path, TradeServiceContext context, PositionManager pos, DataCodec codec, DataFactory factory) throws KerError {
 		this.root = path;
-		this.runtime = runtime;
+		this.context = context;
 		this.positions = pos;
 		this.codec = codec;
 		this.factory = factory;
 		
 		// Try loading account from disk.
-		this.account = new AccountEngine(readAccount(this.root), this.runtime, this.positions, this.factory);
+		this.account = new AccountEngine(readAccount(this.root), this.context, this.positions, this.factory);
 	}
 
 	public AccountEngine accountEngine() {

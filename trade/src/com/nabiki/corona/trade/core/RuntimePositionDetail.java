@@ -10,11 +10,10 @@ import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.client.api.Tick;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class RuntimePositionDetail {
 	private final String symbol;
-	private final RuntimeInfo info;
+	private final TradeServiceContext context;
 	private final List<KerPositionDetail> locked = new LinkedList<>();
 	private final List<KerPositionDetail> closed = new LinkedList<>();
 	
@@ -32,9 +31,9 @@ public class RuntimePositionDetail {
 	 * @param factory data factory
 	 * @throws KerError throw exception when fail to create position detail for new trade.
 	 */
-	public RuntimePositionDetail(KerTradeReport rep, RuntimeInfo info, DataFactory factory) throws KerError {
+	public RuntimePositionDetail(KerTradeReport rep, TradeServiceContext context, DataFactory factory) throws KerError {
 		this.symbol = rep.symbol();
-		this.info = info;
+		this.context = context;
 		this.factory = factory;
 		this.isSettled = false;
 		this.origin = ensure(rep);
@@ -50,9 +49,9 @@ public class RuntimePositionDetail {
 	 * @param factory data factory
 	 */
 	public RuntimePositionDetail(KerPositionDetail origin, Collection<KerPositionDetail> locked,
-			Collection<KerPositionDetail> closed, RuntimeInfo info, DataFactory factory) {
+			Collection<KerPositionDetail> closed, TradeServiceContext context, DataFactory factory) {
 		this.symbol = origin.symbol();
-		this.info = info;
+		this.context = context;
 		this.factory = factory;
 		this.isSettled = true;
 		this.origin = origin;
@@ -67,7 +66,7 @@ public class RuntimePositionDetail {
 		if (rep.offsetFlag() != OffsetFlag.OFFSET_OPEN)
 			throw new KerError("Position detail must be initialized by an open trade.");
 
-		var inst = this.info.instrument(symbol);
+		var inst = this.context.info().instrument(symbol);
 		if (inst == null)
 			throw new KerError("Instrument not found: " + symbol);
 
@@ -129,11 +128,11 @@ public class RuntimePositionDetail {
 	}
 
 	private double getOpenCommission(String s, double price, int volume) throws KerError {
-		var inst = this.info.instrument(s);
+		var inst = this.context.info().instrument(s);
 		if (inst == null)
 			throw new KerError("Instrument not found: " + s);
 
-		var commRate = this.info.commission(s);
+		var commRate = this.context.info().commission(s);
 		if (commRate == null)
 			throw new KerError("Commission rate not found: " + s);
 
@@ -143,15 +142,15 @@ public class RuntimePositionDetail {
 
 	private double getCloseCommission(String s, double price, int volume, LocalDate positionTradingDay)
 			throws KerError {
-		var inst = this.info.instrument(s);
+		var inst = this.context.info().instrument(s);
 		if (inst == null)
 			throw new KerError("Instrument not found: " + s);
 
-		var commRate = this.info.commission(s);
+		var commRate = this.context.info().commission(s);
 		if (commRate == null)
 			throw new KerError("Commission rate not found: " + s);
 
-		if (Utils.same(this.info.tradingDay(), positionTradingDay)) {
+		if (Utils.same(this.context.info().tradingDay(), positionTradingDay)) {
 			// Close today position.
 			return Utils.marginOrCommission(price, volume, inst.volumeMultiple(), commRate.closeTodayRatioByMoney(),
 					commRate.closeTodayRatioByVolume());
@@ -163,7 +162,7 @@ public class RuntimePositionDetail {
 	}
 
 	private double getMarginRateVolume(String s, char direction) throws KerError {
-		var m = this.info.margin(s);
+		var m = this.context.info().margin(s);
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
 
@@ -177,7 +176,7 @@ public class RuntimePositionDetail {
 	}
 
 	private double getMarginRateMoney(String s, char direction) throws KerError {
-		var m = this.info.margin(s);
+		var m = this.context.info().margin(s);
 		if (m == null)
 			throw new KerError("Margin not found: " + s);
 
@@ -199,7 +198,7 @@ public class RuntimePositionDetail {
 	}
 
 	private double lastSettle(String symbol) throws KerError {
-		var t = this.info.lastTick(symbol);
+		var t = this.context.info().lastTick(symbol);
 		if (t == null)
 			throw new KerError("Tick not found: " + symbol);
 
@@ -544,7 +543,7 @@ public class RuntimePositionDetail {
 	 * @throws KerError throws if failing to get instrument info
 	 */
 	private void calculateCloseInfo1(KerPositionDetail toClose, double closePrice) throws KerError {
-		var inst = this.info.instrument(toClose.symbol());
+		var inst = this.context.info().instrument(toClose.symbol());
 		if (inst == null)
 			throw new KerError("Instrument not found: " + toClose.symbol());
 
@@ -574,11 +573,11 @@ public class RuntimePositionDetail {
 	}
 
 	private void calculatePositionInfo(KerPositionDetail pos) throws KerError {
-		var inst = this.info.instrument(origin.symbol());
+		var inst = this.context.info().instrument(origin.symbol());
 		if (inst == null)
 			throw new KerError("Instrument not found: " + origin.symbol());
 
-		var tick = this.info.lastTick(symbol());
+		var tick = this.context.info().lastTick(symbol());
 		if (tick == null)
 			throw new KerError("Tick not found: " + origin.symbol());
 
@@ -597,10 +596,10 @@ public class RuntimePositionDetail {
 		pos.positionProfitByTrade(pt);
 	}
 
-	private double previousPrice(KerPositionDetail pos) {
+	private double previousPrice(KerPositionDetail pos) throws KerError {
 		// Position profit by date.
 		// If it is today's position, today's open price is previous price, otherwise yesterday's settlement price.
-		if (pos.tradingDay().compareTo(this.info.tradingDay()) == 0)
+		if (pos.tradingDay().compareTo(this.context.info().tradingDay()) == 0)
 			// today's position
 			return pos.openPrice();
 		else

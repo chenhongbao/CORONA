@@ -11,15 +11,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.nabiki.corona.system.Utils;
-import com.nabiki.corona.system.api.DataCodec;
-import com.nabiki.corona.system.api.DataFactory;
-import com.nabiki.corona.system.api.KerAccount;
-import com.nabiki.corona.system.api.KerError;
-import com.nabiki.corona.system.api.KerPositionDetail;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
+import com.nabiki.corona.system.api.*;
 
 public class InvestorManager {
-	private final RuntimeInfo runtime;
+	private final TradeServiceContext context;
 	private final DataFactory factory;
 	private final DataCodec codec;
 	private final IdKeeper sm;
@@ -28,8 +23,8 @@ public class InvestorManager {
 	private final static Path root = Path.of(".", "investor");
 	private final static Path adminRoot = Path.of(".", "admin");
 
-	public InvestorManager(RuntimeInfo info, IdKeeper sm, DataCodec codec, DataFactory factory) throws KerError {
-		this.runtime = info;
+	public InvestorManager(TradeServiceContext context, IdKeeper sm, DataCodec codec, DataFactory factory) throws KerError {
+		this.context = context;
 		this.sm = sm;
 		this.codec = codec;
 		this.factory = factory;
@@ -43,7 +38,7 @@ public class InvestorManager {
 
 		for (var n : names) {
 			var np = Path.of(p.toAbsolutePath().toString(), n);
-			this.investors.put(n, new InvestorAccount(n, np, this.runtime, this.sm, this.codec, this.factory));
+			this.investors.put(n, new InvestorAccount(n, np, this.context, this.sm, this.codec, this.factory));
 		}
 	}
 
@@ -123,6 +118,6 @@ public class InvestorManager {
 
 	public void setInvestor(String accountId) throws KerError {
 		var np = Path.of(InvestorManager.root.toAbsolutePath().toString(), accountId);
-		this.investors.put(accountId, new InvestorAccount(accountId, np, this.runtime, this.sm, this.codec, this.factory));
+		this.investors.put(accountId, new InvestorAccount(accountId, np, this.context, this.sm, this.codec, this.factory));
 	}
 }

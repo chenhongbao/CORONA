@@ -13,7 +13,7 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
-import com.nabiki.corona.candle.core.ServiceContext;
+import com.nabiki.corona.candle.core.CandleServiceContext;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
@@ -37,7 +37,7 @@ public class TickLocalService implements TickLocal {
 	private Logger log;
 
 	// Runtime info.
-	private ServiceContext context = new ServiceContext();
+	private CandleServiceContext context = new CandleServiceContext();
 	
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {

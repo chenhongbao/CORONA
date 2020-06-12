@@ -11,14 +11,14 @@ import com.nabiki.corona.system.api.*;
 
 public class CandleGenerator {
 	private final String symbol;
-	private final ServiceContext context;
+	private final CandleServiceContext context;
 	private final DataFactory factory;
 	private final Map<Integer, RuntimeCandle> candles = new ConcurrentHashMap<>();
 	
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
 			CandleMinute.HALF_HOUR, CandleMinute.HALF_QUADTER_HOUR, CandleMinute.HOUR, CandleMinute.TWO_HOUR};
 	
-	public CandleGenerator(String symbol, ServiceContext context, DataFactory factory) throws KerError {
+	public CandleGenerator(String symbol, CandleServiceContext context, DataFactory factory) throws KerError {
 		this.symbol = symbol;
 		this.context = context;
 		this.factory = factory;

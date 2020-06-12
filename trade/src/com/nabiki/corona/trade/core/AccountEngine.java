@@ -9,7 +9,6 @@ import com.nabiki.corona.ErrorMessage;
 import com.nabiki.corona.OffsetFlag;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class AccountEngine {
 	private class RuntimeLockMoney {
@@ -55,7 +54,7 @@ public class AccountEngine {
 	}
 
 	private final KerAccount origin;
-	private final RuntimeInfo info;
+	private final TradeServiceContext context;
 	private final PositionManager position;
 	private final DataFactory factory;
 	
@@ -66,8 +65,8 @@ public class AccountEngine {
 	private final List<CashMove> deposits = new LinkedList<>();
 	private final List<CashMove> withdraws = new LinkedList<>();
 
-	public AccountEngine(KerAccount init, RuntimeInfo info, PositionManager pos, DataFactory factory) throws KerError {
-		this.info = info;
+	public AccountEngine(KerAccount init, TradeServiceContext context, PositionManager pos, DataFactory factory) throws KerError {
+		this.context = context;
 		this.position = pos;
 		this.factory = factory;
 
@@ -125,7 +124,7 @@ public class AccountEngine {
 
 		// Has checked the availability of runtime info, so query won't return null.
 		// Margin.
-		var margin = this.info.margin(order.symbol());
+		var margin = this.context.info().margin(order.symbol());
 		if (order.direction() == DirectionFlag.DIRECTION_BUY) {
 			byVol = margin.longMarginRatioByVolume();
 			byMny = margin.longMarginRatioByMoney();
@@ -134,11 +133,11 @@ public class AccountEngine {
 			byMny = margin.shortMarginRatioByMoney();
 		}
 
-		int multi = this.info.instrument(order.symbol()).volumeMultiple();
+		int multi = this.context.info().instrument(order.symbol()).volumeMultiple();
 		double lockMargin = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
 
 		// Commission.
-		var commRate = this.info.commission(order.symbol());
+		var commRate = this.context.info().commission(order.symbol());
 		byVol = commRate.openRatioByVolume();
 		byMny = commRate.openRatioByMoney();
 
@@ -265,11 +264,11 @@ public class AccountEngine {
 	 * call once per trading day.
 	 */
 	public void init() throws KerError {
-		if (Utils.same(this.info.tradingDay(), this.origin.tradingDay()))
+		if (Utils.same(this.context.info().tradingDay(), this.origin.tradingDay()))
 			throw new KerError("Can't init an account for more than once per trading day.");
 		
 		// Trading day.
-		this.origin.tradingDay(this.info.tradingDay());
+		this.origin.tradingDay(this.context.info().tradingDay());
 		
 		// Set fields to preXxx.
 		this.origin.preBalance(this.origin.balance());

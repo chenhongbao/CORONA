@@ -8,21 +8,20 @@ import java.util.List;
 
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class PositionFile {
 	private final String symbol;
 	private final Path directory;
-	private final RuntimeInfo runtime;
+	private final TradeServiceContext context;
 	private final DataFactory factory;
 
 	// Data codec.
 	private final DataCodec codec;
 
-	public PositionFile(String symbol, Path dir, RuntimeInfo info, DataCodec codec, DataFactory factory) {
+	public PositionFile(String symbol, Path dir, TradeServiceContext context, DataCodec codec, DataFactory factory) {
 		this.symbol = symbol;
 		this.directory = dir;
-		this.runtime = info;
+		this.context = context;
 		this.codec = codec;
 		this.factory = factory;
 	}
@@ -68,7 +67,7 @@ public class PositionFile {
 		// Read closed.
 		var closed = readDetails(Path.of(path.toAbsolutePath().toString(), "closed"));
 		
-		return new RuntimePositionDetail(origin.get(0), locked, closed, this.runtime, this.factory);
+		return new RuntimePositionDetail(origin.get(0), locked, closed, this.context, this.factory);
 	}
 	
 	private List<KerPositionDetail> readDetails(Path p) throws KerError {

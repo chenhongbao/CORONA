@@ -18,7 +18,7 @@ public class CandleEngine extends TimerTask {
 
 	public final static int DEFAULT_PERIOD_MILLIS = 60 * 1000;
 
-	private final ServiceContext context;
+	private final CandleServiceContext context;
 	private final CandleEngineListener listener;
 	private final DataFactory factory = DefaultDataFactory.create();
 
@@ -33,7 +33,7 @@ public class CandleEngine extends TimerTask {
 	// Working mark
 	private AtomicBoolean working = new AtomicBoolean(false);
 
-	public CandleEngine(CandleEngineListener l, ServiceContext context) throws KerError {
+	public CandleEngine(CandleEngineListener l, CandleServiceContext context) throws KerError {
 		if (l == null || context == null)
 			throw new KerError("Invalid parameters.");
 

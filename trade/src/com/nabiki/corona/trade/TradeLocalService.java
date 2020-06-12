@@ -28,33 +28,27 @@ public class TradeLocalService implements TradeLocal {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
 
-	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
-	private volatile RuntimeInfo info;
+	private TradeServiceContext context;
 
+	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {
 		if (info == null)
 			return;
 
-		this.info = info;
-		this.log.info("Bind runtime info.");
-
-		// Create investor manager.
-		try {
-			this.investors = new InvestorManager(this.info, this.idKeeper, this.codec, this.factory);
-			this.log.info("Initialize investors.");
-
-			// If there are reports coming in before investors are ready, execute them.
-			executeTradeReportCache();
-		} catch (KerError e) {
-			this.log.warn("Fail initializing investors. {}", e.getMessage(), e);
-		}
+		this.context.info(info);
+		this.log.info("Bind runtime info: {}.", info.name());
 	}
 
 	public void unbindRuntimeInfo(RuntimeInfo info) {
-		if (this.info != info)
+		try {
+			if (this.context.info() != info)
+				return;
+		} catch (KerError e) {
+			this.log.error("Fail unbinding runtime info. {}", e.message(), e);
 			return;
+		}
 
-		this.info = null;
+		this.context.info(null);
 		this.log.info("Unbind runtime info.");
 	}
 
@@ -64,7 +58,7 @@ public class TradeLocalService implements TradeLocal {
 
 	// Manage investors.
 	private InvestorManager investors;
-	
+
 	// Remote login rsp.
 	private KerRemoteLoginReport login;
 
@@ -75,14 +69,26 @@ public class TradeLocalService implements TradeLocal {
 
 	// Save trade report and wait for investors are ready.
 	private final Set<KerTradeReport> cacheTradeReports = new ConcurrentSkipListSet<>();
-	
+
 	public TradeLocalService() {
+		// Create investor manager.
+		try {
+			this.investors = new InvestorManager(this.context, this.idKeeper, this.codec, this.factory);
+			this.log.info("Initialize investors.");
+		} catch (KerError e) {
+			this.log.warn("Fail initializing investors. {}", e.getMessage(), e);
+		}
 	}
 
-	// If investors are not ready, save the trade reports for future and return true.
+	// If runtime is not ready, save the trade reports for future and return true.
 	private boolean trySaveTradeReportWaitReady(KerTradeReport r) throws KerError {
-		if (this.investors != null)
+		try {
+			// Context's info is ready.
+			this.context.info();
 			return false;
+		} catch (KerError e) {
+			this.log.error("Context not ready. {}", e.message(), e);
+		}
 
 		// Save trade reports.
 		this.cacheTradeReports.add(this.factory.create(KerTradeReport.class, r));
@@ -163,7 +169,7 @@ public class TradeLocalService implements TradeLocal {
 			this.log.error("No session ID associated with order: {}.", r.orderId());
 			return;
 		}
-		
+
 		r.sessionId(sid);
 
 		// Save trade report if investors are not ready, and wait. After investors are initialized, it will check the
@@ -176,6 +182,8 @@ public class TradeLocalService implements TradeLocal {
 			return;
 		}
 
+		// Execute cached reports first, then the currently given report.
+		executeTradeReportCache();
 		executeTradeReport(r);
 	}
 
@@ -189,7 +197,7 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			this.remotePositions.add(this.factory.create(KerPositionDetail.class, p));
 			this.remotePosLast = last;
-			
+
 			if (this.remotePosLast && !this.investors.checkPosition(remotePositions))
 				this.log.warn("Incorrect position, check data files for details.");
 		} catch (KerError e) {
@@ -276,7 +284,7 @@ public class TradeLocalService implements TradeLocal {
 				this.log.error("Factory fails creating order evalue instance. {}", ex.message(), ex);
 				return null;
 			}
-			
+
 			eval.error(new KerError(ErrorCode.BAD_FIELD, e.getMessage()));
 			return eval;
 		}
@@ -375,11 +383,11 @@ public class TradeLocalService implements TradeLocal {
 		// Filter the repeated login in the same trading day.
 		if (this.login != null && Utils.same(rep.tradingDay(), this.login.tradingDay()))
 			return;
-		
+
 		this.login = rep;
 		this.login.isLogin(true);
 		this.idKeeper.resetId(this.login.maxOrderReference());
-		
+
 		// Initialize accounts.
 		try {
 			this.investors.init();
@@ -402,20 +410,25 @@ public class TradeLocalService implements TradeLocal {
 		// Logout once per trading day.
 		// However, the remote may logout over once between different episodes.
 		// Check the time to logout at the end of trading day.
-		
+
 		// Take any of the subscribed symbols.
-		var iter = this.info.symbols().iterator();
-		if (!iter.hasNext()) {
-			this.log.warn("No symbols found in runtime info.");
+		try {
+			var iter = this.context.info().symbols().iterator();
+			if (!iter.hasNext()) {
+				this.log.warn("No symbols found in runtime info.");
+				return;
+			}
+
+			var symbol = iter.next();
+
+			// Check now is the end of a trading day.
+			if (!this.context.info().endOfDay(Instant.now(), symbol))
+				return;
+		} catch (KerError e) {
+			this.log.error("Fail check end-of-day. {}", e.message(), e);
 			return;
 		}
-		
-		var symbol = iter.next();
-		
-		// Check now is the end of a trading day.
-		if (!this.info.endOfDay(Instant.now(), symbol))
-			return;
-		
+
 		// Settle.
 		try {
 			this.investors.settle();
@@ -423,9 +436,9 @@ public class TradeLocalService implements TradeLocal {
 		} catch (KerError e) {
 			this.log.error("Fail settling accounts. {}", e.message(), e);
 		}
-		
+
 		// Reset login info.
-		this.login.isLogin(false);;
+		this.login.isLogin(false);
 	}
 
 	@Override
@@ -443,7 +456,7 @@ public class TradeLocalService implements TradeLocal {
 		var r = new HashSet<String>();
 		for (var inv : this.investors.getInvestors())
 			r.add(inv.accountId());
-		
+
 		return r;
 	}
 

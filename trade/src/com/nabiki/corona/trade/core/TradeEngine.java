@@ -13,7 +13,6 @@ import com.nabiki.corona.MessageType;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.packet.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.object.DefaultDataCodec;
 import com.nabiki.corona.object.tool.Packet;
 import com.nabiki.corona.object.tool.PacketClient;
@@ -23,7 +22,7 @@ public class TradeEngine implements Runnable {
 		STARTING, STARTED, STOPPING, STOPPED
 	}
 	
-	private final RuntimeInfo runtime;
+	private final TradeServiceContext context;
 	private final TradeEngineListener listener;
 	private final TradeEngineErrorListener errorListener;
 
@@ -38,8 +37,8 @@ public class TradeEngine implements Runnable {
 	// Codec.
 	private final DataCodec codec = DefaultDataCodec.create();
 
-	public TradeEngine(TradeEngineListener listener, TradeEngineErrorListener errorListener, RuntimeInfo info) {
-		this.runtime = info;
+	public TradeEngine(TradeEngineListener listener, TradeEngineErrorListener errorListener, TradeServiceContext context) {
+		this.context = context;
 		this.listener = listener;
 		this.errorListener = errorListener;
 	}
@@ -125,7 +124,7 @@ public class TradeEngine implements Runnable {
 	private PacketClient connect() throws KerError {
 		// Find connection config to remote.
 		RemoteConfig conf = null;
-		for (var c : this.runtime.remoteConfig().configs()) {
+		for (var c : this.context.info().remoteConfig().configs()) {
 			if (c.name().toLowerCase().indexOf("trade") != -1) {
 				conf = c;
 				break;

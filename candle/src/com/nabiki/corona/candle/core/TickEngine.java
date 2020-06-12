@@ -20,7 +20,7 @@ public class TickEngine implements Runnable {
 	private EngineState state = EngineState.STOPPED;
 	private PacketClient remote;
 	
-	private final ServiceContext context;
+	private final CandleServiceContext context;
 	private final TickEngineListener listener;
 	private final DataCodec codec = DefaultDataCodec.create();
 	private final DataFactory factory = DefaultDataFactory.create();
@@ -29,7 +29,7 @@ public class TickEngine implements Runnable {
 	private Thread queDaemon;
 	private final BlockingQueue<KerTick> dataQueue = new LinkedBlockingQueue<>();
 
-	public TickEngine(TickEngineListener l, ServiceContext context) {
+	public TickEngine(TickEngineListener l, CandleServiceContext context) {
 		this.listener = l;
 		this.context = context;
 	}

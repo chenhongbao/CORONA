@@ -4,18 +4,13 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.nabiki.corona.system.api.KerOrder;
-import com.nabiki.corona.system.api.KerPositionDetail;
-import com.nabiki.corona.system.api.KerTradeReport;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
+import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.OffsetFlag;
-import com.nabiki.corona.system.api.DataFactory;
-import com.nabiki.corona.system.api.KerError;
 
 public class PositionEngine {
 	private boolean isSettled;
 
-	private final RuntimeInfo runtime;
+	private final TradeServiceContext context;
 	private final String symbol;
 	private final DataFactory fatory;
 	private final List<RuntimePositionDetail> details = new LinkedList<>();
@@ -30,10 +25,10 @@ public class PositionEngine {
 	 * @param factory
 	 * @throws KerError
 	 */
-	public PositionEngine(String symbol, RuntimeInfo runtime, Collection<RuntimePositionDetail> init,
+	public PositionEngine(String symbol, TradeServiceContext context, Collection<RuntimePositionDetail> init,
 			DataFactory factory) throws KerError {
 		this.symbol = symbol;
-		this.runtime = runtime;
+		this.context = context;
 		this.fatory = factory;
 		if (init != null) {
 			for (var d : init) {
@@ -257,6 +252,6 @@ public class PositionEngine {
 	}
 
 	private void openPosition(KerTradeReport rep) throws KerError {
-		this.details.add(new RuntimePositionDetail(rep, this.runtime, this.fatory));
+		this.details.add(new RuntimePositionDetail(rep, this.context, this.fatory));
 	}
 }
