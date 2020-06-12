@@ -13,13 +13,12 @@ import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class CandleEngine extends TimerTask {
 
 	public final static int DEFAULT_PERIOD_MILLIS = 60 * 1000;
 
-	private final RuntimeInfo runtime;
+	private final ServiceContext context;
 	private final CandleEngineListener listener;
 	private final DataFactory factory = DefaultDataFactory.create();
 
@@ -34,21 +33,21 @@ public class CandleEngine extends TimerTask {
 	// Working mark
 	private AtomicBoolean working = new AtomicBoolean(false);
 
-	public CandleEngine(CandleEngineListener l, RuntimeInfo info) throws KerError {
-		if (l == null || info == null)
+	public CandleEngine(CandleEngineListener l, ServiceContext context) throws KerError {
+		if (l == null || context == null)
 			throw new KerError("Invalid parameters.");
 
 		this.listener = l;
-		this.runtime = info;
+		this.context = context;
 	}
 
 	private void initCandleGen() throws KerError {
 		// Create candle generators.
-		for (var s : this.runtime.symbols()) {
-			this.candles.put(s, new CandleGenerator(s, this.runtime, this.factory));
+		for (var s : this.context.info().symbols()) {
+			this.candles.put(s, new CandleGenerator(s, this.context, this.factory));
 		}
 	}
-	
+
 	private void destroyCandleGen() {
 		this.candles.clear();
 	}
@@ -62,18 +61,18 @@ public class CandleEngine extends TimerTask {
 		// Don't generate candles when market is not working.
 		if (!this.working.get())
 			return;
-		
+
 		// Get time and use it across this run().
 		Instant now = Instant.now();
-		
+
 		// Initialize candle generators when market open.
-		if (this.runtime.isMarketOpen(now) && this.candles.isEmpty()) {
-			this.listener.error(new KerError(ErrorCode.NONE, "Initialize candle generators."));
-			try {
+		try {
+			if (this.context.info().isMarketOpen(now) && this.candles.isEmpty()) {
+				this.listener.error(new KerError(ErrorCode.NONE, "Initialize candle generators."));
 				initCandleGen();
-			} catch (KerError e) {
-				this.listener.error(e);
 			}
+		} catch (KerError e) {
+			this.listener.error(e);
 		}
 
 		// Try generating candles.
@@ -88,11 +87,15 @@ public class CandleEngine extends TimerTask {
 				}
 			}
 		}
-		
+
 		// Destroy candle generators when market closes.
-		if (!this.runtime.isMarketOpen(now) && !this.candles.isEmpty()) {
-			destroyCandleGen();
-			this.listener.error(new KerError(ErrorCode.NONE, "Destroy candle generators."));
+		try {
+			if (!this.context.info().isMarketOpen(now) && !this.candles.isEmpty()) {
+				destroyCandleGen();
+				this.listener.error(new KerError(ErrorCode.NONE, "Destroy candle generators."));
+			}
+		} catch (KerError e) {
+			this.listener.error(e);
 		}
 	}
 
@@ -103,17 +106,17 @@ public class CandleEngine extends TimerTask {
 			} catch (Exception e) {
 				this.listener.error(new KerError(e));
 			}
-		}	
+		}
 	}
 
 	public void tick(KerTick t) throws KerError {
 		if (t == null || t.symbol() == null)
 			throw new KerError("Tick or symbol null pointer.");
-		
+
 		var g = this.candles.get(t.symbol());
 		if (g == null)
 			throw new KerError("Candle generator for " + t.symbol() + " not found.");
-		
+
 		// Update tick into candle generator.
 		g.tick(t);
 	}

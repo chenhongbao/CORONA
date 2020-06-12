@@ -8,20 +8,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.nabiki.corona.CandleMinute;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class CandleGenerator {
 	private final String symbol;
-	private final RuntimeInfo info;
+	private final ServiceContext context;
 	private final DataFactory factory;
 	private final Map<Integer, RuntimeCandle> candles = new ConcurrentHashMap<>();
 	
 	private static int[] periods = new int[] { CandleMinute.MINUTE, CandleMinute.FIVE_MINUTE, CandleMinute.QUARTER,
 			CandleMinute.HALF_HOUR, CandleMinute.HALF_QUADTER_HOUR, CandleMinute.HOUR, CandleMinute.TWO_HOUR};
 	
-	public CandleGenerator(String symbol, RuntimeInfo info, DataFactory factory) throws KerError {
+	public CandleGenerator(String symbol, ServiceContext context, DataFactory factory) throws KerError {
 		this.symbol = symbol;
-		this.info = info;
+		this.context = context;
 		this.factory = factory;
 		
 		// Initialize runtime candles.
@@ -35,7 +34,7 @@ public class CandleGenerator {
 	}
 	
 	public KerCandle get(int min, Instant now) throws KerError {
-		if (!this.info.candleNow(this.symbol, min, now))
+		if (!this.context.info().candleNow(this.symbol, min, now))
 			return null;
 		
 		var rc = this.candles.get(min);

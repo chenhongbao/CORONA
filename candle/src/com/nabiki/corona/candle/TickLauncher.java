@@ -54,18 +54,23 @@ public class TickLauncher implements Runnable {
 	}
 
 	// Runtime info.
-	private volatile RuntimeInfo runtime;
+	private ServiceContext context = new ServiceContext();
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {
-		this.runtime = info;
+		this.context.info(info);
 		this.log.info("Bind runtime info: {}.", info.name());
 	}
 
 	public void unbindRuntimeInfo(RuntimeInfo info) {
-		if (this.runtime == info)
-			this.runtime = null;
-			this.log.info("Remove runtime info: {}.", info.name());
+		try {
+			if (this.context.info() == info) {
+				this.context.info(null);
+				this.log.info("Remove runtime info: {}.", info.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail unbinding runtime info. {}", e.message(), e);
+		}
 	}
 
 	// Scheduled executor as timer.
@@ -118,7 +123,7 @@ public class TickLauncher implements Runnable {
 
 			try {
 				this.engine = null;
-				this.engine = new TickEngine(new TickPostListener(), this.runtime);
+				this.engine = new TickEngine(new TickPostListener(), this.context);
 				this.tickFuture = this.executor.submit(this.engine);
 				this.log.info("Launche tick engine.");
 			} catch (RejectedExecutionException e) {
@@ -160,24 +165,34 @@ public class TickLauncher implements Runnable {
 	private boolean minutesAfterMarketOpen(int minutes) {
 		minutes = Math.max(0, minutes);
 		var before = Instant.now().minusSeconds(minutes * 60);
-		return this.runtime.isMarketOpen(before);
+		try {
+			return this.context.info().isMarketOpen(before);
+		} catch (KerError e) {
+			this.log.error("Fail check market open. {}", e.message(), e);
+			return false;
+		}
 	}
 
 	private boolean userReady() {
-		return this.runtime != null;
+		try {
+			this.context.info();
+			return true;
+		} catch (KerError e) {
+			return false;
+		}
 	}
 
 	private EngineAction nextAction() {
 		EngineAction next = EngineAction.NONE;
 
-		if (this.runtime != null) {
+		try {
 			switch (this.engine.state()) {
 			case STARTED:
-				if (!this.runtime.isMarketOpen(Instant.now()))
+				if (!this.context.info().isMarketOpen(Instant.now()))
 					next = EngineAction.STOP;
 				break;
 			case STOPPED:
-				if (this.runtime.isMarketOpen(Instant.now()))
+				if (this.context.info().isMarketOpen(Instant.now()))
 					next = EngineAction.START;
 				break;
 			case STARTING:
@@ -186,8 +201,8 @@ public class TickLauncher implements Runnable {
 				this.log.warn("Unhandled launcher state: {}.", this.engine.state());
 				break;
 			}
-		} else {
-			this.log.warn("Missing market time query before checking next action.");
+		} catch(KerError e) {
+			this.log.warn("Fail checking market open before checking next action.");
 		}
 
 		return next;

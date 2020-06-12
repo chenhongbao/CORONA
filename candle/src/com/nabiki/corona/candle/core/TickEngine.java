@@ -20,7 +20,7 @@ public class TickEngine implements Runnable {
 	private EngineState state = EngineState.STOPPED;
 	private PacketClient remote;
 	
-	private final RuntimeInfo runtime;
+	private final ServiceContext context;
 	private final TickEngineListener listener;
 	private final DataCodec codec = DefaultDataCodec.create();
 	private final DataFactory factory = DefaultDataFactory.create();
@@ -29,14 +29,14 @@ public class TickEngine implements Runnable {
 	private Thread queDaemon;
 	private final BlockingQueue<KerTick> dataQueue = new LinkedBlockingQueue<>();
 
-	public TickEngine(TickEngineListener l, RuntimeInfo info) {
+	public TickEngine(TickEngineListener l, ServiceContext context) {
 		this.listener = l;
-		this.runtime = info;
+		this.context = context;
 	}
 	
 	public void sendSymbols() throws KerError {
 		var symbols = this.factory.create(StringMessage.class);
-		symbols.values(this.runtime.symbols());
+		symbols.values(this.context.info().symbols());
 		symbols.last(true);
 		
 		// Encode.
@@ -111,7 +111,7 @@ public class TickEngine implements Runnable {
 	private PacketClient connect() throws KerError{
 		// Find connection config to remote.
 		RemoteConfig conf = null;
-		for (var c : this.runtime.remoteConfig().configs()) {
+		for (var c : this.context.info().remoteConfig().configs()) {
 			if (c.name().toLowerCase().matches("(md)|(tick)|((market)[\\s_-]?(data))")) {
 				conf = c;
 				break;

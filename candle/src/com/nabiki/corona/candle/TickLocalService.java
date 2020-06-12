@@ -13,6 +13,7 @@ import org.osgi.service.log.LoggerFactory;
 import com.nabiki.corona.ErrorCode;
 import com.nabiki.corona.candle.core.CandleEngine;
 import com.nabiki.corona.candle.core.CandleEngineListener;
+import com.nabiki.corona.candle.core.ServiceContext;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
@@ -36,18 +37,22 @@ public class TickLocalService implements TickLocal {
 	private Logger log;
 
 	// Runtime info.
-	private volatile RuntimeInfo runtime;
+	private ServiceContext context = new ServiceContext();
 	
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {
-		this.runtime = info;
+		this.context.info(info);
 		this.log.info("Bind runtime info: {}.", info.name());
 	}
 	
 	public void unbindRuntimeInfo(RuntimeInfo info) {
-		if (this.runtime == info) {
-			this.runtime = null;
-			this.log.info("Unbind runtime info: {}.", info.name());
+		try {
+			if (this.context.info() == info) {
+				this.context.info(null);
+				this.log.info("Unbind runtime info: {}.", info.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail unbinding runtime info. {}", e.message(), e);
 		}
 	}
 
@@ -100,14 +105,9 @@ public class TickLocalService implements TickLocal {
 
 	@Activate
 	public void start(ComponentContext ctx) {
-		// TODO If I can start the engine in runtime info's setter?
-		if (this.runtime == null) {
-			this.log.error("Runtime info null pointer, can't start candle engine.");
-			return;
-		}
-		
+		// The runtime info ref is set via service context. It can be null pointer here but will be set in future.	
 		try {
-			this.engine = new CandleEngine(new CandlePostListener(), this.runtime);
+			this.engine = new CandleEngine(new CandlePostListener(), this.context);
 		} catch (KerError e) {
 			this.log.error("Fail creating candle engine. {}", e.getMessage(), e);
 			return;
@@ -151,7 +151,11 @@ public class TickLocalService implements TickLocal {
 		}
 		
 		// Keep the tick as last tick.
-		this.runtime.lastTick(tick);
+		try {
+			this.context.info().lastTick(tick);
+		} catch (KerError e) {
+			this.log.error("Fail setting last tick in runtime info. {}", e.message(), e);
+		}
 	}
 
 	private class CandlePostListener implements CandleEngineListener {
