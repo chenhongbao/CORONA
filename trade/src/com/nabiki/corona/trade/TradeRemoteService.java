@@ -165,7 +165,7 @@ public class TradeRemoteService implements TradeRemote {
 	private Logger log;
 
 	// Runtime info.
-	private TradeServiceContext context;
+	private TradeServiceContext context = new TradeServiceContext();
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setInfo(RuntimeInfo info) {

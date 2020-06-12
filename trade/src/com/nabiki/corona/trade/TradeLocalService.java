@@ -28,7 +28,7 @@ public class TradeLocalService implements TradeLocal {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
 
-	private TradeServiceContext context;
+	private TradeServiceContext context = new TradeServiceContext();
 
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {

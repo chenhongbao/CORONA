@@ -22,23 +22,12 @@ import com.nabiki.corona.system.biz.api.*;
 import com.nabiki.corona.system.info.api.*;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.portal.core.LoginManager;
+import com.nabiki.corona.portal.core.PortalServiceContext;
 
 @Component(service = {})
 public class TradeService {
 	class ServiceAdaptor extends ClientInputAdaptor {
 		public ServiceAdaptor() {}
-		
-		private TradeLocal local() throws KerError {
-			if (local == null)
-				throw new KerError("Local trade service not available.");
-			return local;
-		}
-		
-		private TradeRemote remote() throws KerError {
-			if (remote == null)
-				throw new KerError("Remote trade service not available.");
-			return remote;
-		}
 
 		@Override
 		public void error(KerError e) {
@@ -47,13 +36,18 @@ public class TradeService {
 
 		@Override
 		public KerAccount queryAccount(KerQueryAccount qry) {
-			return local.account(qry.accountId());
+			try {
+				return context.local().account(qry.accountId());
+			} catch (KerError e) {
+				log.error("Fail query account with id : {}. {}", qry.accountId(), e.message(), e);
+				return null;
+			}
 		}
 
 		@Override
 		public Collection<KerPositionDetail> queryPositionDetail(KerQueryPositionDetail q) {
 			try {
-				return local().positionDetails(q.accountId(), q.symbol());
+				return context.local().positionDetails(q.accountId(), q.symbol());
 			} catch (KerError e) {
 				log.error("Fail query position detail: {}", e.message(), e);
 				return new LinkedList<>();
@@ -63,7 +57,7 @@ public class TradeService {
 		@Override
 		public Collection<KerOrderStatus> queryOrderStatus(KerQueryOrderStatus q) {
 			try {
-				return local().orderStatus(q.sessionId());
+				return context.local().orderStatus(q.sessionId());
 			} catch (KerError e) {
 				log.error("Fail query order status: {}", e.message(), e);
 				return new LinkedList<>();
@@ -73,7 +67,7 @@ public class TradeService {
 		@Override
 		public Collection<String> queryListSessionId(String accountId) {
 			try {
-				return local().sessionIdsOfAccount(accountId);
+				return context.local().sessionIdsOfAccount(accountId);
 			} catch (KerError e) {
 				log.error("Fail query session ID for account: {}. {}", accountId, e.message(), e);
 				return new LinkedList<>();
@@ -83,7 +77,7 @@ public class TradeService {
 		@Override
 		public Collection<String> queryListAccountId() {
 			try {
-				return local().accountIds();
+				return context.local().accountIds();
 			} catch (KerError e) {
 				log.error("Fail query account ID: {}", e.message(), e);
 				return new LinkedList<>();
@@ -95,7 +89,7 @@ public class TradeService {
 			KerOrderError e = null;
 			
 			try {				
-				int r = remote().order(o);
+				int r = context.remote().order(o);
 				// Create response.
 				e = factory.create(KerOrderError.class);
 				e.order(o);
@@ -117,7 +111,7 @@ public class TradeService {
 		@Override
 		public KerError requestAction(KerAction a) {
 			try {
-				int r = remote().action(a);
+				int r = context.remote().action(a);
 				if (r > 0)
 					return new KerError(0, "Action queueing.");
 				else if (r == 0)
@@ -133,7 +127,7 @@ public class TradeService {
 		@Override
 		public Collection<KerTradeReport> queryTradeReport(KerQueryTradeReport q) {
 			try {
-				return local().tradeReport(q.sessionId());
+				return context.local().tradeReport(q.sessionId());
 			} catch (KerError e) {
 				log.error("Fail query trade reports for session: {}. {}", q.sessionId(), e.message(), e);
 				return new LinkedList<>();
@@ -146,7 +140,7 @@ public class TradeService {
 				// Check duplicated account and write account info.
 				LoginManager.get().writeNewAccount(a);
 				// Create investor account.
-				local.createAccount(a.accountId());
+				context.local().createAccount(a.accountId());
 				
 				return new KerError(0);
 			} catch (KerError e) {
@@ -158,7 +152,7 @@ public class TradeService {
 		@Override
 		public KerError moveCash(CashMove move) {
 			try {
-				local().moveCash(move);
+				context.local().moveCash(move);
 				return new KerError(0);
 			} catch (KerError e) {
 				return e;
@@ -169,53 +163,61 @@ public class TradeService {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
 
-	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
-	private volatile RuntimeInfo info;
+	private PortalServiceContext context = new PortalServiceContext();
 
+	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {
 		if (info == null)
 			return;
 
-		this.info = info;
-		this.log.info("Bind runtime info.");
+		this.context.info(info);
+		this.log.info("Bind runtime info {}.", info.name());
 	}
 
 	public void unbindRuntimeInfo(RuntimeInfo info) {
-		if (this.info != info)
+		try {
+			if (this.context.info() != info)
+				return;
+		} catch (KerError e) {
+			this.log.error("Fail unbinding runtime. {}", e.message(), e);
 			return;
+		}
 
-		this.info = null;
-		this.log.info("Unbind runtime info.");
+		this.context.info(null);
+		this.log.info("Unbind runtime info {}.", info.name());
 	}
 	
-	// Trade services.
-	@Reference(bind = "setLocal", unbind = "unsetLocal", policy = ReferencePolicy.DYNAMIC)
-	private volatile TradeLocal local;
-	
-	@Reference(bind = "setRemote", unbind = "unsetRemote", policy = ReferencePolicy.DYNAMIC)
-	private volatile TradeRemote remote;
-	
+	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setLocal(TradeLocal local) {
-		this.local = local;
+		this.context.local(local);;
 		this.log.info("Set trade local: {}.", local.name());
 	}
 	
 	public void unsetLocal(TradeLocal local) {
-		if (local == this.local) {
-			this.local = null;
-			this.log.info("Unset trade local: {}.", local.name());
+		try {
+			if (this.context.local() == local) {
+				this.context.local(null);
+				this.log.info("Unset trade local: {}.", local.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail unbinding trade local. {}", e.message(), e);
 		}
 	}
 	
+	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setRemote(TradeRemote remote) {
-		this.remote = remote;
+		this.context.remote(remote);
 		this.log.info("Set trade remote: {}.", remote.name());
 	}
 	
 	public void unsetRemote(TradeRemote remote) {
-		if (remote == this.remote) {
-			this.remote = null;
-			this.log.info("Unset trade remote: {}.", remote.name());
+		try {
+			if (this.context.remote() == remote) {
+				this.context.remote(remote);
+				this.log.info("Unset trade remote: {}.", remote.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail unbinding trade remote. {}", e.message(), e);
 		}
 	}
 	

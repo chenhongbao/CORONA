@@ -20,6 +20,7 @@ import com.nabiki.corona.MessageType;
 import com.nabiki.corona.object.*;
 import com.nabiki.corona.portal.core.MarketDataManager;
 import com.nabiki.corona.portal.core.MarketDataSubscriberListener;
+import com.nabiki.corona.portal.core.PortalServiceContext;
 import com.nabiki.corona.portal.inet.ClientInputAdaptor;
 import com.nabiki.corona.portal.inet.ClientInputExecutor;
 import com.nabiki.corona.portal.inet.MarketDataServer;
@@ -55,11 +56,16 @@ public class MarketDataService implements TickCandleForwarder {
 
 		@Override
 		public KerError subscribeSymbol(String symbol, PacketServer server) {
-			var r = manager.subscribe(symbol, server);
-			if (r.code() == 0)
-				historyCandle(symbol, server);
+			try {
+				var r = manager.subscribe(symbol, server);
+				if (r.code() == 0)
+					historyCandle(symbol, server);
 
-			return r;
+				return r;
+			} catch (KerError e) {
+				log.error("Fail subscribing symbols. {}", e.message(), e);
+				return e;
+			}
 		}
 
 		private void historyCandle(String symbol, PacketServer server) {
@@ -87,26 +93,28 @@ public class MarketDataService implements TickCandleForwarder {
 	@Reference(service = LoggerFactory.class)
 	private Logger log;
 
-	@Reference(bind = "bindRuntimeInfo", unbind = "unbindRuntimeInfo", policy = ReferencePolicy.DYNAMIC)
-	private volatile RuntimeInfo info;
+	private PortalServiceContext context = new PortalServiceContext();
 
+	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void bindRuntimeInfo(RuntimeInfo info) {
 		if (info == null)
 			return;
 
-		this.info = info;
-		this.log.info("Bind runtime info.");
-
-		// Create market data manager.
-		this.manager = new MarketDataManager(this.root, this.info, this.handler);
+		this.context.info(info);
+		this.log.info("Bind runtime info {}.", info.name());
 	}
 
 	public void unbindRuntimeInfo(RuntimeInfo info) {
-		if (this.info != info)
+		try {
+			if (this.context.info() != info)
+				return;
+		} catch (KerError e) {
+			this.log.error("Fail unbinding runtime info. {}", e.message(), e);
 			return;
+		}
 
-		this.info = null;
-		this.log.info("Unbind runtime info.");
+		this.context.info(null);
+		this.log.info("Unbind runtime info {}.", info.name());
 	}
 
 	// Candle data files' root.
@@ -150,6 +158,9 @@ public class MarketDataService implements TickCandleForwarder {
 
 	@Activate
 	public void start(ComponentContext ctx) {
+		// Create market data manager.
+		this.manager = new MarketDataManager(this.root, this.context, this.handler);
+
 		this.threads.execute(new Thread(new Runnable() {
 
 			@Override
@@ -179,7 +190,7 @@ public class MarketDataService implements TickCandleForwarder {
 			try {
 				ss.close();
 			} catch (IOException e) {
-				log.error("Fail closing server socket."  + e.getMessage());
+				log.error("Fail closing server socket." + e.getMessage());
 			}
 	}
 }

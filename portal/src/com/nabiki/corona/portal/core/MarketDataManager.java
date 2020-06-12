@@ -18,10 +18,9 @@ import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.CandleMinute;
 import com.nabiki.corona.MessageType;
 import com.nabiki.corona.portal.inet.PacketServer;
-import com.nabiki.corona.system.info.api.RuntimeInfo;
 
 public class MarketDataManager {
-	private final RuntimeInfo runtime;
+	private final PortalServiceContext context;
 	private final MarketDataSubscriberListener listener;
 	private final DataFactory factory = DefaultDataFactory.create();
 	private final DataCodec codec = DefaultDataCodec.create();
@@ -31,8 +30,8 @@ public class MarketDataManager {
 	private final CandleReader reader;
 	private final CandleWriter writer;
 
-	public MarketDataManager(Path root, RuntimeInfo runtime, MarketDataSubscriberListener listener) {
-		this.runtime = runtime;
+	public MarketDataManager(Path root, PortalServiceContext context, MarketDataSubscriberListener listener) {
+		this.context = context;
 		this.listener = listener;
 		this.reader = new CandleReader(root);
 		this.writer = new CandleWriter(root);
@@ -149,12 +148,12 @@ public class MarketDataManager {
 		server.send(MessageType.RX_CANDLE, bytes, 0, bytes.length);
 	}
 
-	public KerError subscribe(String symbol, PacketServer server) {
+	public KerError subscribe(String symbol, PacketServer server) throws KerError {
 		if (symbol == null || server == null)
 			return new KerError("Paramter null pointer.");
 
 		// Contains method invokes string's equals that compares the ref first, then byte content if they are strings.
-		if (!this.runtime.symbols().contains(symbol))
+		if (!this.context.info().symbols().contains(symbol))
 			return new KerError("Invalid symbol: " + symbol);
 
 		if (map.get(symbol) == null)
