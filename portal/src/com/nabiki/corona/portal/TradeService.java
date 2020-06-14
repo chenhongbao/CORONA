@@ -85,7 +85,7 @@ public class TradeService {
 		}
 
 		@Override
-		public KerOrderError requestOrder(KerOrder o) {
+		public KerOrderStatus requestOrder(KerOrder o) {
 			// TODO rewrite, first allocate resources for order, then return the allocation results to client.
 			//      send order to remote.
 			//      create order ID and set into order, method also creates the session ID. retrieve the session ID

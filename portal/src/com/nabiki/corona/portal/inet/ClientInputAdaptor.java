@@ -35,7 +35,7 @@ public abstract class ClientInputAdaptor {
 		return null;
 	}
 	
-	public KerOrderError requestOrder(KerOrder o) {
+	public KerOrderStatus requestOrder(KerOrder o) {
 		return null;
 	}
 	

@@ -168,9 +168,10 @@ public class TradeEngine implements Runnable {
 			this.listener.account(account.value(0));
 			break;
 		case MessageType.RX_ACTION_ERROR:
-			var actError = this.codec.decode(packet.bytes(), RxErrorMessage.class);
+			// Process error on action insertion.
+			var actError = this.codec.decode(packet.bytes(), RxActionErrorMessage.class);
 			for (var error : actError.values())
-				this.listener.error(error);
+				this.listener.error(error.action(), error.error());
 
 			break;
 		case MessageType.RX_COMMISSION:
@@ -207,6 +208,7 @@ public class TradeEngine implements Runnable {
 
 			break;
 		case MessageType.RX_ORDER_ERROR:
+			// Process error on order insertion.
 			var orderError = this.codec.decode(packet.bytes(), RxOrderErrorMessage.class);
 			for (var e : orderError.values())
 				this.listener.error(e.order(), e.error());

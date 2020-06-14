@@ -181,10 +181,10 @@ public class ClientInputExecutor implements Runnable {
 					break;
 				case MessageType.TX_REQUEST_CLIENT_ORDER:
 				case MessageType.TX_REQUEST_ADMIN_ORDER:
-					rspType = MessageType.RX_ORDER_ERROR;
+					rspType = MessageType.RX_ORDER_STATUS;
 					//
 					var reqOrd = this.codec.decode(in.input.bytes(), TxRequestOrderMessage.class);
-					var rspOrd = this.factory.create(RxOrderErrorMessage.class);
+					var rspOrd = this.factory.create(RxOrderStatusMessage.class);
 					for (var o : reqOrd.values())
 						rspOrd.value(this.adaptor.requestOrder(o));
 					//
