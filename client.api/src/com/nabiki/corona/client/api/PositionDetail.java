@@ -10,6 +10,8 @@ import java.time.LocalDate;
  */
 public interface PositionDetail {
 	String symbol();
+	
+	String sessionId();
 
 	char hedgeFlag();
 
@@ -17,15 +19,11 @@ public interface PositionDetail {
 
 	LocalDate openDate();
 
-	String tradeId();
-
 	int volume();
 
 	double openPrice();
 
 	LocalDate tradingDay();
-
-	String settlementId();
 
 	char tradeType();
 

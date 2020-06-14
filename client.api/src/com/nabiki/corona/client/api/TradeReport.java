@@ -11,8 +11,10 @@ import java.time.LocalDate;
  */
 public interface TradeReport {
 	String orderId();
-
-	String tradeId();
+	
+	String sessionId();
+	
+	String symbol();
 
 	char direction();
 
@@ -29,8 +31,4 @@ public interface TradeReport {
 	Instant tradeTime();
 
 	LocalDate tradingDay();
-
-	int sequenceNo();
-
-	int brokerOrderSequence();
 }

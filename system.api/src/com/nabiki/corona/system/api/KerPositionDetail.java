@@ -12,14 +12,8 @@ import com.nabiki.corona.client.api.PositionDetail;
  */
 public interface KerPositionDetail extends PositionDetail {
 	void symbol(String s);
-
-	String brokerId();
-
-	void brokerId(String s);
-
-	String investorId();
-
-	void investorId(String s);
+	
+	void sessionId(String s);
 
 	void hedgeFlag(char t);
 
@@ -27,25 +21,17 @@ public interface KerPositionDetail extends PositionDetail {
 
 	void openDate(LocalDate d);
 
-	void tradeId(String s);
-
 	void volume(int i);
 
 	void openPrice(double d);
 
 	void tradingDay(LocalDate d);
 
-	void settlementId(String s);
-
 	void tradeType(char t);
 
 	String combSymbol();
 
 	void combSymbol(String s);
-
-	String exchangeId();
-
-	void exchangeId(String s);
 	
 	int volumeMultiple();
 	
@@ -82,12 +68,4 @@ public interface KerPositionDetail extends PositionDetail {
 	int timeFirstVolume();
 
 	void timeFirstVolume(int i);
-
-	String investUnitId();
-
-	void investUnitId(String s);
-	
-	String tradeSessionId();
-	
-	void tradeSessionId(String s);
 }

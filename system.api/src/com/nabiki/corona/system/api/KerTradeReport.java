@@ -12,55 +12,13 @@ import com.nabiki.corona.client.api.TradeReport;
  *
  */
 public interface KerTradeReport extends TradeReport {
-	String sessionId();
-	
 	void sessionId(String s);
-	
-	String brokerId();
-
-	void brokerId(String s);
-
-	String investorId();
-
-	void investorId(String s);
-
-	String symbol();
 
 	void symbol(String s);
 
 	void orderId(String s);
 
-	String userId();
-
-	void userId(String s);
-
-	String exchangeId();
-
-	void exchangeId(String s);
-
-	void tradeId(String s);
-
 	void direction(char t);
-
-	String orderSysId();
-
-	void orderSysId(String s);
-
-	String participantId();
-
-	void participantId(String s);
-
-	String clientId();
-
-	void clientId(String s);
-
-	char tradingRole();
-
-	void tradingRole(char t);
-
-	String exchangeInstId();
-
-	void exchangeInstId(String s);
 
 	void offsetFlag(char t);
 
@@ -78,41 +36,5 @@ public interface KerTradeReport extends TradeReport {
 
 	void tradeType(char t);
 
-	char priceSource();
-
-	void priceSource(char t);
-
-	String traderId();
-
-	void traderId(String s);
-
-	String orderLocalId();
-
-	void orderLocalId(String s);
-
-	String clearingPartId();
-
-	void clearingPartId(String s);
-
-	String businessUnit();
-
-	void businessUnit(String s);
-
-	void sequenceNo(int i);
-
 	void tradingDay(LocalDate d);
-
-	String settlementId();
-
-	void settlementId(String s);
-
-	void brokerOrderSequence(int i);
-
-	char tradeSource();
-
-	void tradeSource(char t);
-
-	String investUnitId();
-
-	void investUnitId(String s);
 }

@@ -44,12 +44,4 @@ public interface KerCommission {
 	String exchangeId();
 	
 	void exchangeId(String s);
-	
-	char bizType();
-	
-	void bizType(char c);
-	
-	String investUnitId();
-	
-	void investUnitId(String s);
 }

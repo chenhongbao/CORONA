@@ -13,22 +13,10 @@ import com.nabiki.corona.client.api.OrderStatus;
  */
 public interface KerOrderStatus extends OrderStatus {
 	void symbol(String s);
-
-	String brokerId();
-
-	void brokerId(String s);
 	
 	void sessionId(String sid);
 
-	String investorId();
-
-	void investorId(String s);
-
 	void orderId(String s);
-
-	String userId();
-
-	void userId(String s);
 
 	void priceType(char t);
 
@@ -62,67 +50,15 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void isAutoSuspend(boolean b);
 
-	String businessUnit();
-
-	void businessUnit(String s);
-
-	int requestId();
-
-	void requestId(int i);
-
-	String orderLocalId();
-
-	void orderLocalId(String s);
-
-	String exchangeId();
-
-	void exchangeId(String s);
-
-	String participantId();
-
-	void participantId(String s);
-
-	String clientId();
-
-	void clientId(String s);
-
-	String exchangeSymbol();
-
-	void exchangeSymbol(String s);
-
-	String traderId();
-
-	void traderId(String s);
-
-	int installId();
-
-	void installId(int i);
-
 	void orderSubmitStatus(char t);
 
-	int notifySequence();
-
-	void notifySequence(int i);
-
 	void tradingDay(Date d);
-
-	int settlementId();
-
-	void settlementId(int i);
-
-	String orderSysId();
-
-	void orderSysId(String s);
 
 	char orderSource();
 
 	void orderSource(char t);
 
 	void orderStatus(char t);
-
-	char orderType();
-
-	void orderType(char t);
 
 	void tradedVolume(int i);
 
@@ -138,16 +74,6 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void cancelTime(Instant i);
 
-	String activeTraderId();
-
-	void activeTraderId(String s);
-
-	String clearingPartId();
-
-	void clearingPartId(String s);
-
-	void sequenceNo(int i);
-
 	int remoteFrontId();
 
 	void remoteFrontId(int i);
@@ -156,41 +82,11 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void remoteSessionId(int i);
 
-	String userProductInfo();
-
-	void userProductInfo(String s);
-
 	String statusMessage();
 
 	void statusMessage(String s);
 
-	boolean userForceClose();
-
-	void userForceClose(boolean b);
-
-	String activeUserId();
-
-	void activeUserId(String s);
-
-	void brokerOrderSequence(int i);
-
-	String relativeOrderSysId();
-
-	void relativeOrderSysId(String s);
-
 	void zceTradedVolume(int i);
-
-	boolean isSwapOrder();
-
-	void isSwapOrder(boolean b);
-
-	String branchId();
-
-	void branchId(String s);
-
-	String investUnitId();
-
-	void investUnitId(String s);
 
 	void accountId(String s);
 

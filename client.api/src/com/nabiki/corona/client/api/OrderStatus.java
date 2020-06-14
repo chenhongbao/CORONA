@@ -53,6 +53,11 @@ public interface OrderStatus {
 
 	int tradedVolume();
 
+	/**
+	 * Volume in queue, not traded yet.
+	 * 
+	 * @return volume in queue to be traded
+	 */
 	int waitingVolume();
 
 	Instant insertTime();
@@ -68,8 +73,4 @@ public interface OrderStatus {
 	int zceTradedVolume();
 
 	String accountId();
-
-	int sequenceNo();
-
-	int brokerOrderSequence();
 }

@@ -272,21 +272,13 @@ public class AccountEngine {
 		
 		// Set fields to preXxx.
 		this.origin.preBalance(this.origin.balance());
-		this.origin.preCredit(this.origin.credit());
 		this.origin.preDeposit(this.origin.deposit());
-		this.origin.preFundMortgageIn(this.origin.fundMortgageIn());
-		this.origin.preFundMortgageOut(this.origin.fundMortgageOut());
 		this.origin.preMargin(this.origin.currentMargin());
-		this.origin.preMortgage(this.origin.mortgage());
 		
 		// Reset fields to zeros for new day trading.
 		this.origin.balance(0.0);
-		this.origin.credit(0.0);
 		this.origin.deposit(0.0);
-		this.origin.fundMortgageIn(0.0);
-		this.origin.fundMortgageOut(0.0);
 		this.origin.currentMargin(0.0);
-		this.origin.mortgage(0.0);
 	}
 
 	// Assume available >= amount.

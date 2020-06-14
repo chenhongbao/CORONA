@@ -18,10 +18,6 @@ public interface Account {
 	 */
 	char accountState();
 
-	double preMortgage();
-
-	double preCredit();
-
 	double preDeposit();
 
 	double preBalance();
@@ -44,8 +40,6 @@ public interface Account {
 
 	double currentMargin();
 
-	double cashIn();
-
 	double commission();
 
 	double closeProfit();
@@ -64,51 +58,9 @@ public interface Account {
 
 	String settlementId();
 
-	double credit();
-
-	double mortgage();
-
 	double exchangeMargin();
-
-	double deliveryMargin();
-
-	double exchangeDeliveryMargin();
 
 	double reserveBalance();
 
 	String currencyId();
-
-	double preFundMortgageIn();
-
-	double preFundMortgageOut();
-
-	double fundMortgageIn();
-
-	double fundMortgageOut();
-
-	double fundMortgageAvailable();
-
-	double mortgageableFund();
-
-	double specProductMagin();
-
-	double specProductFrozenMargin();
-
-	double specProductCommission();
-
-	double specProductFrozenCommission();
-
-	double specProductPositionProfit();
-
-	double specProductCloseProfit();
-
-	double specProductPositionProfitByAlg();
-
-	double specProductExchangeMargin();
-
-	char bizType();
-
-	double frozenSwap();
-
-	double remainSwap();
 }

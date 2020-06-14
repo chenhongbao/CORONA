@@ -171,7 +171,7 @@ public class InvestorAccount {
 		
 		// Return trade session ID for verified order.
 		if (r.error().code() == ErrorCode.NONE)
-			r.tradeSessionId(sid);
+			r.sessionId(sid);
 		
 		return r;
 	}

@@ -88,18 +88,14 @@ public class RuntimePositionDetail {
 
 		var p = this.factory.create(KerPositionDetail.class);
 
-		p.brokerId(rep.brokerId());
 		p.closeAmount(0.0);
 		p.closeProfitByDate(0.0);
 		p.closeProfitByTrade(0.0);
 		p.closeVolume(0);
 		p.combSymbol("");
 		p.direction(rep.direction());
-		p.exchangeId(rep.exchangeId());
 		p.exchangeMargin(exMargin);
 		p.hedgeFlag(rep.hedgeFlag());
-		p.investorId(rep.investorId());
-		p.investUnitId(rep.investUnitId());
 		p.lastSettlementPrice(lastSettle);
 		p.margin(margin);
 		p.marginRateByMoney(byMny);
@@ -110,16 +106,12 @@ public class RuntimePositionDetail {
 		p.positionProfitByTrade(0.0);
 		p.openCommission(comm);
 		p.closeCommission(0.0);
-		p.settlementId(rep.settlementId());
 		p.settlementPrice(0.0);
 		p.symbol(rep.symbol());
 		p.volumeMultiple(multi);
-
 		// TODO The field, time first volume, is especially for DCE, but useless.
 		p.timeFirstVolume(0);
-
-		p.tradeId(rep.tradeId());
-		p.tradeSessionId(rep.sessionId());
+		//
 		p.tradeType(rep.tradeType());
 		p.tradingDay(rep.tradingDay());
 		p.volume(rep.volume());
@@ -483,7 +475,7 @@ public class RuntimePositionDetail {
 		// Don't use locked() here because it create new instances and the underlying data is not changed.
 		var iter = this.locked.iterator();
 		while (iter.hasNext()) {
-			if (iter.next().tradeSessionId().compareTo(sessionId) == 0) {
+			if (iter.next().sessionId().compareTo(sessionId) == 0) {
 				iter.remove();
 			}
 		}
@@ -504,7 +496,7 @@ public class RuntimePositionDetail {
 		while (iter.hasNext() && closeVol < rep.volume()) {
 			var n = iter.next();
 
-			if (n.tradeSessionId().compareTo(rep.sessionId()) != 0)
+			if (n.sessionId().compareTo(rep.sessionId()) != 0)
 				continue;
 
 			if (n.volume() <= rep.volume()) {

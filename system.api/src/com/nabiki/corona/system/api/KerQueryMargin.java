@@ -20,8 +20,4 @@ public interface KerQueryMargin {
 	String exchangeId();
 	
 	void exchangeId(String s);
-	
-	String investUnitId();
-	
-	void investUnitId(String s);
 }

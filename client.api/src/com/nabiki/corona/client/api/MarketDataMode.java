@@ -4,7 +4,7 @@ package com.nabiki.corona.client.api;
  * @author Hongbao Chen
  *
  */
-public enum MarketDataSubsMode {
+public enum MarketDataMode {
 	/**
 	 * Receive market data before and during market opens.
 	 */

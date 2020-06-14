@@ -1,6 +1,6 @@
 package com.nabiki.corona.system.api;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 public interface KerInstrument {
 	String symbol();
@@ -59,25 +59,25 @@ public interface KerInstrument {
 	
 	void priceTick(double d);
 	
-	Date createDate();
+	LocalDate createDate();
 	
-	void createDate(Date d);
+	void createDate(LocalDate d);
 	
-	Date openDate();
+	LocalDate openDate();
 	
-	void openDate(Date d);
+	void openDate(LocalDate d);
 	
-	Date expireDate();
+	LocalDate expireDate();
 	
-	void expireDate(Date d);
+	void expireDate(LocalDate d);
 	
-	Date startDelivDate();
+	LocalDate startDelivDate();
 	
-	void startDelivDate(Date d);
+	void startDelivDate(LocalDate d);
 	
-	Date endDelivDate();
+	LocalDate endDelivDate();
 	
-	void endDelivDate(Date d);
+	void endDelivDate(LocalDate d);
 	
 	char instLifePhase();
 	
@@ -103,27 +103,11 @@ public interface KerInstrument {
 	
 	void shortMarginRatio(double d);
 	
-	char maxMarginSideAlgorithm();
-	
-	void maxMarginSideAlgorithm(char c);
-	
 	String underlyingInstrId();
 	
 	void underlyingInstrId(String s);
 	
-	double strikePrice();
-	
-	void strikePrice(double d);
-	
-	char optionsType();
-	
-	void opetionsType(char c);
-	
 	double underlyingMultiple();
 	
 	void underlyingMultiple(double d);
-	
-	char combinationType();
-	
-	void combinationType(char c);
 }

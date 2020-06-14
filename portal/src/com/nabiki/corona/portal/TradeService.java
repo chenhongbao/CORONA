@@ -86,31 +86,17 @@ public class TradeService {
 
 		@Override
 		public KerOrderError requestOrder(KerOrder o) {
-			KerOrderError e = null;
-			
-			try {				
-				int r = context.remote().order(o);
-				// Create response.
-				e = factory.create(KerOrderError.class);
-				e.order(o);
-				// r < 0 is not possible currently, but it may return this value in future.
-				if (r > 0)
-					e.error(new KerError(0, "Order queueing."));
-				else if (r == 0)
-					e.error(new KerError(0, "Order sent."));
-				else
-					e.error(new KerError(r, "Order enqueue error."));
-				
-				return e;
-			} catch (KerError ex) {
-				log.error("Fail creating response for order request: {}", ex.message(), ex);
-				return null;
-			}
+			// TODO rewrite, first allocate resources for order, then return the allocation results to client.
+			//      send order to remote.
+			//      create order ID and set into order, method also creates the session ID. retrieve the session ID
+			//      from the allocation result.
+			return null;
 		}
 
 		@Override
 		public KerError requestAction(KerAction a) {
 			try {
+				// TODO verify the session/order status. if not completed, send action.
 				int r = context.remote().action(a);
 				if (r > 0)
 					return new KerError(0, "Action queueing.");

@@ -3,9 +3,9 @@ package com.nabiki.corona.system.api;
 import java.util.Collection;
 
 public interface KerOrderEvalue {
-	String tradeSessionId();
+	String sessionId();
 	
-	void tradeSessionId(String s);
+	void sessionId(String s);
 	
 	KerError error();
 	
