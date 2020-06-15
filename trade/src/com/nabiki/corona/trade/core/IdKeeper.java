@@ -84,4 +84,10 @@ public class IdKeeper {
 	public String getAccountIdWithSessionId(String sessionId) {
 		return this.s2a.get(sessionId);
 	}
+	
+	public void clear() {
+		this.o2s.clear();
+		this.s2a.clear();
+		this.s2o.clear();
+	}
 }

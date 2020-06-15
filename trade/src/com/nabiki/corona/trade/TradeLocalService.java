@@ -427,6 +427,8 @@ public class TradeLocalService implements TradeLocal {
 		// Settle.
 		try {
 			this.investors.settle();
+			// Clear out-dated data.
+			this.idKeeper.clear();
 			this.log.info("Settle accounts.");
 		} catch (KerError e) {
 			this.log.error("Fail settling accounts. {}", e.message(), e);
