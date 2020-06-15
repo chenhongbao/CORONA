@@ -2,8 +2,7 @@ package com.nabiki.corona.portal;
 
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -16,10 +15,15 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.portal.inet.*;
 import com.nabiki.corona.system.biz.api.*;
 import com.nabiki.corona.system.info.api.*;
+import com.nabiki.corona.system.packet.api.*;
+import com.nabiki.corona.OffsetFlag;
+import com.nabiki.corona.OrderStatus;
+import com.nabiki.corona.OrderSubmitStatus;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.portal.core.LoginManager;
 import com.nabiki.corona.portal.core.PortalServiceContext;
@@ -31,118 +35,335 @@ public class TradeService {
 
 		@Override
 		public void error(KerError e) {
-			log.error("Trade service failed: {}", e.message(), e);
+			log.error("Trade service failed. {}", e.message(), e);
 		}
 
 		@Override
-		public KerAccount queryAccount(KerQueryAccount qry) {
+		public RxAccountMessage queryAccount(KerQueryAccount qry) {
+			RxAccountMessage msg = null;
+			
 			try {
-				return context.local().account(qry.accountId());
+				msg = factory.create(RxAccountMessage.class);
 			} catch (KerError e) {
-				log.error("Fail query account with id : {}. {}", qry.accountId(), e.message(), e);
+				log.error("Fail creating packet message. {}", e.message(), e);
 				return null;
 			}
+			
+			try {
+				msg.value(context.local().account(qry.accountId()));
+			} catch (KerError e) {
+				log.error("Fail query account with id : {}. {}", qry.accountId(), e.message(), e);
+				msg.error(e);
+			}
+			
+			return msg;
 		}
 
 		@Override
-		public Collection<KerPositionDetail> queryPositionDetail(KerQueryPositionDetail q) {
+		public RxPositionDetailMessage queryPositionDetail(KerQueryPositionDetail q) {
+			RxPositionDetailMessage msg = null;
+			
 			try {
-				return context.local().positionDetails(q.accountId(), q.symbol());
+				msg = factory.create(RxPositionDetailMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				msg.values(context.local().positionDetails(q.accountId(), q.symbol()));
 			} catch (KerError e) {
 				log.error("Fail query position detail: {}", e.message(), e);
-				return new LinkedList<>();
+				msg.error(e);
 			}
+			
+			return msg;
 		}
 
 		@Override
-		public Collection<KerOrderStatus> queryOrderStatus(KerQueryOrderStatus q) {
+		public RxOrderStatusMessage queryOrderStatus(KerQueryOrderStatus q) {
+			RxOrderStatusMessage msg = null;
+			
 			try {
-				return context.local().orderStatus(q.sessionId());
+				msg = factory.create(RxOrderStatusMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				msg.values(context.local().orderStatus(q.sessionId()));
 			} catch (KerError e) {
 				log.error("Fail query order status: {}", e.message(), e);
-				return new LinkedList<>();
+				msg.error(e);
 			}
-		}
-
-		@Override
-		public Collection<String> queryListSessionId(String accountId) {
-			try {
-				return context.local().sessionIdsOfAccount(accountId);
-			} catch (KerError e) {
-				log.error("Fail query session ID for account: {}. {}", accountId, e.message(), e);
-				return new LinkedList<>();
-			}
-		}
-
-		@Override
-		public Collection<String> queryListAccountId() {
-			try {
-				return context.local().accountIds();
-			} catch (KerError e) {
-				log.error("Fail query account ID: {}", e.message(), e);
-				return new LinkedList<>();
-			}
-		}
-
-		@Override
-		public KerOrderStatus requestOrder(KerOrder o) {
-			// TODO rewrite, first allocate resources for order, then return the allocation results to client.
-			//      send order to remote.
-			//      create order ID and set into order, method also creates the session ID. retrieve the session ID
-			//      from the allocation result.
+			
 			return null;
 		}
 
 		@Override
-		public KerError requestAction(KerAction a) {
+		public StringMessage queryListSessionId(String accountId) {
+			StringMessage msg = null;
+			
 			try {
-				// TODO verify the session/order status. if not completed, send action.
-				int r = context.remote().action(a);
-				if (r > 0)
-					return new KerError(0, "Action queueing.");
-				else if (r == 0)
-					return new KerError(0, "Action sent.");
-				else
-					return new KerError(r, "Action enqueue error.");
+				msg = factory.create(StringMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				msg.values(context.local().sessionIdsOfAccount(accountId));
+			} catch (KerError e) {
+				log.error("Fail query session ID for account: {}. {}", accountId, e.message(), e);
+				msg.error(e);
+			}
+			
+			return msg;
+		}
+
+		@Override
+		public StringMessage queryListAccountId() {
+			StringMessage msg = null;
+			
+			try {
+				msg = factory.create(StringMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				msg.values(context.local().accountIds());
+			} catch (KerError e) {
+				log.error("Fail query account IDs. {}", e.message(), e);
+				msg.error(e);
+			}
+			
+			return msg;
+		}
+
+		@Override
+		public RxOrderStatusMessage requestOrder(KerOrder o) {
+			// First allocate resources for order, then return the allocation results to client.
+			// Send order to remote.
+			// Once the order is validated correct, create session ID for the request, and then order IDs for each
+			// sub-order.
+			RxOrderStatusMessage msg = null;
+			
+			try {
+				msg = factory.create(RxOrderStatusMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {			
+				// Create order ID and associated session ID.
+				// Allocate resources for order.
+				var sid = context.local().sessionId(o.accountId());
+				o.sessionId(sid);
+				
+				var r = context.local().allocateOrder(o);
+				if (r.error().code() != 0) {
+					// Status.
+					var status = factory.create(KerOrderStatus.class);
+					status.orderSubmitStatus(OrderSubmitStatus.INSERT_REJECTED);
+					status.statusMessage(r.error().message());
+					
+					// Error.
+					msg.value(status);
+					msg.error(r.error());
+				} else {
+					// Check open/close.
+					if (o.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
+						// Set open order ID.
+						o.orderId(context.local().orderId(sid));
+						
+						// Just send open request.
+						int c = context.remote().order(o);
+						
+						// Set status params.
+						var status = factory.create(KerOrderStatus.class);
+						status.orderId(o.orderId());
+						status.sessionId(o.sessionId());
+						
+						// Set message params.
+						msg.value(status);
+						msg.error(getProperError(c));
+
+					} else {
+						int c = 0;
+						for (var p : r.positionToClose()) {
+							// Duplicate params then modify some.
+							var order = factory.create(KerOrder.class, o);
+							
+							// Create order ID for each sub-order.
+							o.orderId(context.local().orderId(order.sessionId()));
+							
+							if (Utils.same(p.tradingDay(), context.local().tradingDay()))
+								// Close today's position.
+								o.offsetFlag(OffsetFlag.OFFSET_CLOSE_TODAY);
+							else
+								// Close yesterday's position.
+								o.offsetFlag(OffsetFlag.OFFSET_CLOSE_YESTERDAY);
+							
+							// Set the split volume.
+							o.volume(p.volume());
+							c = context.remote().order(order);
+
+							// Set status params.
+							var status = factory.create(KerOrderStatus.class);
+							status.orderId(o.orderId());
+							status.sessionId(o.sessionId());
+							
+							if (c < 0)
+								status.orderSubmitStatus(OrderSubmitStatus.INSERT_REJECTED);
+							else
+								status.orderSubmitStatus(OrderSubmitStatus.INSERT_SUBMITTED);
+							
+							// Set message params.
+							msg.value(status);
+						}
+					}
+				}
+			} catch (KerError e) {
+				log.error("Fail requesting order. {}", e.message(), e);
+				msg.error(e);
+			}
+			
+			return msg;
+		}
+
+		@Override
+		public RxActionErrorMessage requestAction(KerAction a) {
+			RxActionErrorMessage msg = null;
+			
+			try {
+				msg = factory.create(RxActionErrorMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				var actionError = factory.create(KerActionError.class);
+				var statuses = context.local().orderStatus(a.sessionId());
+				// Unknown session ID, not order info found.
+				if (statuses.size() == 0) {
+					var e = new KerError("No order status found for session: " + a.sessionId() + " or order: " + a.orderId());
+					// Response.
+					actionError.error(e);
+					actionError.action(a);
+					// Error.
+					msg.error(e);
+				} else {
+					if (isTradedOrCanceled(statuses)) {
+						var e = new KerError("Order outdated, it has been traded or canceled.");
+						// Response.
+						actionError.error(e);
+						actionError.action(a);
+						// Error.
+						msg.error(e);
+					} else {
+						KerError e = null;
+						int r = context.remote().action(a);
+						// Response.
+						actionError.error(getProperError(r));
+						actionError.action(a);
+						msg.value(actionError);
+						// Error.
+						msg.error(e);
+					}
+				}
 			} catch (KerError e) {
 				log.error("Fail enqueueing action. {}", e.message(), e);
-				return e;
+				msg.error(e);
 			}
+			
+			return msg;
+		}
+		
+		private KerError getProperError(int c) {
+			if (c > 0)
+				return new KerError(0, "Request queueing.");
+			else if (c == 0)
+				return new KerError(0, "Request sent.");
+			else
+				return new KerError(c, "Request enqueue error.");
+		}
+		
+		private boolean isTradedOrCanceled(List<KerOrderStatus> statuses) {
+			for (var s : statuses)
+				if (s.orderStatus() == OrderStatus.ALL_TRADED || s.orderStatus() == OrderStatus.CANCELED)
+					return true;
+			return false;
 		}
 
 		@Override
-		public Collection<KerTradeReport> queryTradeReport(KerQueryTradeReport q) {
+		public RxTradeReportMessage queryTradeReport(KerQueryTradeReport q) {
+			RxTradeReportMessage msg = null;
+			
 			try {
-				return context.local().tradeReport(q.sessionId());
+				msg = factory.create(RxTradeReportMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				msg.values(context.local().tradeReport(q.sessionId()));
 			} catch (KerError e) {
 				log.error("Fail query trade reports for session: {}. {}", q.sessionId(), e.message(), e);
-				return new LinkedList<>();
+				msg.error(e);
 			}
+			
+			return msg;
 		}
 
 		@Override
-		public KerError newAccount(KerNewAccount a) {
+		public RxErrorMessage newAccount(KerNewAccount a) {
+			RxErrorMessage msg = null;
+			
+			try {
+				msg = factory.create(RxErrorMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
 			try {
 				// Check duplicated account and write account info.
 				LoginManager.get().writeNewAccount(a);
 				// Create investor account.
 				context.local().createAccount(a.accountId());
-				
-				return new KerError(0);
 			} catch (KerError e) {
-				log.error("Fail creating new account: {}.", e.message(), e);
-				return e;
+				log.error("Fail creating new account. {}", e.message(), e);
+				msg.error(e);
 			}
+			
+			return msg;
 		}
 
 		@Override
-		public KerError moveCash(CashMove move) {
+		public RxErrorMessage moveCash(CashMove move) {
+			RxErrorMessage msg = null;
+			
+			try {
+				msg = factory.create(RxErrorMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
 			try {
 				context.local().moveCash(move);
-				return new KerError(0);
 			} catch (KerError e) {
-				return e;
+				log.error("Fail moving cash. {}", e.message(), e);
+				msg.error(e);
 			}
+			
+			return msg;
 		}
 	}
 	

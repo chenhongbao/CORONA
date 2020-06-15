@@ -153,9 +153,9 @@ public class TradeLocalService implements TradeLocal {
 			// Need to remove order ID mappings for a completed order.
 			if (o.orderStatus() == OrderStatus.CANCELED) {
 				investor.cancel(o);
-				this.idKeeper.removeOrderId(o.orderId());
+				this.idKeeper.eraseOrderId(o.orderId());
 			} else if (o.orderStatus() == OrderStatus.ALL_TRADED) {
-				this.idKeeper.removeOrderId(o.orderId());
+				this.idKeeper.eraseOrderId(o.orderId());
 			}
 		} catch (KerError e) {
 			this.log.error("Fail updating order status. {}", e.getMessage(), e);
@@ -274,7 +274,7 @@ public class TradeLocalService implements TradeLocal {
 		try {
 			return investor.allocateOrder(op);
 		} catch (KerError e) {
-			this.log.error("Fail allocating resource for order: {} and account: {}.", op.orderId(), op.accountId());
+			this.log.error("Fail allocating resource for session: {} and account: {}.", op.sessionId(), op.accountId());
 
 			// Make an error report.
 			KerOrderEvalue eval;
@@ -374,11 +374,6 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public String createOrderId(String accountId) {
-		return this.idKeeper.createOrderId(accountId);
-	}
-
-	@Override
 	public void remoteLogin(KerRemoteLoginReport rep) {
 		// Filter the repeated login in the same trading day.
 		if (this.login != null && Utils.same(rep.tradingDay(), this.login.tradingDay()))
@@ -462,6 +457,21 @@ public class TradeLocalService implements TradeLocal {
 
 	@Override
 	public Collection<String> sessionIdsOfAccount(String accountId) {
-		return this.idKeeper.sessionIds(accountId);
+		return this.idKeeper.getSessionIdsOfAccount(accountId);
+	}
+
+	@Override
+	public String orderId(String sessionId) {
+		try {
+			return this.idKeeper.createOrderId(sessionId);
+		} catch (KerError e) {
+			log.error("Fail creating order ID for session: {}. {}", sessionId, e.message(), e);
+			return null;
+		}
+	}
+
+	@Override
+	public String sessionId(String accountId) {
+		return this.idKeeper.createSessionId(accountId);
 	}
 }

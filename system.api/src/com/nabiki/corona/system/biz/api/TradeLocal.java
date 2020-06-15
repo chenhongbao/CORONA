@@ -10,12 +10,20 @@ public interface TradeLocal {
 	String name();
 
 	/**
-	 * Create a valid order ID associated with a trade session ID.
+	 * Create a valid order ID under given session.
 	 * 
-	 * @param accountId the account with given ID owns the order ID
+	 * @param sessionId session that own the order
 	 * @return order ID
 	 */
-	String createOrderId(String accountId);
+	String orderId(String sessionId);
+	
+	/**
+	 * Create session ID under account with given ID.
+	 * 
+	 * @param accountId account ID
+	 * @return session ID
+	 */
+	String sessionId(String accountId);
 
 	/**
 	 * Get trading day.
@@ -61,18 +69,18 @@ public interface TradeLocal {
 	/**
 	 * Query latest order status of the given trade session ID.
 	 * 
-	 * @param sid trade session ID
+	 * @param sessionId trade session ID
 	 * @return list of order status sorted by update time for early to late
 	 */
-	List<KerOrderStatus> orderStatus(String sid);
+	List<KerOrderStatus> orderStatus(String sessionId);
 
 	/**
 	 * Query all received trade report of the given trade session ID.
 	 * 
-	 * @param sid trade session ID.
+	 * @param sessionId trade session ID.
 	 * @return list of trade reports sorted by update time for early to late
 	 */
-	List<KerTradeReport> tradeReport(String sid);
+	List<KerTradeReport> tradeReport(String sessionId);
 
 	/**
 	 * Update order status into account.

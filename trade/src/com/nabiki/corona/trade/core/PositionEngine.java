@@ -136,7 +136,7 @@ public class PositionEngine {
 
 	public Collection<KerPositionDetail> lock(KerOrder o) throws KerError {
 		if (!canLock(o))
-			throw new KerError("Can't lock position for order: " + o.orderId());
+			throw new KerError("Can't lock position for session: " + o.sessionId());
 
 		Collection<KerPositionDetail> ret = new LinkedList<>();
 		KerOrder toLock = this.fatory.create(KerOrder.class, o);
@@ -153,7 +153,7 @@ public class PositionEngine {
 
 		if (toLock.volume() > 0)
 			throw new KerError(
-					"[FATAL]Internal state changed, but not enough position to lock for order: " + o.orderId());
+					"[FATAL]Internal state changed, but not enough position to lock for session: " + o.sessionId());
 
 		return ret;
 	}

@@ -145,17 +145,14 @@ public class InvestorAccount {
 			throw new KerError("Can't allocate for order of null pointer.");
 		}
 		// Don't insert order if the information for the denoted instrument is not ready.
-		if (!this.context.info().ready(order.symbol)) {
+		if (!this.context.info().ready(order.symbol())) {
 			var r = this.factory.create(KerOrderEvalue.class);
 			r.error(new KerError(ErrorCode.NOT_INITED, ErrorMessage.NOT_INITED));
 			return r;
 		}
 
 		KerOrderEvalue r = null;
-		// Create session ID.
-		var sid = this.idKeeper.getSessionIdWithOrderId(order.orderId());
-		order.sessionId(sid);
-		
+
 		// Save order.
 		this.sessionWriter.write(order);
 		
@@ -168,10 +165,6 @@ public class InvestorAccount {
 		// Set default NONE error, says it is OK.
 		if (r.error() == null)
 			r.error(new KerError(ErrorCode.NONE, ErrorMessage.NONE));
-		
-		// Return trade session ID for verified order.
-		if (r.error().code() == ErrorCode.NONE)
-			r.sessionId(sid);
 		
 		return r;
 	}

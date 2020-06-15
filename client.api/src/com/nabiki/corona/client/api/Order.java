@@ -1,143 +1,53 @@
 package com.nabiki.corona.client.api;
 
-public class Order {
-	public String symbol;
-	public String sessionId;
-	public String accountId;
-	public double price;
-	public double stopPrice;
-	public int volume;
-	public int minVolume;
-	public char direction;
-	public char priceType;
-	public char offsetFlag;
-	public char hedgeFlag;
-	public char timeCondition;
-	public char volumeCondition;
-	public char contigentCondition;
-	String note;
+public interface Order {
+	void symbol(String s);
 
-	public Order() {
-	}
-	
-	public void sessionId(String s) {
-		this.sessionId = s;
-	}
-	
-	public String sessionId() {
-		return this.sessionId;
-	}
+	public void accountId(String s);
 
-	public void symbol(String s) {
-		this.symbol = s;
-	}
+	void price(double d);
 
-	public String symbol() {
-		return this.symbol;
-	}
+	double price();
 
-	public void accountId(String s) {
-		this.accountId = s;
-	}
+	void stopPrice(double d);
 
-	public String accountId() {
-		return this.accountId;
-	}
+	double stopPrice();
 
-	public void price(double d) {
-		this.price = d;
-	}
+	void volume(int i);
 
-	public double price() {
-		return this.price;
-	}
+	int volume();
 
-	public void stopPrice(double d) {
-		this.stopPrice = d;
-	}
+	void minVolume(int i);
 
-	public double stopPrice() {
-		return this.stopPrice;
-	}
+	int minVolume();
 
-	public void volume(int i) {
-		this.volume = i;
-	}
+	void direction(char t);
 
-	public int volume() {
-		return this.volume;
-	}
+	char direction();
 
-	public void minVolume(int i) {
-		this.minVolume = i;
-	}
+	void priceType(char t);
 
-	public int minVolume() {
-		return this.minVolume;
-	}
+	char priceType();
 
-	public void direction(char t) {
-		this.direction = t;
-	}
+	void offsetFlag(char t);
 
-	public char direction() {
-		return this.direction;
-	}
+	char offsetFlag();
 
-	public void priceType(char t) {
-		this.priceType = t;
-	}
+	void hedgeFlag(char t);
 
-	public char priceType() {
-		return this.priceType;
-	}
+	char hedgeFlag();
 
-	public void offsetFlag(char t) {
-		this.offsetFlag = t;
-	}
+	void timeCondition(char t);
 
-	public char offsetFlag() {
-		return this.offsetFlag;
-	}
+	char timeCondition();
 
-	public void hedgeFlag(char t) {
-		this.hedgeFlag = t;
-	}
+	void volumeCondition(char t);
 
-	public char hedgeFlag() {
-		return this.hedgeFlag;
-	}
+	char volumeCondition();
 
-	public void timeCondition(char t) {
-		this.timeCondition = t;
-	}
+	void contigentConditon(char t);
 
-	public char timeCondition() {
-		return this.timeCondition;
-	}
+	char contigentConditon();
 
-	public void volumeCondition(char t) {
-		this.volumeCondition = t;
-	}
-
-	public char volumeCondition() {
-		return this.volumeCondition;
-	}
-
-	public void contigentConditon(char t) {
-		this.contigentCondition = t;
-	}
-
-	public char contigentConditon() {
-		return this.contigentCondition;
-	}
-
-	public void note(String n) {
-		this.note = n;
-	}
-
-	public String note() {
-		return this.note;
-	}
-
+	void note(String n);
 }

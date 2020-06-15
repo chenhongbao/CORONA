@@ -62,7 +62,278 @@ public class ClientInputExecutor implements Runnable {
 		
 		return count;
 	}
+	
+	private void setParams(PacketMessage<?> msg, int rSeq, boolean last) {
+		if (msg == null)
+			return;
+		
+		msg.requestSeq(rSeq);
+		msg.responseSeq(Utils.increaseGet());
+		msg.time(LocalDateTime.now());
+		msg.last(last);
+	}
+	
+	private void sndPacket(short type, PacketMessage<?> msg, PacketServer remote) throws KerError {
+		if (msg == null)
+			return;
+		
+		var bytes = this.codec.encode(msg);
+		remote.send(type, bytes, 0, bytes.length);
+	}
+	
+	private void procQueryAccount(TxQueryAccountMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxAccountMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_ACCOUNT, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryAccount(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_ACCOUNT, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_ACCOUNT, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procQueryPositionDetail(TxQueryPositionDetailMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxPositionDetailMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_POSITION_DETAIL, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryPositionDetail(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_POSITION_DETAIL, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_POSITION_DETAIL, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procQueryOrderStatus(TxQueryOrderStatusMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxOrderStatusMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryOrderStatus(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procQueryListSessionId(StringMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(StringMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_LIST_SESSION_ID, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryListSessionId(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_LIST_SESSION_ID, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_LIST_SESSION_ID, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procQueryListAccountId(StringMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(StringMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryListAccountId();
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procRequestAction(TxRequestActionMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxActionErrorMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_ACTION_ERROR, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.requestAction(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_ACTION_ERROR, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_ACTION_ERROR, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procRequestOrder(TxRequestOrderMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxOrderStatusMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.requestOrder(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procSubscription(StringMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxErrorMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_SUBSCRIBE_SYMBOL, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.subscribeSymbol(iter.next(), remote);
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_SUBSCRIBE_SYMBOL, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_SUBSCRIBE_SYMBOL, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procNewAccount(TxRequestNewAccountMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxErrorMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_SET_NEW_ACCOUNT, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.newAccount(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_SET_NEW_ACCOUNT, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_SET_NEW_ACCOUNT, rsp, remote);
+				}
+			}
+		}
+	}
 
+	private void procMoveCash(TxCashMoveMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxErrorMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_CASH_MOVE, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.moveCash(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_CASH_MOVE, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_CASH_MOVE, rsp, remote);
+				}
+			}
+		}
+	}
+	
+	private void procQueryTradeReport(TxQueryTradeReportMessage req, PacketServer remote) throws KerError {
+		var iter = req.values().iterator();
+		if (!iter.hasNext()) {
+			var rsp = this.factory.create(RxTradeReportMessage.class);
+			setParams(rsp, req.requestSeq(), true);
+			sndPacket(MessageType.RX_TRADE_REPORT, rsp, remote);
+		} else {
+			while (true) {
+				var rsp = this.adaptor.queryTradeReport(iter.next());
+				// Last mark.
+				if (!iter.hasNext()) {
+					setParams(rsp, req.requestSeq(), true);
+					sndPacket(MessageType.RX_TRADE_REPORT, rsp, remote);
+					// Must break loop.
+					break;
+				} else {
+					setParams(rsp, req.requestSeq(), false);
+					sndPacket(MessageType.RX_TRADE_REPORT, rsp, remote);
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void run() {
 		// Set mark.
@@ -74,187 +345,48 @@ public class ClientInputExecutor implements Runnable {
 				if (in.input == null || in.service == null)
 					continue;
 				
-				short rspType = 0;
-				byte[] rspBytes = new byte[0];
-				
 				// Decide the input type.
 				switch(in.input.type()) {
 				case MessageType.TX_QUERY_CLIENT_ACCOUNT:
-				case MessageType.TX_QUERY_ADMIN_ACCOUNT:
-					// Reply message type.
-					rspType = MessageType.RX_ACCOUNT;
-					// Decode message.
-					var reqAcc = this.codec.decode(in.input.bytes(), TxQueryAccountMessage.class);
-					
+				case MessageType.TX_QUERY_ADMIN_ACCOUNT:			
 					// Process input and reply.
-					var rspAcc = this.factory.create(RxAccountMessage.class);
-					for (var a : reqAcc.values())
-						rspAcc.value(this.adaptor.queryAccount(a));
-					
-					// Sequences.
-					rspAcc.requestSeq(reqAcc.requestSeq());
-					rspAcc.responseSeq(Utils.increaseGet());
-					// Time stamp.
-					rspAcc.time(LocalDateTime.now());
-					// Last mark.
-					rspAcc.last(true);
-					// Encode.
-					rspBytes = this.codec.encode(rspAcc);
+					procQueryAccount(this.codec.decode(in.input.bytes(), TxQueryAccountMessage.class), in.service);
 					break;
 				case MessageType.TX_QUERY_CLIENT_POSITION_DETAIL:
 				case MessageType.TX_QUERY_ADMIN_POSITION_DETAIL:
-					rspType = MessageType.RX_POSITION_DETAIL;
-					//
-					var reqPos = this.codec.decode(in.input.bytes(), TxQueryPositionDetailMessage.class);
-					var rspPos = this.factory.create(RxPositionDetailMessage.class);
-					for (var q : reqPos.values())
-						rspPos.values(this.adaptor.queryPositionDetail(q));
-					//
-					rspPos.requestSeq(reqPos.requestSeq());
-					rspPos.responseSeq(Utils.increaseGet());
-					rspPos.time(LocalDateTime.now());
-					rspPos.last(true);
-					//
-					rspBytes = this.codec.encode(rspPos);
+					procQueryPositionDetail(this.codec.decode(in.input.bytes(), TxQueryPositionDetailMessage.class), in.service);
 					break;
 				case MessageType.TX_QUERY_CLIENT_ORDER_STATUS:
 				case MessageType.TX_QUERY_ADMIN_ORDER_STATUS:
-					rspType = MessageType.RX_ORDER_STATUS;
-					//
-					var reqSta = this.codec.decode(in.input.bytes(), TxQueryOrderStatusMessage.class);
-					var rspSta = this.factory.create(RxOrderStatusMessage.class);
-					for (var q : reqSta.values())
-						rspSta.values(this.adaptor.queryOrderStatus(q));
-					//
-					rspSta.requestSeq(reqSta.requestSeq());
-					rspSta.responseSeq(Utils.increaseGet());
-					rspSta.time(LocalDateTime.now());
-					rspSta.last(true);
-					//
-					rspBytes = this.codec.encode(rspSta);
+					procQueryOrderStatus(this.codec.decode(in.input.bytes(), TxQueryOrderStatusMessage.class), in.service);
 					break;
 				case MessageType.TX_QUERY_CLIENT_LIST_SESSION_ID:
 				case MessageType.TX_QUERY_ADMIN_LIST_SESSION_ID:
-					rspType = MessageType.RX_LIST_SESSION_ID;
-					//
-					var reqSid = this.codec.decode(in.input.bytes(), StringMessage.class);
-					var rspSid = this.factory.create(StringMessage.class);
-					for (var q : reqSid.values())
-						rspSid.values(this.adaptor.queryListSessionId(q));
-					//
-					rspSid.requestSeq(reqSid.requestSeq());
-					rspSid.responseSeq(Utils.increaseGet());
-					rspSid.time(LocalDateTime.now());
-					rspSid.last(true);
-					//
-					rspBytes = this.codec.encode(rspSid);
+					procQueryListSessionId(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
 					break;
 				case MessageType.TX_QUERY_ADMIN_LIST_ACCOUNT_ID:
-					rspType = MessageType.RX_LIST_ACCOUNT_ID;
-					//
-					var reqAid = this.codec.decode(in.input.bytes(), StringMessage.class);
-					var rspAid = this.factory.create(StringMessage.class);
-					rspAid.values(this.adaptor.queryListAccountId());
-					//
-					rspAid.requestSeq(reqAid.requestSeq());
-					rspAid.responseSeq(Utils.increaseGet());
-					rspAid.time(LocalDateTime.now());
-					rspAid.last(true);
-					//
-					rspBytes = this.codec.encode(rspAid);
+					procQueryListAccountId(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
 					break;
 				case MessageType.TX_REQUEST_CLIENT_ACTION:
 				case MessageType.TX_REQUEST_ADMIN_ACTION:
-					rspType = MessageType.RX_ACTION_ERROR;
-					//
-					var reqAct = this.codec.decode(in.input.bytes(), TxRequestActionMessage.class);
-					var rspAct = this.factory.create(RxErrorMessage.class);
-					for (var a : reqAct.values())
-						rspAct.value(this.adaptor.requestAction(a));
-					//
-					rspAct.requestSeq(reqAct.requestSeq());
-					rspAct.responseSeq(Utils.increaseGet());
-					rspAct.time(LocalDateTime.now());
-					rspAct.last(true);
-					//
-					rspBytes = this.codec.encode(rspAct);
+					procRequestAction(this.codec.decode(in.input.bytes(), TxRequestActionMessage.class), in.service);
 					break;
 				case MessageType.TX_REQUEST_CLIENT_ORDER:
 				case MessageType.TX_REQUEST_ADMIN_ORDER:
-					rspType = MessageType.RX_ORDER_STATUS;
-					//
-					var reqOrd = this.codec.decode(in.input.bytes(), TxRequestOrderMessage.class);
-					var rspOrd = this.factory.create(RxOrderStatusMessage.class);
-					for (var o : reqOrd.values())
-						rspOrd.value(this.adaptor.requestOrder(o));
-					//
-					rspOrd.requestSeq(reqOrd.requestSeq());
-					rspOrd.responseSeq(Utils.increaseGet());
-					rspOrd.time(LocalDateTime.now());
-					rspOrd.last(true);
-					//
-					rspBytes = this.codec.encode(rspOrd);
+					procRequestOrder(this.codec.decode(in.input.bytes(), TxRequestOrderMessage.class), in.service);
 					break;
 				case MessageType.TX_SET_CLIENT_SUBSCRIBE_SYMBOLS:
-					rspType = MessageType.RX_SUBSCRIBE_SYMBOL;
-					//
-					var reqSub = this.codec.decode(in.input.bytes(), StringMessage.class);
-					var rspSub = this.factory.create(RxErrorMessage.class);
-					for (var s : reqSub.values())
-						rspSub.value(this.adaptor.subscribeSymbol(s, in.service));
-					//
-					rspSub.requestSeq(reqSub.requestSeq());
-					rspSub.responseSeq(Utils.increaseGet());
-					rspSub.time(LocalDateTime.now());
-					rspSub.last(true);
-					//
-					rspBytes = this.codec.encode(rspSub);
+					procSubscription(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
 					break;
 				case MessageType.TX_SET_ADMIN_NEW_ACCOUNT:
-					rspType = MessageType.RX_SET_NEW_ACCOUNT;
-					//
-					var reqNew = this.codec.decode(in.input.bytes(), TxRequestNewAccountMessage.class);
-					var rspNew = this.factory.create(RxErrorMessage.class);
-					for (var q : reqNew.values())
-						rspNew.value(this.adaptor.newAccount(q));
-					//
-					rspNew.requestSeq(reqNew.requestSeq());
-					rspNew.responseSeq(Utils.increaseGet());
-					rspNew.time(LocalDateTime.now());
-					rspNew.last(true);
-					//
-					rspBytes = this.codec.encode(rspNew);
+					procNewAccount(this.codec.decode(in.input.bytes(), TxRequestNewAccountMessage.class), in.service);
 					break;
 				case MessageType.TX_SET_ADMIN_CASH_MOVE:
-					rspType = MessageType.RX_CASH_MOVE;
-					//
-					var reqCas = this.codec.decode(in.input.bytes(), TxCashMoveMessage.class);
-					var rspCas = this.factory.create(RxErrorMessage.class);
-					for (var q : reqCas.values())
-						rspCas.value(this.adaptor.moveCash(q));
-					//
-					rspCas.requestSeq(reqCas.requestSeq());
-					rspCas.responseSeq(Utils.increaseGet());
-					rspCas.time(LocalDateTime.now());
-					rspCas.last(true);
-					//
-					rspBytes = this.codec.encode(rspCas);
+					procMoveCash(this.codec.decode(in.input.bytes(), TxCashMoveMessage.class), in.service);
 					break;
 				case MessageType.TX_QUERY_ADMIN_TRADE_REPORT:
 				case MessageType.TX_QUERY_CLIENT_TRADE_REPORT:
-					rspType = MessageType.RX_TRADE_REPORT;
-					//
-					var reqTra = this.codec.decode(in.input.bytes(),  TxQueryTradeReportMessage.class);
-					var rspTra = this.factory.create(RxTradeReportMessage.class);
-					for (var q : reqTra.values())
-						rspTra.values(this.adaptor.queryTradeReport(q));
-					//
-					rspTra.requestSeq(reqTra.requestSeq());
-					rspTra.responseSeq(Utils.increaseGet());
-					rspTra.time(LocalDateTime.now());
-					rspTra.last(true);
-					//
-					rspBytes = this.codec.encode(rspTra);
+					procQueryTradeReport(this.codec.decode(in.input.bytes(),  TxQueryTradeReportMessage.class), in.service);
 					break;
 				default:
 					// Unknown message, probably hacked.
@@ -267,12 +399,6 @@ public class ClientInputExecutor implements Runnable {
 					in.service = null;
 					break;
 				}
-				
-				// Send response to peer.
-				if (in.service == null)
-					continue;
-				
-				in.service.send(rspType, rspBytes, 0, rspBytes.length);
 			} catch (InterruptedException e) {
 				this.adaptor.error(new KerError("Interrupted blocking poll. ", e));
 			} catch (KerError e) {

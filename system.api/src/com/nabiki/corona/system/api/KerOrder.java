@@ -10,20 +10,30 @@ import com.nabiki.corona.client.api.Order;
  * @author Hongbao Chen
  *
  */
-public abstract class KerOrder extends Order {
-	public abstract String orderId();
+public interface KerOrder extends Order {
+	String sessionId();
+	
+	void sessionId(String s);
+	
+	String orderId();
 
-	public abstract void orderId(String s);
+	void orderId(String s);
+	
+	String accountId();
+	
+	String symbol();
 
-	public abstract LocalDate gtdDate();
+	LocalDate gtdDate();
 
-	public abstract void gtdDate(LocalDate d);
+	void gtdDate(LocalDate d);
 
-	public abstract String ipAddress();
+	String ipAddress();
 
-	public abstract void ipAddress(String s);
+	void ipAddress(String s);
 
-	public abstract String macAddress();
+	String macAddress();
 
-	public abstract void macAddress(String s);
+	void macAddress(String s);
+	
+	String note();
 }

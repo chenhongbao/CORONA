@@ -141,7 +141,7 @@ public class AccountEngine {
 		byVol = commRate.openRatioByVolume();
 		byMny = commRate.openRatioByMoney();
 
-		double lockCommission = Utils.marginOrCommission(order.price, order.volume(), multi, byMny, byVol);
+		double lockCommission = Utils.marginOrCommission(order.price(), order.volume(), multi, byMny, byVol);
 
 		KerOrderEvalue eval = this.factory.create(KerOrderEvalue.class);
 		if (lockMargin + lockCommission > current().available()) {

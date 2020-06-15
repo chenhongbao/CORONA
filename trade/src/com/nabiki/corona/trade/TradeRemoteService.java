@@ -233,7 +233,8 @@ public class TradeRemoteService implements TradeRemote {
 			req.last(true);
 			return this.packetQueue.enqueue(new Packet(MessageType.TX_REQUEST_ORDER, this.codec.encode(req)));
 		} catch (KerError e) {
-			this.log.error("fail sending order request: {}. {}", order.orderId(), e.message(), e);
+			this.log.error("fail sending order {} under session {} for account. {}", order.orderId(), order.sessionId(),
+					order.accountId(), e.message(), e);
 			return -1;
 		}
 	}

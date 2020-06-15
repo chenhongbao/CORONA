@@ -31,6 +31,9 @@ public class MessageKeeper<T> {
 			throw new KerError("Invalid parameter, session ID nulll pointer.");
 		// Sync on the linked list.
 		var list = this.map.get(sid);
+		if (list == null)
+			return new LinkedList<T>();
+		
 		synchronized (list) {
 			return new LinkedList<T>(list);
 		}

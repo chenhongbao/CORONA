@@ -5,9 +5,9 @@ public interface KerAction {
 	
 	void orderId(String s);
 	
-	int sessionId();
+	String sessionId();
 	
-	void sessionId(int i);
+	void sessionId(String s);
 	
 	String symbol();
 	

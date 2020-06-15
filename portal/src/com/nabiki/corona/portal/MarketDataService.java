@@ -30,6 +30,7 @@ import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.biz.api.TickCandleForwarder;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.system.packet.api.RxCandleMessage;
+import com.nabiki.corona.system.packet.api.RxErrorMessage;
 
 @Component
 public class MarketDataService implements TickCandleForwarder {
@@ -55,17 +56,28 @@ public class MarketDataService implements TickCandleForwarder {
 		}
 
 		@Override
-		public KerError subscribeSymbol(String symbol, PacketServer server) {
+		public RxErrorMessage subscribeSymbol(String symbol, PacketServer server) {
+			RxErrorMessage msg;
 			try {
+				msg = factory.create(RxErrorMessage.class);
+			} catch (KerError e) {
+				log.error("Fail creating packet message. {}", e.message(), e);
+				return null;
+			}
+			
+			try {
+				
 				var r = manager.subscribe(symbol, server);
 				if (r.code() == 0)
 					historyCandle(symbol, server);
-
-				return r;
+				else
+					msg.value(r);
 			} catch (KerError e) {
 				log.error("Fail subscribing symbols. {}", e.message(), e);
-				return e;
+				msg.error(e);
 			}
+			
+			return msg;
 		}
 
 		private void historyCandle(String symbol, PacketServer server) {
