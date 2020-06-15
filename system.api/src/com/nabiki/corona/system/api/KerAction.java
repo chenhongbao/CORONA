@@ -9,6 +9,10 @@ public interface KerAction {
 	
 	void sessionId(String s);
 	
+	String accountId();
+	
+	void accountId(String id);
+	
 	String symbol();
 	
 	void symbol(String s);

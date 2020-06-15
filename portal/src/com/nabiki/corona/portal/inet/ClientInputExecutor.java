@@ -16,35 +16,37 @@ public class ClientInputExecutor implements Runnable {
 	// Client input information keeper.
 	public class ClientInput {
 		public Packet input;
+		public KerLogin user;
 		public PacketServer service;
-		
-		ClientInput(Packet input, PacketServer service) {
+
+		ClientInput(Packet input, PacketServer service, KerLogin user) {
 			this.input = input;
 			this.service = service;
+			this.user = user;
 		}
 	}
-	
+
 	private boolean stopped;
 	private final DataCodec codec = DefaultDataCodec.create();
 	private final DataFactory factory = DefaultDataFactory.create();
 	private final ClientInputAdaptor adaptor;
 	private final Thread daemon;
 	private final BlockingQueue<ClientInput> queue = new LinkedBlockingQueue<>();
-	
+
 	public ClientInputExecutor(ClientInputAdaptor adaptor) {
 		this.daemon = new Thread(this);
 		this.daemon.start();
 		this.daemon.setDaemon(true);
 		this.adaptor = adaptor;
 	}
-	
-	public void input(Packet input, PacketServer service) {
-		this.queue.offer(new ClientInput(input, service));
+
+	public void input(Packet input, PacketServer service, KerLogin user) {
+		this.queue.offer(new ClientInput(input, service, user));
 	}
-	
+
 	/**
-	 * Remove inputs associated with given service after a client disconnects from server
-	 * and the related packet service becomes unavailable. It returns number of removed inputs.
+	 * Remove inputs associated with given service after a client disconnects from server and the related packet service
+	 * becomes unavailable. It returns number of removed inputs.
 	 * 
 	 * @param service service
 	 * @return number of removed inputs
@@ -59,29 +61,29 @@ public class ClientInputExecutor implements Runnable {
 			inp.service = null;
 			++count;
 		}
-		
+
 		return count;
 	}
-	
+
 	private void setParams(PacketMessage<?> msg, int rSeq, boolean last) {
 		if (msg == null)
 			return;
-		
+
 		msg.requestSeq(rSeq);
 		msg.responseSeq(Utils.increaseGet());
 		msg.time(LocalDateTime.now());
 		msg.last(last);
 	}
-	
+
 	private void sndPacket(short type, PacketMessage<?> msg, PacketServer remote) throws KerError {
 		if (msg == null)
 			return;
-		
+
 		var bytes = this.codec.encode(msg);
 		remote.send(type, bytes, 0, bytes.length);
 	}
-	
-	private void procQueryAccount(TxQueryAccountMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryAccount(TxQueryAccountMessage req, PacketServer remote, KerLogin user) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxAccountMessage.class);
@@ -89,9 +91,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_ACCOUNT, rsp, remote);
 		} else {
 			while (true) {
-				var rsp = this.adaptor.queryAccount(iter.next());
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
+				var rsp = this.adaptor.queryAccount(n);
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_ACCOUNT, rsp, remote);
 					// Must break loop.
@@ -103,8 +112,9 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procQueryPositionDetail(TxQueryPositionDetailMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryPositionDetail(TxQueryPositionDetailMessage req, PacketServer remote, KerLogin user)
+			throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxPositionDetailMessage.class);
@@ -112,9 +122,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_POSITION_DETAIL, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.queryPositionDetail(iter.next());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_POSITION_DETAIL, rsp, remote);
 					// Must break loop.
@@ -126,8 +143,9 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procQueryOrderStatus(TxQueryOrderStatusMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryOrderStatus(TxQueryOrderStatusMessage req, PacketServer remote, KerLogin user)
+			throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxOrderStatusMessage.class);
@@ -135,9 +153,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.queryOrderStatus(iter.next());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
 					// Must break loop.
@@ -149,8 +174,9 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procQueryListSessionId(StringMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryListSessionId(TxQueryListSessionIdMessage req, PacketServer remote, KerLogin user)
+			throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(StringMessage.class);
@@ -158,9 +184,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_LIST_SESSION_ID, rsp, remote);
 		} else {
 			while (true) {
-				var rsp = this.adaptor.queryListSessionId(iter.next());
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
+				var rsp = this.adaptor.queryListSessionId(iter.next().accountId());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_LIST_SESSION_ID, rsp, remote);
 					// Must break loop.
@@ -172,8 +205,8 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procQueryListAccountId(StringMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryListAccountId(TxQueryListAccountId req, PacketServer remote, KerLogin user) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(StringMessage.class);
@@ -181,9 +214,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.queryListAccountId();
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
 					// Must break loop.
@@ -195,8 +235,8 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procRequestAction(TxRequestActionMessage req, PacketServer remote) throws KerError {
+
+	private void procRequestAction(TxRequestActionMessage req, PacketServer remote, KerLogin user) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxActionErrorMessage.class);
@@ -204,9 +244,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_ACTION_ERROR, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.requestAction(iter.next());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_ACTION_ERROR, rsp, remote);
 					// Must break loop.
@@ -218,8 +265,8 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procRequestOrder(TxRequestOrderMessage req, PacketServer remote) throws KerError {
+
+	private void procRequestOrder(TxRequestOrderMessage req, PacketServer remote, KerLogin user) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxOrderStatusMessage.class);
@@ -227,9 +274,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.requestOrder(iter.next());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_ORDER_STATUS, rsp, remote);
 					// Must break loop.
@@ -241,7 +295,7 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
+
 	private void procSubscription(StringMessage req, PacketServer remote) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
@@ -264,7 +318,7 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
+
 	private void procNewAccount(TxRequestNewAccountMessage req, PacketServer remote) throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
@@ -310,8 +364,9 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
-	private void procQueryTradeReport(TxQueryTradeReportMessage req, PacketServer remote) throws KerError {
+
+	private void procQueryTradeReport(TxQueryTradeReportMessage req, PacketServer remote, KerLogin user)
+			throws KerError {
 		var iter = req.values().iterator();
 		if (!iter.hasNext()) {
 			var rsp = this.factory.create(RxTradeReportMessage.class);
@@ -319,9 +374,16 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_TRADE_REPORT, rsp, remote);
 		} else {
 			while (true) {
+				var n = iter.next();
+				var next = iter.hasNext();
+
+				// Check right account.
+				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+					break;
+
 				var rsp = this.adaptor.queryTradeReport(iter.next());
 				// Last mark.
-				if (!iter.hasNext()) {
+				if (!next) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_TRADE_REPORT, rsp, remote);
 					// Must break loop.
@@ -333,47 +395,54 @@ public class ClientInputExecutor implements Runnable {
 			}
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		// Set mark.
 		stopped = false;
-		
-		while(!stopped) {
+
+		while (!stopped) {
 			try {
 				var in = queue.poll(24, TimeUnit.HOURS);
 				if (in.input == null || in.service == null)
 					continue;
-				
+
 				// Decide the input type.
-				switch(in.input.type()) {
+				switch (in.input.type()) {
 				case MessageType.TX_QUERY_CLIENT_ACCOUNT:
-				case MessageType.TX_QUERY_ADMIN_ACCOUNT:			
+				case MessageType.TX_QUERY_ADMIN_ACCOUNT:
 					// Process input and reply.
-					procQueryAccount(this.codec.decode(in.input.bytes(), TxQueryAccountMessage.class), in.service);
+					procQueryAccount(this.codec.decode(in.input.bytes(), TxQueryAccountMessage.class), in.service,
+							in.user);
 					break;
 				case MessageType.TX_QUERY_CLIENT_POSITION_DETAIL:
 				case MessageType.TX_QUERY_ADMIN_POSITION_DETAIL:
-					procQueryPositionDetail(this.codec.decode(in.input.bytes(), TxQueryPositionDetailMessage.class), in.service);
+					procQueryPositionDetail(this.codec.decode(in.input.bytes(), TxQueryPositionDetailMessage.class),
+							in.service, in.user);
 					break;
 				case MessageType.TX_QUERY_CLIENT_ORDER_STATUS:
 				case MessageType.TX_QUERY_ADMIN_ORDER_STATUS:
-					procQueryOrderStatus(this.codec.decode(in.input.bytes(), TxQueryOrderStatusMessage.class), in.service);
+					procQueryOrderStatus(this.codec.decode(in.input.bytes(), TxQueryOrderStatusMessage.class),
+							in.service, in.user);
 					break;
 				case MessageType.TX_QUERY_CLIENT_LIST_SESSION_ID:
 				case MessageType.TX_QUERY_ADMIN_LIST_SESSION_ID:
-					procQueryListSessionId(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
+					procQueryListSessionId(this.codec.decode(in.input.bytes(), TxQueryListSessionIdMessage.class),
+							in.service, in.user);
 					break;
 				case MessageType.TX_QUERY_ADMIN_LIST_ACCOUNT_ID:
-					procQueryListAccountId(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
+					procQueryListAccountId(this.codec.decode(in.input.bytes(), TxQueryListAccountId.class), in.service,
+							in.user);
 					break;
 				case MessageType.TX_REQUEST_CLIENT_ACTION:
 				case MessageType.TX_REQUEST_ADMIN_ACTION:
-					procRequestAction(this.codec.decode(in.input.bytes(), TxRequestActionMessage.class), in.service);
+					procRequestAction(this.codec.decode(in.input.bytes(), TxRequestActionMessage.class), in.service,
+							in.user);
 					break;
 				case MessageType.TX_REQUEST_CLIENT_ORDER:
 				case MessageType.TX_REQUEST_ADMIN_ORDER:
-					procRequestOrder(this.codec.decode(in.input.bytes(), TxRequestOrderMessage.class), in.service);
+					procRequestOrder(this.codec.decode(in.input.bytes(), TxRequestOrderMessage.class), in.service,
+							in.user);
 					break;
 				case MessageType.TX_SET_CLIENT_SUBSCRIBE_SYMBOLS:
 					procSubscription(this.codec.decode(in.input.bytes(), StringMessage.class), in.service);
@@ -386,7 +455,8 @@ public class ClientInputExecutor implements Runnable {
 					break;
 				case MessageType.TX_QUERY_ADMIN_TRADE_REPORT:
 				case MessageType.TX_QUERY_CLIENT_TRADE_REPORT:
-					procQueryTradeReport(this.codec.decode(in.input.bytes(),  TxQueryTradeReportMessage.class), in.service);
+					procQueryTradeReport(this.codec.decode(in.input.bytes(), TxQueryTradeReportMessage.class),
+							in.service, in.user);
 					break;
 				default:
 					// Unknown message, probably hacked.

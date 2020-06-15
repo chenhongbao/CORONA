@@ -52,7 +52,7 @@ public class PacketServer {
 	}
 
 	public void execute(Packet input) {
-		this.executor.input(input, this);
+		this.executor.input(input, this, this.login);
 	}
 
 	public void close() {
