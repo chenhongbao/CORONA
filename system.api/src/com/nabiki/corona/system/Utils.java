@@ -51,6 +51,10 @@ public class Utils {
 	public static LocalDate deepCopy(LocalDate source) {
 		return LocalDate.of(source.getYear(), source.getMonthValue(), source.getDayOfMonth());
 	}
+	
+	public static Instant deepCopy(Instant source) {
+		return Instant.ofEpochMilli(source.toEpochMilli());
+	}
 
 	public static String sessionId() {
 		var timeStamp = LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
