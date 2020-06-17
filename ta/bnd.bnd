@@ -1,7 +1,12 @@
-Bundle-Version: 0.0.1.${tstamp}
-
--baseline: *
 -buildpath: \
-  osgi.annotation; version=7.0.0
+	osgi.annotation; version=7.0.0,\
+	osgi.core; version=7.0.0,\
+	osgi.cmpn; version=7.0.0
 
+-testpath: \
+	${junit},\
+	${mockito},\
+	${mockito-deps}
+
+Bundle-Version: 0.0.1.${tstamp}
 Export-Package: com.nabiki.corona.ta
