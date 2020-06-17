@@ -449,7 +449,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public Collection<String> accountIds() {
+	public Collection<String> queryAccounts() {
 		var r = new HashSet<String>();
 		for (var inv : this.investors.getInvestors())
 			r.add(inv.accountId());
@@ -458,12 +458,12 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public Collection<String> sessionIdsOfAccount(String accountId) {
+	public Collection<String> querySessionsOfAccount(String accountId) {
 		return this.idKeeper.getSessionIdsOfAccount(accountId);
 	}
 
 	@Override
-	public String orderId(String sessionId) {
+	public String createOrder(String sessionId) {
 		try {
 			return this.idKeeper.createOrderId(sessionId);
 		} catch (KerError e) {
@@ -473,7 +473,7 @@ public class TradeLocalService implements TradeLocal {
 	}
 
 	@Override
-	public String sessionId(String accountId) {
+	public String createSession(String accountId) {
 		return this.idKeeper.createSessionId(accountId);
 	}
 }

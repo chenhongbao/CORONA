@@ -113,7 +113,7 @@ public class TradeService {
 			}
 			
 			try {
-				msg.values(context.local().sessionIdsOfAccount(accountId));
+				msg.values(context.local().querySessionsOfAccount(accountId));
 			} catch (KerError e) {
 				log.error("Fail query session ID for account: {}. {}", accountId, e.message(), e);
 				msg.error(e);
@@ -134,7 +134,7 @@ public class TradeService {
 			}
 			
 			try {
-				msg.values(context.local().accountIds());
+				msg.values(context.local().queryAccounts());
 			} catch (KerError e) {
 				log.error("Fail query account IDs. {}", e.message(), e);
 				msg.error(e);
@@ -161,7 +161,7 @@ public class TradeService {
 			try {			
 				// Create order ID and associated session ID.
 				// Allocate resources for order.
-				var sid = context.local().sessionId(o.accountId());
+				var sid = context.local().createSession(o.accountId());
 				o.sessionId(sid);
 				
 				var r = context.local().allocateOrder(o);
@@ -178,7 +178,7 @@ public class TradeService {
 					// Check open/close.
 					if (o.offsetFlag() == OffsetFlag.OFFSET_OPEN) {
 						// Set open order ID.
-						o.orderId(context.local().orderId(sid));
+						o.orderId(context.local().createOrder(sid));
 						
 						// Just send open request.
 						int c = context.remote().order(o);
@@ -199,7 +199,7 @@ public class TradeService {
 							var order = factory.create(KerOrder.class, o);
 							
 							// Create order ID for each sub-order.
-							o.orderId(context.local().orderId(order.sessionId()));
+							o.orderId(context.local().createOrder(order.sessionId()));
 							
 							if (Utils.same(p.tradingDay(), context.local().tradingDay()))
 								// Close today's position.

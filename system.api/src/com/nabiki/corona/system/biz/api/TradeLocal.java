@@ -15,7 +15,7 @@ public interface TradeLocal {
 	 * @param sessionId session that own the order
 	 * @return order ID
 	 */
-	String orderId(String sessionId);
+	String createOrder(String sessionId);
 	
 	/**
 	 * Create session ID under account with given ID.
@@ -23,7 +23,7 @@ public interface TradeLocal {
 	 * @param accountId account ID
 	 * @return session ID
 	 */
-	String sessionId(String accountId);
+	String createSession(String accountId);
 
 	/**
 	 * Get trading day.
@@ -56,7 +56,7 @@ public interface TradeLocal {
 	 * 
 	 * @return collection of all account ids.
 	 */
-	Collection<String> accountIds();
+	Collection<String> queryAccounts();
 
 	/**
 	 * Get sessions of the given account, both finished and unfinished.
@@ -64,7 +64,7 @@ public interface TradeLocal {
 	 * @param accountId account ID
 	 * @return session ids of the account
 	 */
-	Collection<String> sessionIdsOfAccount(String accountId);
+	Collection<String> querySessionsOfAccount(String accountId);
 
 	/**
 	 * Query latest order status of the given trade session ID.
