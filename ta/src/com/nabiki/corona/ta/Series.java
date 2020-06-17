@@ -20,23 +20,11 @@ public class Series<E> extends Vector<E> {
      * Construct a Series containing the elements in the specified collection,
      * in order they are returned by collection's iterator.
      *
-     * @param toCopy the collection whose elements are to be placed into this vector
+     * @param toCopy the collection whose elements are to be placed into this Series
      * @throws NullPointerException if the specified collection is null
      */
     public Series(Collection<E> toCopy) {
         super(toCopy);
-    }
-
-    /**
-     * Get element of the given Series at specified position in reserved order.
-     * The method calls {@code ref(index)} of the given Series.
-     *
-     * @param series Series to inspect on
-     * @param index position of the element to be retrieved
-     * @return element at specified position
-     */
-    public static Object ref(@SuppressWarnings("rawtypes") Series series, int index) {
-        return series.ref(index);
     }
 
     /**

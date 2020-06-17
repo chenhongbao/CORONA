@@ -9,4 +9,6 @@
 	${mockito-deps}
 
 Bundle-Version: 0.0.1.${tstamp}
-Export-Package: com.nabiki.corona.ta
+Export-Package: \
+	com.nabiki.corona.ta,\
+	com.nabiki.corona.ta.utils
