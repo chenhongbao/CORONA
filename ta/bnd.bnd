@@ -4,6 +4,4 @@ Bundle-Version: 0.0.1.${tstamp}
 -buildpath: \
   osgi.annotation; version=7.0.0
 
-Export-Package: \
-	com.nabiki.corona,\
-	com.nabiki.corona.client.api
+Export-Package: com.nabiki.corona.ta
