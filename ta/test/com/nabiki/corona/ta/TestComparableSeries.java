@@ -7,11 +7,11 @@ import java.util.LinkedList;
 
 import org.junit.Test;
 
-public class TestArithmeticSeries {
+public class TestComparableSeries {
 	
 	private final LinkedList<Double> data;
 	
-	public TestArithmeticSeries() {
+	public TestComparableSeries() {
 		this.data = new LinkedList<Double>();
 		this.data.add(1.0);
 		this.data.add(2.0);
@@ -27,7 +27,7 @@ public class TestArithmeticSeries {
 	
 	@Test
 	public void comparator() {
-		var as = new ArithmeticSeries<Double>(this.data, new Comparator<Double>() {
+		var as = new ComparableSeries<Double>(this.data, new Comparator<Double>() {
 
 			@Override
 			public int compare(Double o1, Double o2) {
@@ -50,7 +50,7 @@ public class TestArithmeticSeries {
 	
 	@Test
 	public void comparable() {
-		var as = new ArithmeticSeries<Double>(this.data);
+		var as = new ComparableSeries<Double>(this.data);
 		
 		assertTrue(as.high(5) == 8);
 		assertTrue(as.high(10) == 10);

@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
-public class ArithmeticSeries<E> extends Series<E> {
+public class ComparableSeries<E> extends Series<E> {
 	private static final long serialVersionUID = 1L;
 	private Comparator<E> comparator;
 	
@@ -15,7 +15,7 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * Construct an empty arithmetic series containing the specified elements.
 	 * <p>The generic type must implements {@code Comparable}.
 	 */
-	public ArithmeticSeries() {
+	public ComparableSeries() {
 		super();
 	}
 	
@@ -25,7 +25,7 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * 
 	 * @param toCopy the collection whose elements are to be placed into this Series
 	 */
-	public ArithmeticSeries(Collection<E> toCopy) {
+	public ComparableSeries(Collection<E> toCopy) {
 		super(toCopy);
 	}
 
@@ -34,7 +34,7 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * 
 	 * @param comparator the comparator used to compared the elements
 	 */
-	public ArithmeticSeries(Comparator<E> comparator) {
+	public ComparableSeries(Comparator<E> comparator) {
 		super();
 		this.comparator = comparator;
 	}
@@ -46,7 +46,7 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * @param toCopy the collection whose elements are to be placed into this Series
 	 * @param comparator the comparator used to compared the elements
 	 */
-	public ArithmeticSeries(Collection<E> toCopy, Comparator<E> comparator) {
+	public ComparableSeries(Collection<E> toCopy, Comparator<E> comparator) {
 		super(toCopy);
 		this.comparator = comparator;
 	}
