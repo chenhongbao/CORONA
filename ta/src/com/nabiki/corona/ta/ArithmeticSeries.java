@@ -97,7 +97,7 @@ public class ArithmeticSeries<E> extends Series<E> {
      *         {@code (fromIndex > toIndex)}
 	 */
 	public E high(int from, int to) {
-		return sorted(from, to).get(to - from - 1);
+		return highAt(from, to, 0);
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * <p>The generic parameter implements Comparable, or a comparator must be provided.
 	 * 
 	 * @param count the number of latest elements to inspect
-	 * @return largest element in the latest {@code count} elements
+	 * @return smallest element in the latest {@code count} elements
 	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
      *         {@code (fromIndex < 0 || toIndex > size)}
      * @throws IllegalArgumentException if the endpoint indices are out of order
@@ -121,14 +121,14 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 * 
 	 * @param from starting index, inclusive
 	 * @param to ending index, exclusive
-	 * @return largest element in the latest {@code count} elements
+	 * @return smallest element in the latest {@code count} elements
 	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
      *         {@code (fromIndex < 0 || toIndex > size)}
      * @throws IllegalArgumentException if the endpoint indices are out of order
      *         {@code (fromIndex > toIndex)}
 	 */
 	public E low(int from, int to) {
-		return sorted(from, to).get(0);
+		return lowAt(from, to, 0);
 	}
 	
 	/**
@@ -160,5 +160,77 @@ public class ArithmeticSeries<E> extends Series<E> {
 	 */
 	public E medium(int from, int to) {
 		return sorted(from, to).get((to - from)/2);
+	}
+	
+	/**
+	 * Get n'th biggest element in the latest elements to specified count.
+	 * <p>The generic parameter implements Comparable, or a comparator must be provided.
+	 * <p>The specified n'th must be in range [0, count).
+	 * 
+	 * @param count the number of latest elements to inspect
+	 * @param n n'th element
+	 * @return n'th biggest element
+	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
+     *         {@code (fromIndex < 0 || toIndex > size)}
+     * @throws IllegalArgumentException if the endpoint indices are out of order
+     *         {@code (fromIndex > toIndex)}
+	 */
+	public E highAt(int count, int n) {
+		return highAt(size() - count, size(), n);
+	}
+	
+	/**
+	 * Get n'th biggest element in the latest elements to specified count.
+	 * <p>The generic parameter implements Comparable, or a comparator must be provided.
+	 * <p>The specified n'th must be in range [0, to - from).
+	 * 
+	 * @param from starting index, inclusive
+	 * @param to ending index, exclusive
+	 * @param n n'th element
+	 * @return n'th biggest element
+	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
+     *         {@code (fromIndex < 0 || toIndex > size)}
+     * @throws IllegalArgumentException if the endpoint indices are out of order
+     *         {@code (fromIndex > toIndex)}
+	 */
+	public E highAt(int from, int to, int n) {
+		Objects.checkIndex(n, to - from);
+		return sorted(from, to).get(to - from - 1 - n);
+	}
+	
+	/**
+	 * Get n'th smallest element in the latest elements to specified count.
+	 * <p>The generic parameter implements Comparable, or a comparator must be provided.
+	 * <p>The specified n'th must be in range [0, count).
+	 * 
+	 * @param count the number of latest elements to inspect
+	 * @param n n'th element
+	 * @return n'th smallest element
+	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
+     *         {@code (fromIndex < 0 || toIndex > size)}
+     * @throws IllegalArgumentException if the endpoint indices are out of order
+     *         {@code (fromIndex > toIndex)}
+	 */
+	public E lowAt(int count, int n) {
+		return lowAt(size() - count, size(), n);
+	}
+	
+	/**
+	 * Get n'th smallest element in the latest elements to specified count.
+	 * <p>The generic parameter implements Comparable, or a comparator must be provided.
+	 * <p>The specified n'th must be in range [0, to - from).
+	 * 
+	 * @param from starting index, inclusive
+	 * @param to ending index, exclusive
+	 * @param n n'th element
+	 * @return n'th smallest element
+	 * @throws IndexOutOfBoundsException if an endpoint index value is out of range
+     *         {@code (fromIndex < 0 || toIndex > size)}
+     * @throws IllegalArgumentException if the endpoint indices are out of order
+     *         {@code (fromIndex > toIndex)}
+	 */
+	public E lowAt(int from, int to, int n) {
+		Objects.checkIndex(n, to - from);
+		return sorted(from, to).get(n);
 	}
 }
