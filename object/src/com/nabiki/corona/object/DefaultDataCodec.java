@@ -43,6 +43,8 @@ public class DefaultDataCodec implements DataCodec {
 			return this.gson.toJson(a, CashMoveGson.class).getBytes(this.charset);
 		} else if (a instanceof KerAccount || a instanceof Account) {
 			return this.gson.toJson(a, KerAccountGson.class).getBytes(this.charset);
+		} else if (a instanceof KerAction) {
+			return this.gson.toJson(a, KerActionGson.class).getBytes(this.charset);
 		}
 		else
 			throw new KerError("Unsupported type: " + a.getClass().getCanonicalName());
@@ -61,6 +63,8 @@ public class DefaultDataCodec implements DataCodec {
 			return (T) this.gson.fromJson(new String(b, this.charset), CashMoveGson.class);
 		} else if (clz.equals(KerAccount.class) || clz.equals(Account.class)) {
 			return (T) this.gson.fromJson(new String(b,  this.charset), KerAccountGson.class);
+		} else if (clz.equals(KerAction.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerActionGson.class);
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());

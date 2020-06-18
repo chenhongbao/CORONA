@@ -27,6 +27,8 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) new CashMoveGson();
 		} else if (clz.equals(KerAccount.class) || clz.equals(Account.class)) {
 			return (T) new KerAccountGson();
+		} else if (clz.equals(KerAction.class)) {
+			return (T) new KerActionGson();
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
@@ -44,11 +46,24 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) create((CashMove)param);
 		} else if (clz.equals(KerAccount.class) || clz.equals(Account.class)) {
 			return (T) create((KerAccount)param);
+		} else if (clz.equals(KerAction.class)) {
+			return (T) create((KerAction)param);
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
 	}
 	
+	private KerActionGson create(KerAction param) {
+		var r = new KerActionGson();
+		r.accountId = param.accountId();
+		r.ipAddress = param.ipAddress();
+		r.macAddress = param.macAddress();
+		r.orderId = param.orderId();
+		r.sessionId = param.sessionId();
+		r.symbol = param.symbol();
+		return r;
+	}
+
 	private KerAccountGson create(KerAccount param) {
 		var r = new KerAccountGson();
 		r.accountId = param.accountId();
