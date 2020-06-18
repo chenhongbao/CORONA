@@ -49,6 +49,16 @@ public class DefaultDataCodec implements DataCodec {
 			return this.gson.toJson(a, KerActionErrorGson.class).getBytes(this.charset);
 		} else if (a instanceof KerCommission) {
 			return this.gson.toJson(a, KerCommissionGson.class).getBytes(this.charset);
+		} else if (a instanceof KerInstrument) {
+			return this.gson.toJson(a, KerInstrumentGson.class).getBytes(this.charset);
+		} else if (a instanceof KerLogin) {
+			return this.gson.toJson(a, KerLoginGson.class).getBytes(this.charset);
+		} else if (a instanceof KerMargin) {
+			return this.gson.toJson(a, KerMarginGson.class).getBytes(this.charset);
+		} else if (a instanceof KerNewAccountGson) {
+			return this.gson.toJson(a, KerNewAccountGson.class).getBytes(this.charset);
+		} else if (a instanceof KerOrder) {
+			return this.gson.toJson(a, KerOrderGson.class).getBytes(this.charset);
 		}
 		else
 			throw new KerError("Unsupported type: " + a.getClass().getCanonicalName());
@@ -66,13 +76,23 @@ public class DefaultDataCodec implements DataCodec {
 		} else if (clz.equals(CashMove.class)) {
 			return (T) this.gson.fromJson(new String(b, this.charset), CashMoveGson.class);
 		} else if (clz.equals(KerAccount.class) || clz.equals(Account.class)) {
-			return (T) this.gson.fromJson(new String(b,  this.charset), KerAccountGson.class);
+			return (T) this.gson.fromJson(new String(b, this.charset), KerAccountGson.class);
 		} else if (clz.equals(KerAction.class)) {
 			return (T) this.gson.fromJson(new String(b, this.charset), KerActionGson.class);
 		} else if (clz.equals(KerActionError.class)) {
 			return (T) this.gson.fromJson(new String(b, this.charset), KerActionErrorGson.class);
 		} else if (clz.equals(KerCommission.class)) {
 			return (T) this.gson.fromJson(new String(b, this.charset), KerCommissionGson.class);
+		} else if (clz.equals(KerInstrument.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerInstrumentGson.class);
+		} else if (clz.equals(KerLogin.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerLoginGson.class);
+		} else if (clz.equals(KerMargin.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerMarginGson.class);
+		} else if (clz.equals(KerNewAccount.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerNewAccountGson.class);
+		} else if (clz.equals(KerOrder.class)) {
+			return (T) this.gson.fromJson(new String(b, this.charset), KerOrderGson.class);
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());

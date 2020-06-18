@@ -5,10 +5,6 @@ public interface KerMargin {
 	
 	void symbol(String s);
 	
-	char investorRange();
-	
-	void investorRane(char s);
-	
 	String brokerId();
 	
 	void brokerId(String s);

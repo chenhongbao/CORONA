@@ -11,10 +11,6 @@ public interface KerInstrument {
 	
 	void exchangeId(String s);
 	
-	String instrumentName();
-	
-	void instrumentName(String s);
-	
 	String exchangeInstId();
 	
 	void exchangeInstId(String s);

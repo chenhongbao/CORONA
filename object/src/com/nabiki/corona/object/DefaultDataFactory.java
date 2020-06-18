@@ -33,6 +33,16 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) new KerActionErrorGson();
 		} else if (clz.equals(KerCommission.class)) {
 			return (T) new KerCommissionGson();
+		} else if (clz.equals(KerInstrument.class)) {
+			return (T) new KerInstrumentGson();
+		} else if (clz.equals(KerLogin.class)) {
+			return (T) new KerLoginGson();
+		} else if (clz.equals(KerMargin.class)) {
+			return (T) new KerMarginGson();
+		} else if (clz.equals(KerNewAccount.class)) {
+			return (T) new KerNewAccountGson();
+		} else if (clz.equals(KerOrder.class)) {
+			return (T) new KerOrderGson();
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
@@ -56,11 +66,108 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) create((KerActionError)param);
 		} else if (clz.equals(KerCommission.class)) {
 			return (T) create((KerCommission)param);
+		} else if (clz.equals(KerInstrument.class)) {
+			return (T) create((KerInstrument)param);
+		} else if (clz.equals(KerLogin.class)) {
+			return (T) create((KerLogin)param);
+		} else if (clz.equals(KerMargin.class)) {
+			return (T) create((KerMargin)param);
+		} else if (clz.equals(KerNewAccount.class)) {
+			return (T) create((KerNewAccount)param);
+		} else if (clz.equals(KerOrder.class)) {
+			return (T) create((KerOrder)param);
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
 	}
 	
+	private KerOrderGson create(KerOrder param) {
+		var r = new KerOrderGson();
+		r.accountId = param.accountId();
+		r.contigentConditon = param.contigentConditon();
+		r.direction = param.direction();
+		r.gtdDate = Utils.deepCopy(param.gtdDate());
+		r.hedgeFlag = param.hedgeFlag();
+		r.ipAddress = param.ipAddress();
+		r.macAddress = param.macAddress();
+		r.minVolume = param.minVolume();
+		r.note = param.note();
+		r.offsetFlag = param.offsetFlag();
+		r.orderId = param.orderId();
+		r.price = param.price();
+		r.priceType = param.priceType();
+		r.sessionId = param.sessionId();
+		r.stopPrice = param.stopPrice();
+		r.symbol = param.symbol();
+		r.timeCondition = param.timeCondition();
+		r.volume = param.volume();
+		r.volumeCondition = param.volumeCondition();
+		return r;
+	}
+
+	private KerNewAccountGson create(KerNewAccount param) {
+		var r = new KerNewAccountGson();
+		r.accountId = param.accountId();
+		r.pin = param.pin();
+		r.role = param.role();
+		return r;
+	}
+
+	private KerMarginGson create(KerMargin param) {
+		var r = new KerMarginGson();
+		r.brokerId = param.brokerId();
+		r.exchangeId = param.exchangeId();
+		r.hedgeFlag = param.hedgeFlag();
+		r.investorId = param.investorId();
+		r.isRelative = param.isRelative();
+		r.longMarginRatioByMoney = param.longMarginRatioByMoney();
+		r.longMarginRatioByVolume = param.longMarginRatioByVolume();
+		r.shortMarginRatioByMoney = param.shortMarginRatioByMoney();
+		r.shortMarginRatioByVolume = param.shortMarginRatioByVolume();
+		r.symbol = param.symbol();
+		return r;
+	}
+
+	private KerLoginGson create(KerLogin param) {
+		var r = new KerLoginGson();
+		r.accountId = param.accountId();
+		r.address = param.address();
+		r.pin = param.pin();
+		r.role = param.role();
+		return r;
+	}
+
+	private KerInstrumentGson create(KerInstrument param) {
+		var r = new KerInstrumentGson();
+		r.createDate = Utils.deepCopy(param.createDate());
+		r.deliveryMonth = param.deliveryMonth();
+		r.deliveryYear = param.deliveryYear();
+		r.endDelivDate = Utils.deepCopy(param.endDelivDate());
+		r.exchangeId = param.exchangeId();
+		r.exchangeInstId = param.exchangeInstId();
+		r.expireDate = Utils.deepCopy(param.expireDate());
+		r.instLifePhase = param.instLifePhase();
+		r.isTrading = param.isTrading();
+		r.longMarginRatio = param.longMarginRatio();
+		r.maxLimitOrderVolume = param.maxLimitOrderVolume();
+		r.maxMarketOrderVolume = param.maxMarketOrderVolume();
+		r.minLimitOrderVolume = param.minLimitOrderVolume();
+		r.minMarketOrderVolume = param.minMarketOrderVolume();
+		r.openDate = Utils.deepCopy(param.openDate());
+		r.positionDateType = param.positionDateType();
+		r.positionType = param.positionType();
+		r.priceTick = param.priceTick();
+		r.productClass = param.productClass();
+		r.productId = param.productId();
+		r.shortMarginRatio = param.shortMarginRatio();
+		r.startDelivDate = Utils.deepCopy(param.startDelivDate());
+		r.symbol = param.symbol();
+		r.underlyingInstrId = param.underlyingInstrId();
+		r.underlyingMultiple = param.underlyingMultiple();
+		r.volumeMultiple = param.volumeMultiple();
+		return r;
+	}
+
 	private KerCommissionGson create(KerCommission param) {
 		var r = new KerCommissionGson();
 		r.brokerId = param.brokerId();
