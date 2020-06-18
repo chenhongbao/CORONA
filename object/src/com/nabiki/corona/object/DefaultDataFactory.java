@@ -29,6 +29,10 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) new KerAccountGson();
 		} else if (clz.equals(KerAction.class)) {
 			return (T) new KerActionGson();
+		} else if (clz.equals(KerActionError.class)) {
+			return (T) new KerActionErrorGson();
+		} else if (clz.equals(KerCommission.class)) {
+			return (T) new KerCommissionGson();
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
@@ -48,11 +52,37 @@ public class DefaultDataFactory implements DataFactory {
 			return (T) create((KerAccount)param);
 		} else if (clz.equals(KerAction.class)) {
 			return (T) create((KerAction)param);
+		} else if (clz.equals(KerActionError.class)) {
+			return (T) create((KerActionError)param);
+		} else if (clz.equals(KerCommission.class)) {
+			return (T) create((KerCommission)param);
 		}
 		else
 			throw new KerError("Unsupported type: " + clz.getCanonicalName());
 	}
 	
+	private KerCommissionGson create(KerCommission param) {
+		var r = new KerCommissionGson();
+		r.brokerId = param.brokerId();
+		r.closeRatioByMoney = param.closeRatioByMoney();
+		r.closeRatioByVolume = param.closeRatioByVolume();
+		r.closeTodayRatioByMoney = param.closeTodayRatioByMoney();
+		r.closeTodayRatioByVolume = param.closeTodayRatioByVolume();
+		r.exchangeId = param.exchangeId();
+		r.investorId = param.investorId();
+		r.openRatioByMoney = param.openRatioByMoney();
+		r.openRatioByVolume = param.openRatioByVolume();
+		r.symbol = param.symbol();
+		return r;
+	}
+
+	private KerActionErrorGson create(KerActionError param) {
+		var r = new KerActionErrorGson();
+		r.action = (KerActionGson)param.action();
+		r.error = param.error();
+		return r;
+	}
+
 	private KerActionGson create(KerAction param) {
 		var r = new KerActionGson();
 		r.accountId = param.accountId();

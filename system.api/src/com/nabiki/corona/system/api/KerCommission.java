@@ -5,10 +5,6 @@ public interface KerCommission {
 	
 	void symbol(String s);
 	
-	char investorRange();
-	
-	void investorRange(char c);
-	
 	String brokerId();
 	
 	void brokerId(String s);
