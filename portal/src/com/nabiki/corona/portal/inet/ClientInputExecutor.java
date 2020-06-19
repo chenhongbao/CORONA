@@ -84,7 +84,7 @@ public class ClientInputExecutor implements Runnable {
 		remote.send(type, bytes, 0, bytes.length);
 	}
 	
-	private boolean isAuth(String reqAccountId, KerLogin user) {
+	private boolean isRightAccountId(String reqAccountId, KerLogin user) {
 		return user.role() != AccountRole.TRADER || reqAccountId.compareTo(user.accountId()) == 0;
 	}
 
@@ -100,7 +100,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryAccount(n);
@@ -131,7 +131,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryPositionDetail(iter.next());
@@ -162,7 +162,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryOrderStatus(iter.next());
@@ -193,7 +193,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryListSessionId(iter.next().accountId());
@@ -250,7 +250,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.requestAction(iter.next());
@@ -280,7 +280,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.requestOrder(iter.next());
@@ -380,7 +380,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (!isAuth(n.accountId(), user) && !next)
+				if (!isRightAccountId(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryTradeReport(iter.next());
