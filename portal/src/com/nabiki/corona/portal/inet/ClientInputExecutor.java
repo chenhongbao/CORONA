@@ -5,6 +5,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import com.nabiki.corona.AccountRole;
 import com.nabiki.corona.MessageType;
 import com.nabiki.corona.object.tool.Packet;
 import com.nabiki.corona.object.*;
@@ -82,6 +83,10 @@ public class ClientInputExecutor implements Runnable {
 		var bytes = this.codec.encode(msg);
 		remote.send(type, bytes, 0, bytes.length);
 	}
+	
+	private boolean isAuth(String reqAccountId, KerLogin user) {
+		return user.role() != AccountRole.TRADER || reqAccountId.compareTo(user.accountId()) == 0;
+	}
 
 	private void procQueryAccount(TxQueryAccountMessage req, PacketServer remote, KerLogin user) throws KerError {
 		var iter = req.values().iterator();
@@ -95,7 +100,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryAccount(n);
@@ -126,7 +131,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryPositionDetail(iter.next());
@@ -157,7 +162,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryOrderStatus(iter.next());
@@ -188,7 +193,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryListSessionId(iter.next().accountId());
@@ -214,16 +219,13 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
 		} else {
 			while (true) {
-				var n = iter.next();
-				var next = iter.hasNext();
-
-				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
-					break;
-
+				// Don't need any information, just skip to next.
+				iter.next();
+				
+				// Trader won't call this method, no need to auth.
 				var rsp = this.adaptor.queryListAccountId();
 				// Last mark.
-				if (!next) {
+				if (!iter.hasNext()) {
 					setParams(rsp, req.requestSeq(), true);
 					sndPacket(MessageType.RX_LIST_ACCOUNT_ID, rsp, remote);
 					// Must break loop.
@@ -248,7 +250,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.requestAction(iter.next());
@@ -278,7 +280,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.requestOrder(iter.next());
@@ -378,7 +380,7 @@ public class ClientInputExecutor implements Runnable {
 				var next = iter.hasNext();
 
 				// Check right account.
-				if (n.accountId().compareTo(user.accountId()) != 0 && !next)
+				if (!isAuth(n.accountId(), user) && !next)
 					break;
 
 				var rsp = this.adaptor.queryTradeReport(iter.next());
