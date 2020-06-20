@@ -4,21 +4,21 @@ import com.nabiki.ctp.md.struct.CThostFtdcReqUserLoginField;
 import com.nabiki.ctp.md.struct.CThostFtdcUserLogoutField;
 
 public class MdNatives {
-    native public static int createChannel();
+    native public static int CreateChannel();
 
-    native public static void destroyChannel(int channelId);
+    native public static void DestroyChannel(int channelId);
 
-    native public static int waitOnChannel(int channelId, long millis);
+    native public static int WaitOnChannel(int channelId, long millis);
 
-    native public static void signalChannel(int channelId);
+    native public static void SignalChannel(int channelId);
 
-    native public static void readChannel(int channelId, MdChannelData data);
+    native public static void ReadChannel(int channelId, MdChannelData data);
 
-    native public static void writeChannel(int channelId, MdChannelData data);
+    native public static void WriteChannel(int channelId, MdChannelData data);
 
-    native public static int createMdSession(LoginProfile profile, int channelId);
+    native public static int CreateMdSession(LoginProfile profile, int channelId);
 
-    native public static void destroyMdSession(int mdSessionid);
+    native public static void DestroyMdSession(int mdSessionid);
     
     native public static int ReqUserLogin(int mdSessionid, CThostFtdcReqUserLoginField reqUserLoginField, int requestId);
 

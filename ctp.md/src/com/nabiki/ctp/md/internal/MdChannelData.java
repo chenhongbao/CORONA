@@ -20,4 +20,8 @@ public class MdChannelData {
 	public List<RspUserLogout> ListRspUserLogout;
 	
 	public List<CThostFtdcDepthMarketDataField> ListRtnDepthMarketData;
+	
+	public List<RspSubMarketData> ListRspSubMarketData;
+	
+	public List<RspUnSubMarketData> ListRspUnSubMarketData;
 }

@@ -1,12 +1,31 @@
 package com.nabiki.ctp.md;
 
-import com.nabiki.ctp.md.internal.LoginProfile;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
+
+import com.nabiki.ctp.md.internal.*;
 import com.nabiki.ctp.md.struct.*;
 
-public class CThostFtdcMdApiImpl extends CThostFtdcMdApi {
+public class CThostFtdcMdApiImpl extends CThostFtdcMdApi implements AutoCloseable {
     private final static String apiVersion = "0.0.1";
     private final LoginProfile profile = new LoginProfile();
-
+    
+	// Front address pattern.
+	private Pattern addressRegex = Pattern
+			.compile("tcp://((\\d{1})|([1-9]\\d{1,2}))(\\.((\\d{1})|([1-9]\\d{1,2}))){3}:\\d+");
+    
+    private int sessionId, channelId;
+    
+    private CThostFtdcMdSpi spi;
+    
+	// Join/Release.
+	private ReentrantLock lock = new ReentrantLock();
+	private Condition cond = lock.newCondition();
+    
+    // Channel reader.
+    private MdChannelReader channelReader;
+    
     CThostFtdcMdApiImpl(String szFlowPath, boolean isUsingUdp, boolean isMulticast) {
         this.profile.FlowPath = szFlowPath;
         this.profile.isUsingUdp = isUsingUdp;
@@ -20,56 +39,70 @@ public class CThostFtdcMdApiImpl extends CThostFtdcMdApi {
 
     @Override
     public String GetTradingDay() {
-        // TODO Auto-generated method stub
-        return null;
+        return this.channelReader == null ? null : this.channelReader.tradingDay();
     }
 
     @Override
     public void Init() {
-        // TODO Auto-generated method stub
+        this.channelId = MdNatives.CreateChannel();
+        this.channelReader = new MdChannelReader(this.channelId, this.spi);
+        this.sessionId = MdNatives.CreateMdSession(this.profile, this.channelId);
     }
 
     @Override
     public void Join() {
-        // TODO Auto-generated method stub
+		while (true)
+			try {
+				this.cond.await();
+				break;
+			} catch (InterruptedException e) {
+			}
     }
 
     @Override
-    public void RegisterFront(String szFrontAddress) {
-        // TODO Auto-generated method stub
+    public void RegisterFront(String frontAddress) {
+		// Filter mal-formated address.
+		if (this.addressRegex.matcher(frontAddress).matches())
+			this.profile.FrontAddresses.add(frontAddress);
     }
 
     @Override
     public void RegisterSpi(CThostFtdcMdSpi spi) {
-        // TODO Auto-generated method stub
+    	this.spi = spi;
     }
 
     @Override
     public void Release() {
-        // TODO Auto-generated method stub
+		MdNatives.DestroyMdSession(this.sessionId);
+		this.channelReader.stop();
+		this.channelReader = null;
+		MdNatives.DestroyChannel(this.channelId);
+		// Signal.
+		this.cond.signalAll();
     }
 
     @Override
     public int ReqUserLogin(CThostFtdcReqUserLoginField reqUserLoginField, int requestId) {
-        // TODO Auto-generated method stub
-        return 0;
+        return MdNatives.ReqUserLogin(this.sessionId, reqUserLoginField, requestId);
     }
 
     @Override
     public int ReqUserLogout(CThostFtdcUserLogoutField userLogout, int requestId) {
-        // TODO Auto-generated method stub
-        return 0;
+        return MdNatives.ReqUserLogout(this.sessionId, userLogout, requestId);
     }
 
     @Override
     public int SubscribeMarketData(String[] instrumentID, int count) {
-        // TODO Auto-generated method stub
-        return 0;
+        return MdNatives.SubscribeMarketData(this.sessionId, instrumentID, count);
     }
 
     @Override
     public int UnSubscribeMarketData(String[] instrumentID, int count) {
-        // TODO Auto-generated method stub
-        return 0;
+        return MdNatives.UnSubscribeMarketData(this.sessionId, instrumentID, count);
     }
+
+	@Override
+	public void close() throws Exception {
+		this.Release();
+	}
 }

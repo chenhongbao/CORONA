@@ -9,7 +9,7 @@ import com.nabiki.ctp.trader.internal.TraderChannelReader;
 import com.nabiki.ctp.trader.internal.TraderNatives;
 import com.nabiki.ctp.trader.struct.*;
 
-public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi {
+public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi implements AutoCloseable {
 	private static final String apiVersion = "0.0.1";
 
 	private final LoginProfile profile = new LoginProfile();
@@ -42,10 +42,7 @@ public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi {
 
 	@Override
 	public String GetTradingDay() {
-		if (this.channelReader != null)
-			return this.channelReader.tradingDay();
-		else
-			return null;
+		return this.channelReader == null ? null : this.channelReader.tradingDay();
 	}
 
 	@Override
@@ -167,5 +164,10 @@ public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi {
 	public int ReqQryInvestorPositionDetail(CThostFtdcQryInvestorPositionDetailField qryInvestorPositionDetail,
 			int requestId) {
 		return TraderNatives.ReqQryInvestorPositionDetail(this.sessionId, qryInvestorPositionDetail, requestId);
+	}
+
+	@Override
+	public void close() throws Exception {
+		this.Release();
 	}
 }

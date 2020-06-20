@@ -1,28 +1,28 @@
-package com.nabiki.ctp.trader.internal;
+package com.nabiki.ctp.md.internal;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.nabiki.ctp.trader.CThostFtdcTraderSpi;
-import com.nabiki.ctp.trader.ErrorCodes;
-import com.nabiki.ctp.trader.struct.*;
+import com.nabiki.ctp.md.*;
+import com.nabiki.ctp.md.struct.*;
 
-public class TraderChannelReader {
+public class MdChannelReader {
 	private final static long WAIT_MILLIS = 1000;
 
 	private final int channelId;
-	private final CThostFtdcTraderSpi spi;
+	private final CThostFtdcMdSpi spi;
 	private final Thread readerThread, callbackThread;
-	private final BlockingQueue<TraderChannelData> bQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<MdChannelData> bQueue = new LinkedBlockingQueue<>();
 
 	// Stop marker.
 	private AtomicBoolean stopped;
 	
 	private String tradingDay;
 
-	public TraderChannelReader(int channelId, CThostFtdcTraderSpi spi) {
+	// Same code with trader channel reader.
+	public MdChannelReader(int channelId, CThostFtdcMdSpi spi) {
 		if (spi == null)
 			throw new NullPointerException("SPI null pointer.");
 
@@ -34,14 +34,11 @@ public class TraderChannelReader {
 		this.readerThread = new Thread(() -> {
 			while (!Thread.currentThread().isInterrupted()) {
 				try {
-					// Don't wait too long because it could miss the signal when new data arrives before java
-					// codes returns to native codes and wait again.
-					// Delay at most 1000 milliseconds.
-					TraderNatives.WaitOnChannel(this.channelId, WAIT_MILLIS);
+					MdNatives.WaitOnChannel(this.channelId, WAIT_MILLIS);
 					
-					var data = new TraderChannelData();
+					var data = new MdChannelData();
 					// Read channel data.
-					TraderNatives.ReadChannel(this.channelId, data);
+					MdNatives.ReadChannel(this.channelId, data);
 					if (!this.bQueue.offer(data, WAIT_MILLIS, TimeUnit.MILLISECONDS)) {
 						onErrorRsp(ErrorCodes.NO_SPACE, "Blocking queue's offer timeout.", 0, true);
 					}
@@ -89,52 +86,19 @@ public class TraderChannelReader {
 		}
 	}
 
-	private void onChannelData(TraderChannelData data) {
+	private void onChannelData(MdChannelData data) {
 		if (data == null)
 			return;
 
 		try {
+			for (var m : data.ListRtnDepthMarketData)
+				this.spi.OnRtnDepthMarketData(m);
+			
 			for (@SuppressWarnings("unused") var m : data.ListConnect)
 				this.spi.OnFrontConnected();
 
 			for (var m : data.ListDisconnect)
 				this.spi.OnFrontDisconnected(m.Reason);
-
-			for (var m : data.ListErrRtnOrderAction)
-				this.spi.OnErrRtnOrderAction(m.OrderAction, m.RspInfo);
-
-			for (var m : data.ListErrRtnOrderInsert)
-				this.spi.OnErrRtnOrderInsert(m.InputOrder, m.RspInfo);
-
-			for (var m : data.ListRspAuthenticate)
-				this.spi.OnRspAuthenticate(m.RspAuthenticateField, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspError)
-				this.spi.OnRspError(m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspOrderAction)
-				this.spi.OnRspOrderAction(m.InputOrderAction, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspOrderInsert)
-				this.spi.OnRspOrderInsert(m.InputOrder, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspQryInstrument)
-				this.spi.OnRspQryInstrument(m.Instrument, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspQryInstrumentCommissionRate)
-				this.spi.OnRspQryInstrumentCommissionRate(m.InstrumentCommissionRate, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspQryInstrumentMarginRate)
-				this.spi.OnRspQryInstrumentMarginRate(m.InstrumentMarginRate, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspQryInvestorPositionDetail)
-				this.spi.OnRspQryInvestorPositionDetail(m.InvestorPositionDetail, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspQryTradingAccount)
-				this.spi.OnRspQryTradingAccount(m.TradingAccount, m.RspInfo, m.RequestId, m.IsLast);
-
-			for (var m : data.ListRspSettlementInfoConfirm)
-				this.spi.OnRspSettlementInfoConfirm(m.SettlementInfoConfirm, m.RspInfo, m.RequestId, m.IsLast);
 
 			for (var m : data.ListRspUserLogin) {
 				this.spi.OnRspUserLogin(m.RspUserLogin, m.RspInfo, m.RequestId, m.IsLast);
@@ -145,12 +109,12 @@ public class TraderChannelReader {
 				this.spi.OnRspUserLogout(m.UserLogout, m.RspInfo, m.RequestId, m.IsLast);
 				this.tradingDay = null;
 			}
-
-			for (var m : data.ListRtnOrder)
-				this.spi.OnRtnOrder(m);
-
-			for (var m : data.ListRtnTrade)
-				this.spi.OnRtnTrade(m);
+						
+			for (var m : data.ListRspSubMarketData)
+				this.spi.OnRspSubMarketData(m.SpecificInstrument, m.RspInfo, m.RequestId, m.IsLast);
+			
+			for (var m : data.ListRspUnSubMarketData)
+				this.spi.OnRspUnSubMarketData(m.SpecificInstrument, m.RspInfo, m.RequestId, m.IsLast);
 		} catch (Throwable th) {
 			onErrorRsp(ErrorCodes.UNNO_THROW, th.getMessage(), 0, true);
 		}
