@@ -11,8 +11,21 @@ public abstract class CThostFtdcTraderSpi {
 
     public void OnFrontDisconnected(int reason) {};
 
-    public void OnRspAuthenticate(CThostFtdcRspAuthenticateField pRspAuthenticateField, CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
+    public void OnRspAuthenticate(CThostFtdcRspAuthenticateField rspAuthenticateField, CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
 
+    /**
+     * Error response callback. The method is called whenever there is error from native(JVM) internals, CTP response or
+     * java codes.
+     * 
+     * <p> The error code in {@link CThostFtdcRspInfoField} has 3 categories:
+     * <li>if code < 0, error is caused by native(JVM) or java codes
+     * <li>if code = 0, no error
+     * <li>if code > 0, error is caused by CTP
+     * 
+     * @param rspInfo error response information
+     * @param requestId identifier for the request that causes this error
+     * @param isLast {@code true} if the current response is the last piece from this error, {@code false} otherwise.
+     */
     public void OnRspError(CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
 
     public void OnRspOrderAction(CThostFtdcInputOrderActionField inputOrderAction, CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
@@ -33,7 +46,7 @@ public abstract class CThostFtdcTraderSpi {
 
     public void OnRspUserLogin(CThostFtdcRspUserLoginField rspUserLogin, CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
 
-    public void OnRspUserLogout(CThostFtdcUserLogoutField userLogout, CThostFtdcRspInfoField rspInfo, int nRequestID, boolean isLast) {};
+    public void OnRspUserLogout(CThostFtdcUserLogoutField userLogout, CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {};
 
     public void OnRtnOrder(CThostFtdcOrderField order) {};
 

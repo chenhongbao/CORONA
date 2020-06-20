@@ -13,6 +13,8 @@ import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.packet.api.*;
 
+// Execute all request input by clients in a thread.
+// The thread decodes the request messages and verify the targeted account ID before process it.
 public class ClientInputExecutor implements Runnable {
 	// Client input information keeper.
 	public class ClientInput {
@@ -84,6 +86,8 @@ public class ClientInputExecutor implements Runnable {
 		remote.send(type, bytes, 0, bytes.length);
 	}
 	
+	// Check the operator's account ID and its counter part in request are the same.
+	// Typically for trader role and two other roles can operate on any accounts.
 	private boolean isRightAccountId(String reqAccountId, KerLogin user) {
 		return user.role() != AccountRole.TRADER || reqAccountId.compareTo(user.accountId()) == 0;
 	}
@@ -465,9 +469,8 @@ public class ClientInputExecutor implements Runnable {
 					// Close the connection immediately.
 					stopped = true;
 					in.service.close();
-					// Remove all pending input.
+					// Remove all pending input from the disconnected clients.
 					remove(in.service);
-					// Set current input's ref to null.
 					in.service = null;
 					break;
 				}

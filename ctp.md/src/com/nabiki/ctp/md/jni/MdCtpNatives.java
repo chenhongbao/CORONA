@@ -7,7 +7,7 @@ public class MdCtpNatives {
 
     native public static void destroyChannel();
 
-    native public static void waitOnChannel(int channelId);
+    native public static int waitOnChannel(int channelId, long millis);
 
     native public static void signalChannel(int channelId);
 
