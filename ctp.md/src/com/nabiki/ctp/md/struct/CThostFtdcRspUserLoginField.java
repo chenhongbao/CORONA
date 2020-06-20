@@ -1,4 +1,4 @@
-package com.nabiki.ctp.md.jni;
+package com.nabiki.ctp.md.struct;
 
 public class CThostFtdcRspUserLoginField {
 }

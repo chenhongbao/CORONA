@@ -1,6 +1,6 @@
 package com.nabiki.ctp.md;
 
-import com.nabiki.ctp.md.jni.*;
+import com.nabiki.ctp.md.struct.*;
 
 public abstract class CThostFtdcMdApi {
     protected CThostFtdcMdApi() {}

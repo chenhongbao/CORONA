@@ -1,23 +1,21 @@
 package com.nabiki.ctp.md;
 
-import com.nabiki.ctp.md.jni.*;
+import com.nabiki.ctp.md.internal.LoginProfile;
+import com.nabiki.ctp.md.struct.*;
 
 public class CThostFtdcMdApiImpl extends CThostFtdcMdApi {
     private final static String apiVersion = "0.0.1";
-    private final String szFlowPath;
-    private final boolean isUsingUdp;
-    private final boolean isMulticast;
+    private final LoginProfile profile = new LoginProfile();
 
     CThostFtdcMdApiImpl(String szFlowPath, boolean isUsingUdp, boolean isMulticast) {
-        this.szFlowPath = szFlowPath;
-        this.isUsingUdp = isUsingUdp;
-        this.isMulticast = isMulticast;
+        this.profile.FlowPath = szFlowPath;
+        this.profile.isUsingUdp = isUsingUdp;
+        this.profile.isMulticast = isMulticast;
     }
 
     @Override
     public String GetApiVersion() {
-        // TODO Auto-generated method stub
-        return null;
+        return CThostFtdcMdApiImpl.apiVersion;
     }
 
     @Override
