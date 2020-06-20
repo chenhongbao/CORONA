@@ -17,9 +17,12 @@ public class TraderChannelReader {
 	private final Thread readerThread, callbackThread;
 	private final BlockingQueue<TraderChannelData> bQueue = new LinkedBlockingQueue<>();
 
+	// Stop marker.
 	private AtomicBoolean stopped;
+	
+	private String tradingDay;
 
-	TraderChannelReader(int channelId, CThostFtdcTraderSpi spi) {
+	public TraderChannelReader(int channelId, CThostFtdcTraderSpi spi) {
 		if (spi == null)
 			throw new NullPointerException("SPI null pointer.");
 
@@ -69,6 +72,10 @@ public class TraderChannelReader {
 				onErrorRsp(ErrorCodes.UNNO_INTERRUPTED, e.getMessage(), 0, true);
 			}
 		});
+	}
+	
+	public String tradingDay() {
+		return this.tradingDay;
 	}
 
 	private void onErrorRsp(int code, String message, int requestId, boolean isLast) {
@@ -128,11 +135,15 @@ public class TraderChannelReader {
 			for (var m : data.ListRspSettlementInfoConfirm)
 				this.spi.OnRspSettlementInfoConfirm(m.SettlementInfoConfirm, m.RspInfo, m.RequestId, m.IsLast);
 
-			for (var m : data.ListRspUserLogin)
+			for (var m : data.ListRspUserLogin) {
 				this.spi.OnRspUserLogin(m.RspUserLogin, m.RspInfo, m.RequestId, m.IsLast);
+				this.tradingDay = m.RspUserLogin.TradingDay;
+			}
 
-			for (var m : data.ListRspUserLogout)
+			for (var m : data.ListRspUserLogout) {
 				this.spi.OnRspUserLogout(m.UserLogout, m.RspInfo, m.RequestId, m.IsLast);
+				this.tradingDay = null;
+			}
 
 			for (var m : data.ListRtnOrder)
 				this.spi.OnRtnOrder(m);

@@ -18,10 +18,11 @@ public abstract class CThostFtdcTraderSpi {
      * java codes.
      * 
      * <p> The error code in {@link CThostFtdcRspInfoField} has 3 categories:
+     * <ul>
      * <li>if code < 0, error is caused by native(JVM) or java codes
      * <li>if code = 0, no error
      * <li>if code > 0, error is caused by CTP
-     * 
+     * </ul>
      * @param rspInfo error response information
      * @param requestId identifier for the request that causes this error
      * @param isLast {@code true} if the current response is the last piece from this error, {@code false} otherwise.

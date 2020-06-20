@@ -18,6 +18,10 @@ public abstract class CThostFtdcTraderApi {
 	
 	public abstract void Join();
 	
+	public abstract void SubscribePrivateTopic(int type);
+	
+	public abstract void SubscribePublicTopic(int type);
+	
 	public abstract void RegisterFront(String frontAddress);
 	
 	public abstract void RegisterSpi(CThostFtdcTraderSpi spi);
