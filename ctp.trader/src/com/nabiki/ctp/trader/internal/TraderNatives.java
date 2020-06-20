@@ -1,6 +1,15 @@
-package com.nabiki.ctp.trader.jni;
+package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.internal.*;
+import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderActionField;
+import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderField;
+import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentCommissionRateField;
+import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentField;
+import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentMarginRateField;
+import com.nabiki.ctp.trader.struct.CThostFtdcQryInvestorPositionDetailField;
+import com.nabiki.ctp.trader.struct.CThostFtdcQryTradingAccountField;
+import com.nabiki.ctp.trader.struct.CThostFtdcReqAuthenticateField;
+import com.nabiki.ctp.trader.struct.CThostFtdcReqUserLoginField;
+import com.nabiki.ctp.trader.struct.CThostFtdcUserLogoutField;
 
 public class TraderNatives {
     native public static int CreateChannel();

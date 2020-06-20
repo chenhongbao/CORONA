@@ -1,6 +1,6 @@
 package com.nabiki.ctp.trader;
 
-import com.nabiki.ctp.trader.jni.*;
+import com.nabiki.ctp.trader.struct.*;
 
 public abstract class CThostFtdcTraderSpi {
     public void OnErrRtnOrderAction(CThostFtdcOrderActionField orderAction, CThostFtdcRspInfoField rspInfo) {}

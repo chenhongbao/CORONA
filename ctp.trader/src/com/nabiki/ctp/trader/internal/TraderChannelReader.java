@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.ctp.trader.CThostFtdcTraderSpi;
 import com.nabiki.ctp.trader.ErrorCodes;
-import com.nabiki.ctp.trader.jni.*;
+import com.nabiki.ctp.trader.struct.*;
 
 public class TraderChannelReader {
 	private final static long WAIT_MILLIS = 1000;

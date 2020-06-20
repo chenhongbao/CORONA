@@ -2,10 +2,10 @@ package com.nabiki.ctp.trader.internal;
 
 import java.util.List;
 
-import com.nabiki.ctp.trader.jni.CThostFtdcConnect;
-import com.nabiki.ctp.trader.jni.CThostFtdcDisconnect;
-import com.nabiki.ctp.trader.jni.CThostFtdcOrderField;
-import com.nabiki.ctp.trader.jni.CThostFtdcTradeField;
+import com.nabiki.ctp.trader.struct.CThostFtdcConnect;
+import com.nabiki.ctp.trader.struct.CThostFtdcDisconnect;
+import com.nabiki.ctp.trader.struct.CThostFtdcOrderField;
+import com.nabiki.ctp.trader.struct.CThostFtdcTradeField;
 
 public class TraderChannelData {
 	public List<ErrRtnOrderAction> ListErrRtnOrderAction;

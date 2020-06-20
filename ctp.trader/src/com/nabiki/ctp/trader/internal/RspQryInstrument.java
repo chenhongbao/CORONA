@@ -1,7 +1,7 @@
 package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.jni.CThostFtdcInstrumentField;
-import com.nabiki.ctp.trader.jni.CThostFtdcRspInfoField;
+import com.nabiki.ctp.trader.struct.CThostFtdcInstrumentField;
+import com.nabiki.ctp.trader.struct.CThostFtdcRspInfoField;
 
 public class RspQryInstrument {
 	public CThostFtdcInstrumentField Instrument;

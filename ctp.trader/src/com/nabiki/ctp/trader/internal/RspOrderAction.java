@@ -1,7 +1,7 @@
 package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.jni.CThostFtdcInputOrderActionField;
-import com.nabiki.ctp.trader.jni.CThostFtdcRspInfoField;
+import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderActionField;
+import com.nabiki.ctp.trader.struct.CThostFtdcRspInfoField;
 
 public class RspOrderAction {
 	public CThostFtdcInputOrderActionField InputOrderAction;

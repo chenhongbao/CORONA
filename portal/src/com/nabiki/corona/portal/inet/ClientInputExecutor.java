@@ -310,6 +310,7 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_SUBSCRIBE_SYMBOL, rsp, remote);
 		} else {
 			while (true) {
+				// Trader won't call this method, no need to auth.
 				var rsp = this.adaptor.subscribeSymbol(iter.next(), remote);
 				// Last mark.
 				if (!iter.hasNext()) {
@@ -333,6 +334,7 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_SET_NEW_ACCOUNT, rsp, remote);
 		} else {
 			while (true) {
+				// Trader won't call this method, no need to auth.
 				var rsp = this.adaptor.newAccount(iter.next());
 				// Last mark.
 				if (!iter.hasNext()) {
@@ -356,6 +358,7 @@ public class ClientInputExecutor implements Runnable {
 			sndPacket(MessageType.RX_CASH_MOVE, rsp, remote);
 		} else {
 			while (true) {
+				// Trader won't call this method, no need to auth.
 				var rsp = this.adaptor.moveCash(iter.next());
 				// Last mark.
 				if (!iter.hasNext()) {

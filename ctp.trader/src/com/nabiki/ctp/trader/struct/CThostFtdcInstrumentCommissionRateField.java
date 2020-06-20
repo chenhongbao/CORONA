@@ -1,4 +1,4 @@
-package com.nabiki.ctp.trader.jni;
+package com.nabiki.ctp.trader.struct;
 
 public class CThostFtdcInstrumentCommissionRateField {
 }

@@ -1,7 +1,7 @@
 package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.jni.CThostFtdcInputOrderField;
-import com.nabiki.ctp.trader.jni.CThostFtdcRspInfoField;
+import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderField;
+import com.nabiki.ctp.trader.struct.CThostFtdcRspInfoField;
 
 public class ErrRtnOrderInsert {
 	public CThostFtdcInputOrderField InputOrder;

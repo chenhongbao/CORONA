@@ -1,7 +1,7 @@
 package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.jni.CThostFtdcRspInfoField;
-import com.nabiki.ctp.trader.jni.CThostFtdcSettlementInfoConfirmField;
+import com.nabiki.ctp.trader.struct.CThostFtdcRspInfoField;
+import com.nabiki.ctp.trader.struct.CThostFtdcSettlementInfoConfirmField;
 
 public class RspSettlementInfoConfirm {
 	public CThostFtdcSettlementInfoConfirmField SettlementInfoConfirm;
