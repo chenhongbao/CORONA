@@ -112,6 +112,8 @@ public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi {
 		this.channelReader = null;
 		
 		TraderNatives.DestroyChannel(this.channelId);
+		// Signal.
+		this.cond.signalAll();
 	}
 
 	@Override
