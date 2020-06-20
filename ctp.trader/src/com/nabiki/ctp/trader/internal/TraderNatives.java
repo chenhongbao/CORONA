@@ -96,130 +96,23 @@ public class TraderNatives {
      */
     native public static void DestroyTraderSession(int traderSessionId);
     
-    /**
-     * Request client authentication for the specified session. {@code OnRspAuthenticate} is called on the authentication
-     * response.
-     * 
-     * <p>The method doesn't throw exception.
-     * 
-     * @param traderSessionId identifier for the trader session to be authenticated
-     * @param reqAuthenticateField authentication request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     * <ul>
-     * <li>0, successful sending
-     * <li>-1, network failure
-     * <li>-2, too many requests that are not processed
-     * <li>-3, too many requests in last second
-     * </ul>
-     */
     native public static int ReqAuthenticate(int traderSessionId, CThostFtdcReqAuthenticateField reqAuthenticateField, int requestId);
 	
-    /**
-     * Request client login for the specified session. {@code OnRspUserLogin} is called on login response.
-     * 
-     * <p>The method doesn't throw exception.
-     * 
-     * @param traderSessionId identifier for the specified session to login
-     * @param reqUserLoginField login request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqUserLogin(int traderSessionId, CThostFtdcReqUserLoginField reqUserLoginField, int requestId);
 	
-    /**
-     * Request client logout for the specified session. {@code OnRspUserLogout} is called on logout response.
-     * 
-     * <p>The method doesn't throw exception.
-     * 
-     * @param traderSessionId identifier for the specified session to logout
-     * @param userLogout logout request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqUserLogout(int traderSessionId, CThostFtdcUserLogoutField userLogout, int requestId);
 	
-    /**
-     * Request inserting order for the specified session. Different methods are called on different errors or response.
-     * <ul>
-     * <li>{@code OnErrRtnOrderInsert} or {@code OnRspOrderInsert} is callled on incorrect fields in request.
-     * <li>{@code OnRtnOrder} is called on order status update.
-     * <li>{@code OnRtnTrade} is called on trade update.
-     * </ul>
-     * @param traderSessionId identifier for the specified session to request order
-     * @param inputOrder order request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqOrderInsert(int traderSessionId, CThostFtdcInputOrderField inputOrder, int requestId);
 	
-    /**
-     * Request cancelling an existing order from the specified session. There are two ways to cancel an order:
-     * <ul>
-     * <li>{@code OrderSysID}, the field is in order status update after execution of an order
-     * <li>{@code FrontID + SessionID + OrderRef}, order reference is maintained by client and the previous two fields
-     * 		are in successful login response, or in order status update.
-	 * </ul>
-	 * <p>Different methods are called on different errors or response:
-	 * <ul>
-	 * <li>{@code OnErrRtnOrderAction} or {@code OnRspOrderAction} is called on incorrect fields in action request.
-	 * <li>{@code OnRtnOrder} is called on order status update.
-     * </ul>
-     * @param traderSessionId identifier for the specified session
-     * @param inputOrderAction action request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqOrderAction(int traderSessionId, CThostFtdcInputOrderActionField inputOrderAction, int requestId);
 	
-    /**
-     * Request query instrument information of the specified session. {@code OnRspQryInstrument} is called on response.
-     * 
-     * @param traderSessionId identifier for the specified session
-     * @param qryInstrument query request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqQryInstrument(int traderSessionId, CThostFtdcQryInstrumentField qryInstrument, int requestId);
 	
-    /**
-     * Request query commission rate from the specified session. {@code OnRspQryInstrumentCommissionRate} is called on
-     * response.
-     * 
-     * @param traderSessionId identifier for the specified session
-     * @param qryInstrumentCommissionRate query request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqQryInstrumentCommissionRate(int traderSessionId, CThostFtdcQryInstrumentCommissionRateField qryInstrumentCommissionRate, int requestId);
 	
-    /**
-     * Request query margin rate from the specified session. {@code OnRspQryInstrumentMarginRate} is called on response.
-     * 
-     * @param traderSessionId identifier for the specified session
-     * @param qryInstrumentMarginRate query request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqQryInstrumentMarginRate(int traderSessionId, CThostFtdcQryInstrumentMarginRateField qryInstrumentMarginRate, int requestId);
 	
-    /**
-     * Request query trading account for the login user. {@code OnRspQryTradingAccount} is called on response.
-     * 
-     * @param traderSessionId identifier for the specified session
-     * @param qryTradingAccount query request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqQryTradingAccount(int traderSessionId, CThostFtdcQryTradingAccountField qryTradingAccount, int requestId);
 	
-    /**
-     * Request query position detail for the login user. {@code OnRspQryInvestorPositionDetail} is called on response.
-     * 
-     * @param traderSessionId identifier for the specified session
-     * @param qryInvestorPositionDetail query request
-     * @param requestId identifier for this request
-     * @return returned value from native function
-     */
     native public static int ReqQryInvestorPositionDetail(int traderSessionId, CThostFtdcQryInvestorPositionDetailField qryInvestorPositionDetail, int requestId);
 }
