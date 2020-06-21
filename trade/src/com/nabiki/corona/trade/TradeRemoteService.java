@@ -35,22 +35,38 @@ public class TradeRemoteService implements TradeRemote {
 
 		@Override
 		public void orderStatus(KerOrderStatus status) {
-			local.orderStatus(status);
+			try {
+				context.local().orderStatus(status);
+			} catch (KerError e) {
+				log.error("Fail updating order status. {}", e.message(), e);
+			}
 		}
 
 		@Override
 		public void tradeReport(KerTradeReport rep) {
-			local.tradeReport(rep);
+			try {
+				context.local().tradeReport(rep);
+			} catch (KerError e) {
+				log.error("Fail updating trade report. {}", e.message(), e);
+			}
 		}
 
 		@Override
 		public void account(KerAccount account) {
-			local.account(account);
+			try {
+				context.local().account(account);
+			} catch (KerError e) {
+				log.error("Fail updating remote account. {}", e.message(), e);
+			}
 		}
 
 		@Override
 		public void position(KerPositionDetail pos, boolean last) {
-			local.positionDetail(pos, last);
+			try {
+				context.local().positionDetail(pos, last);
+			} catch (KerError e) {
+				log.error("Fail updating remote position details. {}", e.message(), e);
+			}
 		}
 
 		@Override
@@ -76,7 +92,7 @@ public class TradeRemoteService implements TradeRemote {
 				status.orderSubmitStatus((char) OrderSubmitStatus.INSERT_REJECTED);
 
 				// Call method.
-				local.orderStatus(status);
+				context.local().orderStatus(status);
 			} catch (KerError e) {
 				log.error("Fail canceling order: {}. {}", order.orderId(), e.message(), e);
 			}
@@ -89,12 +105,20 @@ public class TradeRemoteService implements TradeRemote {
 				return;
 
 			login = rep;
-			local.remoteLogin(rep);
+			try {
+				context.local().remoteLogin(rep);
+			} catch (KerError e) {
+				log.error("Fail notifying remote login. {}", e.message(), e);
+			}
 		}
 
 		@Override
 		public void remoteLogout() {
-			local.remoteLogout();
+			try {
+				context.local().remoteLogout();
+			} catch (KerError e) {
+				log.error("Fail notifying remote logout. {}", e.message(), e);
+			}
 		}
 
 		@Override
@@ -170,19 +194,20 @@ public class TradeRemoteService implements TradeRemote {
 		}
 	}
 
-	// Trade local service.
-	private volatile TradeLocal local;
-
 	@Reference(policy = ReferencePolicy.DYNAMIC)
 	public void setTradeLocal(TradeLocal local) {
-		this.local = local;
+		this.context.local(local);
 		this.log.info("Set trade local: {}.", local.name());
 	}
 
 	public void unsetTradeLocal(TradeLocal local) {
-		if (local == this.local) {
-			this.local = null;
-			this.log.info("Unset trade local: {}.", local.name());
+		try {
+			if (local == this.context.local()) {
+				this.context.local(null);
+				this.log.info("Unset trade local: {}.", local.name());
+			}
+		} catch (KerError e) {
+			this.log.error("Fail checking trader local. {}", e.message(), e);
 		}
 	}
 
@@ -269,7 +294,7 @@ public class TradeRemoteService implements TradeRemote {
 			var val = this.factory.create(KerQueryAccount.class);
 			val.brokerId(this.login.brokerId());
 			val.investorId(this.login.userId());
-			val.investorId("CNY");
+			// The trade engine sets the currency id.
 			this.requestQueue.enqueue(new Request<KerQueryAccount>(val));
 		} catch (KerError e) {
 			this.log.error("Fail sending query account. {}", e.message(), e);

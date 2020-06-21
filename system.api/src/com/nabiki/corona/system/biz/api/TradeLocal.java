@@ -40,7 +40,7 @@ public interface TradeLocal {
 	KerRemoteLoginReport remoteInfo();
 
 	/**
-	 * Notifier for remote login.
+	 * Notify local trader for remote login.
 	 * 
 	 * @param rep remote login report
 	 */

@@ -86,8 +86,11 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 					this.traderApi.ReqQryInstrumentCommissionRate(translate((KerQueryCommission)request.request()), Utils.increaseGet()));
 			break;
 		case QueryAccount:
+			// Set currency id.
+			var qryAccount = (KerQueryAccount)request.request();
+			qryAccount.currencyId(this.config.currencyId());
 			checkRtnCode("request query account",
-					this.traderApi.ReqQryTradingAccount(translate((KerQueryAccount)request.request()), Utils.increaseGet()));
+					this.traderApi.ReqQryTradingAccount(translate(qryAccount), Utils.increaseGet()));
 			break;
 		case QueryPositionDetail:
 			checkRtnCode("request query position detail",
