@@ -3,7 +3,6 @@ package com.nabiki.corona.candle;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +72,6 @@ public class TickLauncher implements Runnable {
 		}
 	}
 
-	// Scheduled executor as timer.
-	private Future<?> tickFuture;
 	private TickEngine engine;
 	private ScheduledThreadPoolExecutor executor;
 	public final static int CHECK_PERIOD_MILLIS = 60 * 1000;
@@ -96,6 +93,9 @@ public class TickLauncher implements Runnable {
 		} catch (RejectedExecutionException e) {
 			this.log.error("Fail scheduling tick launcher. {}", e.getMessage());
 		}
+
+		// Create tick engine.
+		this.engine = new TickEngine(new TickPostListener(), this.context);
 	}
 
 	@Deactivate
@@ -113,38 +113,25 @@ public class TickLauncher implements Runnable {
 
 	@Override
 	public void run() {
-		var action = nextAction();
+		EngineAction action = EngineAction.NONE;
+		try {
+			action = nextAction();
+		} catch (KerError e) {
+			this.log.warn("Fail deciding tick launcher action. {}", e.message(), e);
+			return;
+		}
+		
 		switch (action) {
 		case START:
-			if (!userReady()) {
-				this.log.warn("Presiquites not ready before new tick launch.");
-				break;
-			}
-
 			try {
-				this.engine = null;
-				this.engine = new TickEngine(new TickPostListener(), this.context);
-				this.tickFuture = this.executor.submit(this.engine);
-				this.log.info("Launche tick engine.");
-			} catch (RejectedExecutionException e) {
-				this.log.warn("Fail submitting tick engine to scheduler. {}", e.getMessage());
+				this.engine.start();
+			} catch (KerError e) {
+				this.log.warn("Fail start tick engine. {}", e.getMessage());
 			}
 
 			break;
 		case STOP:
-			if (this.tickFuture.isDone()) {
-				this.log.warn("Fail stopping tick engine for it is done.");
-				break;
-			}
-
-			// Notify engine to stop and turn its state to stopping.
-			this.engine.tellStopping();
-			if (!this.tickFuture.isDone() && !this.tickFuture.cancel(true))
-				this.log.warn("Fail canceling tick engine.");
-
-			// Clear resources.
-			// Don't set engine to null because it needs to check engine's state to decide the next action.
-			this.executor.purge();
+			this.engine.stop();
 			break;
 		default:
 			this.log.warn("Unhandled launching action: {}.", action);
@@ -152,7 +139,7 @@ public class TickLauncher implements Runnable {
 		}
 		
 		// Check time and send remote with symbols to subscribe in next trading day. Must wait all symbols ready.
-		if (minutesAfterMarketOpen(5)) {
+		if (this.engine.state() == EngineState.STARTED && minutesAfterMarketOpen(5)) {
 			try {
 				this.engine.sendSymbols();
 			} catch (KerError e) {
@@ -160,7 +147,7 @@ public class TickLauncher implements Runnable {
 			}
 		}
 	}
-	
+
 	// Check now is the N minutes after market opens.
 	private boolean minutesAfterMarketOpen(int minutes) {
 		minutes = Math.max(0, minutes);
@@ -173,36 +160,23 @@ public class TickLauncher implements Runnable {
 		}
 	}
 
-	private boolean userReady() {
-		try {
-			this.context.info();
-			return true;
-		} catch (KerError e) {
-			return false;
-		}
-	}
-
-	private EngineAction nextAction() {
+	private EngineAction nextAction() throws KerError {
 		EngineAction next = EngineAction.NONE;
-
-		try {
-			switch (this.engine.state()) {
-			case STARTED:
-				if (!this.context.info().isMarketOpen(Instant.now()))
-					next = EngineAction.STOP;
-				break;
-			case STOPPED:
-				if (this.context.info().isMarketOpen(Instant.now()))
-					next = EngineAction.START;
-				break;
-			case STARTING:
-			case STOPPING:
-			default:
-				this.log.warn("Unhandled launcher state: {}.", this.engine.state());
-				break;
-			}
-		} catch(KerError e) {
-			this.log.warn("Fail checking market open before checking next action.");
+		switch (this.engine.state()) {
+		case STARTED:
+			if (!this.context.info().isMarketOpen(Instant.now()))
+				next = EngineAction.STOP;
+			break;
+		case STOPPED:
+			if (this.context.info().isMarketOpen(Instant.now()))
+				next = EngineAction.START;
+			break;
+		case STARTING:
+		case STOPPING:
+			break;
+		default:
+			this.log.warn("Unhandled launcher state: {}.", this.engine.state());
+			break;
 		}
 
 		return next;
@@ -210,10 +184,10 @@ public class TickLauncher implements Runnable {
 
 	private class TickPostListener implements TickEngineListener {
 		private boolean working = false;
-		
+
 		public TickPostListener() {
 		}
-		
+
 		private boolean isWorkingTick(Instant update) {
 			var diff = Instant.now().getEpochSecond() - update.getEpochSecond();
 			return Math.abs(diff) < 60;
@@ -226,10 +200,10 @@ public class TickLauncher implements Runnable {
 				this.working = true;
 				for (var local : tickLocals)
 					local.marketWorking(true);
-				
+
 				log.info("Tick remote starts working.");
 			}
-			
+
 			for (var local : tickLocals) {
 				local.tick(tick);
 			}
@@ -243,13 +217,13 @@ public class TickLauncher implements Runnable {
 		@Override
 		public void state(EngineState s) {
 			log.info("Tick engine state: {}.", s);
-			
+
 			// Set working state in tick local.
 			if (s == EngineState.STOPPED) {
 				this.working = false;
 				for (var local : tickLocals)
 					local.marketWorking(false);
-				
+
 				log.info("Tick remote stops working.");
 			}
 		}

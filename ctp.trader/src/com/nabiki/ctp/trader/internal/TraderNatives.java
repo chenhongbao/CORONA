@@ -1,15 +1,6 @@
 package com.nabiki.ctp.trader.internal;
 
-import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderActionField;
-import com.nabiki.ctp.trader.struct.CThostFtdcInputOrderField;
-import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentCommissionRateField;
-import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentField;
-import com.nabiki.ctp.trader.struct.CThostFtdcQryInstrumentMarginRateField;
-import com.nabiki.ctp.trader.struct.CThostFtdcQryInvestorPositionDetailField;
-import com.nabiki.ctp.trader.struct.CThostFtdcQryTradingAccountField;
-import com.nabiki.ctp.trader.struct.CThostFtdcReqAuthenticateField;
-import com.nabiki.ctp.trader.struct.CThostFtdcReqUserLoginField;
-import com.nabiki.ctp.trader.struct.CThostFtdcUserLogoutField;
+import com.nabiki.ctp.trader.struct.*;
 
 public class TraderNatives {
 	/**
@@ -101,6 +92,8 @@ public class TraderNatives {
     native public static int ReqUserLogin(int traderSessionId, CThostFtdcReqUserLoginField reqUserLoginField, int requestId);
 	
     native public static int ReqUserLogout(int traderSessionId, CThostFtdcUserLogoutField userLogout, int requestId);
+    
+    native public static int ReqSettlementInfoConfirm(int traderSessionId, CThostFtdcSettlementInfoConfirmField settlementInfoConfirm, int requestId);
 	
     native public static int ReqOrderInsert(int traderSessionId, CThostFtdcInputOrderField inputOrder, int requestId);
 	

@@ -9,4 +9,7 @@
 	${mockito-deps}
 
 Bundle-Version: 0.0.0.${tstamp}
-Export-Package: com.nabiki.ctp.trader
+Export-Package: \
+	com.nabiki.ctp.trader,\
+	com.nabiki.ctp.trader.struct,\
+	com.nabiki.ctp.trader.exception

@@ -108,6 +108,15 @@ public abstract class CThostFtdcTraderApi {
      */
 	public abstract int ReqUserLogout(CThostFtdcUserLogoutField userLogout, int requestId);
 	
+	/**
+	 * Request settlment confirm. {@code OnRspSettlementInfoConfirm} is called on response.
+	 * 
+	 * @param settlementInfoConfirm confirm request
+	 * @param requestId identifier for this request
+	 * @return returned value from native function
+	 */
+	public abstract int ReqSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField settlementInfoConfirm, int requestId);
+	
     /**
      * Request inserting order for the specified session. Different methods are called on different errors or response.
      * <ul>

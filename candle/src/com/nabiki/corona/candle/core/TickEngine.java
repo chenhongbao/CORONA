@@ -1,33 +1,31 @@
 package com.nabiki.corona.candle.core;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.nabiki.corona.MessageType;
-import com.nabiki.corona.object.*;
-import com.nabiki.corona.object.tool.*;
+import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.*;
-import com.nabiki.corona.system.packet.api.*;
+import com.nabiki.ctp.md.CThostFtdcMdApi;
+import com.nabiki.ctp.md.CThostFtdcMdSpi;
+import com.nabiki.ctp.md.struct.CThostFtdcDepthMarketDataField;
+import com.nabiki.ctp.md.struct.CThostFtdcReqUserLoginField;
+import com.nabiki.ctp.md.struct.CThostFtdcRspInfoField;
+import com.nabiki.ctp.md.struct.CThostFtdcRspUserLoginField;
+import com.nabiki.ctp.md.struct.CThostFtdcSpecificInstrumentField;
+import com.nabiki.ctp.md.struct.CThostFtdcUserLogoutField;
 
-public class TickEngine implements Runnable {
+public class TickEngine extends CThostFtdcMdSpi {
 	private EngineState state = EngineState.STOPPED;
-	private PacketClient remote;
 	
 	private final CandleServiceContext context;
 	private final TickEngineListener listener;
-	private final DataCodec codec = DefaultDataCodec.create();
-	private final DataFactory factory = DefaultDataFactory.create();
+
+	private RemoteConfig config;
+	private CThostFtdcMdApi mdApi;
 	
-	// Data queue.
-	private Thread queDaemon;
-	private final BlockingQueue<KerTick> dataQueue = new LinkedBlockingQueue<>();
+	private Set<String> subscribed = new HashSet<>();
 
 	public TickEngine(TickEngineListener l, CandleServiceContext context) {
 		this.listener = l;
@@ -35,166 +33,158 @@ public class TickEngine implements Runnable {
 	}
 	
 	public void sendSymbols() throws KerError {
-		var symbols = this.factory.create(StringMessage.class);
-		symbols.values(this.context.info().symbols());
-		symbols.last(true);
-		
-		// Encode.
-		var bytes = this.codec.encode(symbols);
-		if (this.remote.closed())
-			throw new KerError("Can't send symbols because remote connection is closed.");
-		
-		this.remote.send(MessageType.TX_SET_SUBSCRIBE_SYMBOLS, bytes, 0, bytes.length);
+		var symbols = this.context.info().symbols();
+		if (symbols == null || symbols.size() == 0)
+			throw new KerError("No symbol to subscribe.");
+		// Get symbols.
+		String[] instruments = new String[symbols.size()];
+		symbols.toArray(instruments);
+		// Send request.
+		checkRtnCode("subscribe symbols", this.mdApi.SubscribeMarketData(instruments, instruments.length));
 	}
 
-	@Override
-	public void run() {
-		this.state = EngineState.STARTING;
-		callListener(this.state);
-		
-		// Queue daemon.
-		this.queDaemon = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (state != EngineState.STOPPING) {
-					try {
-						var tick = dataQueue.poll(24, TimeUnit.HOURS);
-						callListener(tick);
-					} catch (InterruptedException e) {
-						if (state != EngineState.STOPPING)
-							callListener(new KerError("Date queue waiting for tick interrupted.", e));
-					}
-				}
-			}
-		});
-		
-		this.queDaemon.start();
-		this.queDaemon.setDaemon(true);
-		
-		// Connect remote.
-		try {
-			this.remote = connect();
-		} catch (KerError e) {
-			callListener(e);
-			return;
-		}
-			
-		// Receive packet and process it.
-		while (this.state != EngineState.STOPPING) {
-			try {
-				processPacket(this.remote.receive());
-			} catch (KerError e) {
-				if (this.state != EngineState.STOPPING) {
-					callListener(e);
-				} else {
-					callListener(this.state);
-				}
-			}
-		}
-		
-		// Try closing connection if it comes here by other error.
-		tryClose();
-		
-		// Interrupt data queue thread.
-		if (!this.queDaemon.isInterrupted())
-			this.queDaemon.interrupt();
-		
-		try {
-			this.queDaemon.join();
-		} catch (InterruptedException e) {}
-		
-		// Call listener on state change.
-		this.state = EngineState.STOPPED;
-		callListener(this.state);
-	}
-	
-	private PacketClient connect() throws KerError{
-		// Find connection config to remote.
-		RemoteConfig conf = null;
-		for (var c : this.context.info().remoteConfig().configs()) {
-			if (c.name().toLowerCase().matches("(md)|(tick)|((market)[\\s_-]?(data))")) {
-				conf = c;
-				break;
-			}
-		}
-		
-		if (conf == null)
-			throw new KerError("Remote connection configuration not found. "
-					+ "Need name like \'tick\', \'market-data\', \'market_data\' or \'marketdata\'");
-		
-		try {
-			var address = new InetSocketAddress(InetAddress.getByName(conf.host()), conf.port());
-			
-			// Connect remote.
-			var connection = new Socket();
-			connection.connect(address);
-			
-			// Wrap connection into packet socket.
-			return new PacketClient(connection);
-		} catch (UnknownHostException e) {
-			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
-		} catch (IOException e) {
-			throw new KerError("Fail connecting remote host " + conf.host() + ":" + conf.port());
-		}
-	}
-	
-	private void processPacket(Packet packet) {
-		if (packet.type() != MessageType.RX_TICK) {
-			callListener(new KerError("Wrong packet type, need TICK."));
-			return;
-		}
-		
-		try {
-			var ticks = this.codec.decode(packet.bytes(), RxTickMessage.class);
-			for (var tick : ticks.values()) {
-				if (!this.dataQueue.offer(tick))
-					callListener(new KerError("Fail enqueuing the tick."));
-			}
-		} catch (KerError e) {
-			callListener(e);
-		}
-	}
-	
-	private void callListener(KerError e) {
-		if (this.listener == null)
-			return;
-		
-		try {
-			this.listener.error(e);
-		} catch (Exception ex) {}
-	}
-	
-	private void callListener(EngineState s) {
-		if (this.listener == null)
-			return;
-		
-		try {
-			this.listener.state(s);
-		} catch (Exception ex) {}
-	}
-	
-	private void callListener(KerTick tick) {
-		if (this.listener == null)
-			return;
-		
-		try {
-			this.listener.tick(tick);
-		} catch (Exception ex) {}
-	}
-	
-	private void tryClose() {
-		if (this.remote.closed())
-			return;
-		
-		this.remote.close();
-	}
-
-	public void tellStopping() {
-		this.state = EngineState.STOPPING;
-		tryClose();
+	public void stop() {
+		// Change state.
+		changeState(EngineState.STOPPING);
+		// Logout request.
+		CThostFtdcUserLogoutField req = new CThostFtdcUserLogoutField();
+		req.BrokerID = this.config.brokerId();
+		req.UserID =  this.config.userId();
+		checkRtnCode("request logout", this.mdApi.ReqUserLogout(req, Utils.increaseGet()));
 	}
 
 	public EngineState state() {
 		return this.state;
+	}
+	
+	public void start() throws KerError {
+		this.config = this.context.info().remoteConfig().traderConfig();
+		if (this.config == null)
+			throw new KerError("Md config not found.");
+		// Ensure flow directory.
+		Utils.ensureDir(Paths.get(this.config.flowPath()));
+		
+		// Set state.
+		changeState(EngineState.STARTING);
+		
+		// Create trader api if it doesn't exist.
+		if (this.mdApi == null) {
+			this.mdApi = CThostFtdcMdApi.CreateFtdcMdApi(this.config.flowPath(), false, false);
+			// Set counter info.
+			// Front addresses.
+			for (var addr : this.config.addresses())
+				this.mdApi.RegisterFront(addr);
+			// Spi.
+			this.mdApi.RegisterSpi(this);
+		}
+
+		// Connect to remote counter.
+		this.mdApi.Init();
+	}
+	
+	private void changeState(EngineState state) {
+		this.state = state;
+		try {
+			this.listener.state(this.state);
+		} catch (Throwable th) {
+		}
+	}
+	
+	private void checkRtnCode(String msg, int n) {
+		switch (n) {
+		case -1:
+			this.listener.error(new KerError("Network failure: " + msg));
+			break;
+		case -2:
+			this.listener.error(new KerError("Request queue overflow: " + msg));
+			break;
+		case -3:
+			this.listener.error(new KerError("Flow control: " + msg));
+			break;
+		default:
+			break;
+		}
+	}
+	
+	private KerTick translate(CThostFtdcDepthMarketDataField depthMarketData) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	private KerError translate(CThostFtdcRspInfoField rsp) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void OnFrontConnected() {
+		if (this.state == EngineState.STOPPING || this.state == EngineState.STOPPED)
+			return;
+		
+		CThostFtdcReqUserLoginField req = new CThostFtdcReqUserLoginField();
+		req.BrokerID = this.config.brokerId();
+		req.UserID = this.config.userId();
+		req.Password = this.config.password();
+		req.UserProductInfo = this.config.userProductInfo();
+		// Send login request.
+		checkRtnCode("request login", this.mdApi.ReqUserLogin(req, Utils.increaseGet()));
+	}
+
+	@Override
+	public void OnFrontDisconnected(int reason) {
+		this.listener.error(new KerError(reason, "Trader disconnected: " + reason));
+	}
+
+	@Override
+	public void OnRspError(CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspUserLogin(CThostFtdcRspUserLoginField rspUserLogin, CThostFtdcRspInfoField rspInfo, int requestId,
+			boolean isLast) {
+		if (rspInfo.code == 0)
+			changeState(EngineState.STARTED);
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspUserLogout(CThostFtdcUserLogoutField userLogout, CThostFtdcRspInfoField rspInfo, int nRequestID,
+			boolean isLast) {
+		if (rspInfo.code == 0)
+			changeState(EngineState.STOPPED);
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspSubMarketData(CThostFtdcSpecificInstrumentField specificInstrument, CThostFtdcRspInfoField rspInfo,
+			int requestId, boolean isLast) {
+		if (rspInfo.code == 0) {
+			this.subscribed.add(specificInstrument.InstrumentID);
+			if (isLast) {
+				try {
+					for (var symbol : this.context.info().symbols())
+						if (!this.subscribed.contains(symbol))
+							this.listener.error(new KerError("Symbol not subscribed: " + symbol));
+				} catch (KerError e) {
+					this.listener.error(e);
+				}
+				// Clear for next round.
+				this.subscribed.clear();
+			}
+		} else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspUnSubMarketData(CThostFtdcSpecificInstrumentField specificInstrument,
+			CThostFtdcRspInfoField rspInfo, int nRequestID, boolean isLast) {
+	}
+
+	@Override
+	public void OnRtnDepthMarketData(CThostFtdcDepthMarketDataField depthMarketData) {
+		this.listener.tick(translate(depthMarketData));
 	}
 }

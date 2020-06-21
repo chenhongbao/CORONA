@@ -1,247 +1,366 @@
 package com.nabiki.corona.trade.core;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.nio.file.Paths;
 
-import com.nabiki.corona.MessageType;
+import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
-import com.nabiki.corona.system.packet.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
-import com.nabiki.corona.object.DefaultDataCodec;
-import com.nabiki.corona.object.tool.Packet;
-import com.nabiki.corona.object.tool.PacketClient;
+import com.nabiki.ctp.trader.*;
+import com.nabiki.ctp.trader.struct.*;
 
-public class TradeEngine implements Runnable {
+public class TradeEngine extends CThostFtdcTraderSpi {
 	public enum State {
 		STARTING, STARTED, STOPPING, STOPPED
 	}
-	
+
 	private final TradeServiceContext context;
 	private final TradeEngineListener listener;
-	private final TradeEngineErrorListener errorListener;
 
-	// Socket connection.
 	private State state = State.STOPPED;
-	private PacketClient connection;
 
-	// Data queue.
-	private Thread queDaemon;
-	private final BlockingQueue<Packet> dataQueue = new LinkedBlockingQueue<>();
+	private RemoteConfig config;
+	private CThostFtdcTraderApi traderApi;
 
-	// Codec.
-	private final DataCodec codec = DefaultDataCodec.create();
-
-	public TradeEngine(TradeEngineListener listener, TradeEngineErrorListener errorListener, TradeServiceContext context) {
+	public TradeEngine(TradeEngineListener listener, TradeServiceContext context) {
 		this.context = context;
 		this.listener = listener;
-		this.errorListener = errorListener;
 	}
 
-	public synchronized void send(short type, byte[] bytes, int offset, int length) throws KerError {
-		if (this.connection.closed())
-			throw new KerError("Can't send through a closed or never connected socket.");
-		// Send bytes.
-		this.connection.send(type, bytes, offset, length);
-	}
-
-	public void tellStop() {
+	public void stop() {
 		this.state = State.STOPPING;
-		tryClose();
+		// Request logout.
+		CThostFtdcUserLogoutField req = new CThostFtdcUserLogoutField();
+		req.BrokerID = this.config.brokerId();
+		req.UserID = this.config.userId();
+		checkRtnCode("Request logout", this.traderApi.ReqUserLogout(req, Utils.increaseGet()));
 	}
-	
+
 	public State state() {
 		return this.state;
 	}
 
-	@Override
-	public void run() {
-		// Mark state.
+	public void start() throws KerError {
+		this.config = this.context.info().remoteConfig().traderConfig();
+		if (this.config == null)
+			throw new KerError("Trader config not found.");
+		// Ensure flow directory.
+		Utils.ensureDir(Paths.get(this.config.flowPath()));
+		// Set state.
 		this.state = State.STARTING;
 		
-		// Queue daemon.
-		this.queDaemon = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (state != State.STOPPING) {
-					try {
-						invokePacket(dataQueue.poll(24, TimeUnit.HOURS));
-					} catch (InterruptedException e) {
-						// Interrupted by trade launcher to exit.
-						// Do nothing here. The while loop will exit if thread is interrupted for close.
-					} catch (KerError e) {
-						errorListener.error(e);
-					}
-				}
-			}
-		});
-		
-		this.queDaemon.start();
-		this.queDaemon.setDaemon(true);
-
-		// Connect.
-		try {
-			this.connection = connect();
-		} catch (KerError e) {
-			this.errorListener.error(e);
-			return;
-		}
-		
-		// Mark state.
-		this.state = State.STARTED;
-
-		// Loop to receive packet.
-		while (state == State.STARTED) {
-			try {
-				if (!this.dataQueue.offer(this.connection.receive()))
-					this.errorListener.error(new KerError("Fail offering packet to queue."));
-			} catch (KerError e) {
-				this.errorListener.error(e);
-			}
+		// Create trader api if it doesn't exist.
+		if (this.traderApi == null) {
+			this.traderApi = CThostFtdcTraderApi.CreateFtdcTraderApi(this.config.flowPath());
+			// Set counter info.
+			// Front addresses.
+			for (var addr : this.config.addresses())
+				this.traderApi.RegisterFront(addr);
+			// Spi.
+			this.traderApi.RegisterSpi(this);
+			// Topic types.
+			this.traderApi.SubscribePrivateTopic(this.config.privateTopicType());
+			this.traderApi.SubscribePublicTopic(this.config.publicTopicType());
 		}
 
-		// Close connection.
-		tryClose();
-
-		// Interrupt data queue thread and exit.
-		if (!this.queDaemon.isInterrupted())
-			this.queDaemon.interrupt();
-
-		try {
-			this.queDaemon.join();
-		} catch (InterruptedException e) {
-		}
-		
-		// Mark state.
-		this.state = State.STOPPED;
+		// Connect to remote counter.
+		this.traderApi.Init();
 	}
-
-	private PacketClient connect() throws KerError {
-		// Find connection config to remote.
-		RemoteConfig conf = null;
-		for (var c : this.context.info().remoteConfig().configs()) {
-			if (c.name().toLowerCase().indexOf("trade") != -1) {
-				conf = c;
-				break;
-			}
-		}
-
-		if (conf == null)
-			throw new KerError("Remote connection configuration not found. Need name like \'trade\' or \trader\'");
-
-		try {
-			var address = new InetSocketAddress(InetAddress.getByName(conf.host()), conf.port());
-
-			// Connect remote.
-			var connection = new Socket();
-			connection.connect(address);
-
-			// Wrap connection into packet socket.
-			return new PacketClient(connection);
-		} catch (UnknownHostException e) {
-			throw new KerError("Can't find remote host " + conf.host() + ":" + conf.port());
-		} catch (IOException e) {
-			throw new KerError("Fail connecting remote host " + conf.host() + ":" + conf.port());
+	
+	public synchronized void send(Request<?> request) throws KerError {
+		if (request == null)
+			throw new KerError("Request null pointer");
+		
+		switch (request.type()) {
+		case Unknown:
+			throw new KerError("Unknown request type.");
+		case QueryInstrument:
+			checkRtnCode("request query instrument", 
+					this.traderApi.ReqQryInstrument(translate((KerQueryInstrument)request.request()), Utils.increaseGet()));
+			break;
+		case QueryMargin:
+			checkRtnCode("request query margin",
+					this.traderApi.ReqQryInstrumentMarginRate(translate((KerQueryMargin)request.request()), Utils.increaseGet()));
+			break;
+		case QueryCommission:
+			checkRtnCode("request query commission",
+					this.traderApi.ReqQryInstrumentCommissionRate(translate((KerQueryCommission)request.request()), Utils.increaseGet()));
+			break;
+		case QueryAccount:
+			checkRtnCode("request query account",
+					this.traderApi.ReqQryTradingAccount(translate((KerQueryAccount)request.request()), Utils.increaseGet()));
+			break;
+		case QueryPositionDetail:
+			checkRtnCode("request query position detail",
+					this.traderApi.ReqQryInvestorPositionDetail(translate((KerQueryPositionDetail)request.request()), Utils.increaseGet()));
+			break;
+		case Order:
+			checkRtnCode("request inserting order",
+					this.traderApi.ReqOrderInsert(translate((KerOrder)request.request()), Utils.increaseGet()));
+			break;
+		case Action:
+			checkRtnCode("request order action",
+					this.traderApi.ReqOrderAction(translate((KerAction)request.request()), Utils.increaseGet()));
+		default:
+			break;
 		}
 	}
 
-	private void tryClose() {
-		if (this.connection.closed())
-			return;
-
-		this.connection.close();
+	private CThostFtdcInputOrderActionField translate(KerAction request) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	private void invokePacket(Packet packet) throws KerError {
-		switch (packet.type()) {
-		case MessageType.RX_ACCOUNT:
-			var account = this.codec.decode(packet.bytes(), RxAccountMessage.class);
-			if (account.valueCount() != 1)
-				throw new KerError("Duplicated remote accounts, expected to be unique one.");
+	private CThostFtdcInputOrderField translate(KerOrder request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-			// Callback with the first(sole) account.
-			this.listener.account(account.value(0));
+	private CThostFtdcQryInvestorPositionDetailField translate(KerQueryPositionDetail request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private CThostFtdcQryTradingAccountField translate(KerQueryAccount request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private CThostFtdcQryInstrumentCommissionRateField translate(KerQueryCommission request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private CThostFtdcQryInstrumentMarginRateField translate(KerQueryMargin request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private CThostFtdcQryInstrumentField translate(KerQueryInstrument request) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private void checkRtnCode(String msg, int n) {
+		switch (n) {
+		case -1:
+			this.listener.error(new KerError("Network failure: " + msg));
 			break;
-		case MessageType.RX_ACTION_ERROR:
-			// Process error on action insertion.
-			var actError = this.codec.decode(packet.bytes(), RxActionErrorMessage.class);
-			for (var error : actError.values())
-				this.listener.error(error.action(), error.error());
-
+		case -2:
+			this.listener.error(new KerError("Request queue overflow: " + msg));
 			break;
-		case MessageType.RX_COMMISSION:
-			var comm = this.codec.decode(packet.bytes(), RxCommissionMessage.class);
-			for (var c : comm.values())
-				this.listener.commission(c);
-
-			break;
-		case MessageType.RX_ERROR:
-			var error = this.codec.decode(packet.bytes(), RxErrorMessage.class);
-			for (var e : error.values())
-				this.listener.error(e);
-
-			break;
-		case MessageType.RX_INSTRUMENT:
-			var insts = this.codec.decode(packet.bytes(), RxInstrumentMessage.class);
-			if (insts.valueCount() > 0) {
-				var iter = insts.values().iterator();
-				KerInstrument in = iter.next();
-
-				// There is next element after current position, it is not the LAST element.
-				while (iter.hasNext()) {
-					this.listener.instrument(in, false);
-					in = iter.next();
-				}
-				// If this packet is last of the same query, call method with last set true, false otherwise.
-				this.listener.instrument(in, insts.last());
-			}
-			break;
-		case MessageType.RX_MARGIN:
-			var margin = this.codec.decode(packet.bytes(), RxMarginMessage.class);
-			for (var m : margin.values())
-				this.listener.margin(m);
-
-			break;
-		case MessageType.RX_ORDER_ERROR:
-			// Process error on order insertion.
-			var orderError = this.codec.decode(packet.bytes(), RxOrderErrorMessage.class);
-			for (var e : orderError.values())
-				this.listener.error(e.order(), e.error());
-
-			break;
-		case MessageType.RX_ORDER_STATUS:
-			var status = this.codec.decode(packet.bytes(), RxOrderStatusMessage.class);
-			for (var s : status.values())
-				this.listener.orderStatus(s);
-
-			break;
-		case MessageType.RX_POSITION_DETAIL:
-			var pos = this.codec.decode(packet.bytes(), RxPositionDetailMessage.class);
-			if (pos.valueCount() > 0) {
-				var iter = pos.values().iterator();
-				KerPositionDetail p = iter.next();
-				while (iter.hasNext()) {
-					this.listener.position(p, false);
-					p = iter.next();
-				}
-
-				this.listener.position(p, pos.last());
-			}
-			break;
-		case MessageType.RX_TRADE_REPORT:
-			var reps = this.codec.decode(packet.bytes(), RxTradeReportMessage.class);
-			for (var rep : reps.values())
-				this.listener.tradeReport(rep);
-
+		case -3:
+			this.listener.error(new KerError("Flow control: " + msg));
 			break;
 		default:
-			this.errorListener.error(new KerError("Unknown message type: " + Short.toString(packet.type())));
 			break;
+		}
+	}
+
+	private KerOrder translate(CThostFtdcInputOrderField order) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerAction translate(CThostFtdcOrderActionField action) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerAction translate(CThostFtdcInputOrderActionField action) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerInstrument translate(CThostFtdcInstrumentField instrument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerCommission translate(CThostFtdcInstrumentCommissionRateField commission) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerMargin translate(CThostFtdcInstrumentMarginRateField margin) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerPositionDetail translate(CThostFtdcInvestorPositionDetailField pd) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerAccount translate(CThostFtdcTradingAccountField account) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	private KerOrderStatus transalte(CThostFtdcOrderField order) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerTradeReport translate(CThostFtdcTradeField trade) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private KerError translate(CThostFtdcRspInfoField rsp) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void OnErrRtnOrderAction(CThostFtdcOrderActionField orderAction, CThostFtdcRspInfoField rspInfo) {
+		this.listener.error(translate(orderAction), translate(rspInfo));
+	}
+
+	@Override
+	public void OnErrRtnOrderInsert(CThostFtdcInputOrderField inputOrder, CThostFtdcRspInfoField rspInfo) {
+		this.listener.error(translate(inputOrder), translate(rspInfo));
+	}
+
+	@Override
+	public void OnFrontConnected() {
+		if (this.state == State.STOPPING || this.state == State.STOPPED)
+			return;
+		
+		CThostFtdcReqAuthenticateField req = new CThostFtdcReqAuthenticateField();
+		req.AppID = this.config.appId();
+		req.AuthCode = this.config.authCode();
+		req.BrokerID = this.config.brokerId();
+		req.UserID = this.config.userId();
+		req.UserProductInfo = this.config.userProductInfo();
+		// Send auth request.
+		checkRtnCode("request authentication", this.traderApi.ReqAuthenticate(req, Utils.increaseGet()));
+	}
+
+	@Override
+	public void OnFrontDisconnected(int reason) {
+		this.listener.error(new KerError(reason, "Trader disconnected: " + reason));
+	}
+
+	@Override
+	public void OnRspAuthenticate(CThostFtdcRspAuthenticateField rspAuthenticateField, CThostFtdcRspInfoField rspInfo,
+			int requestId, boolean isLast) {
+		if (rspInfo.code == 0) {
+			CThostFtdcReqUserLoginField req = new CThostFtdcReqUserLoginField();
+			req.BrokerID = this.config.brokerId();
+			req.UserID = this.config.userId();
+			req.Password = this.config.password();
+			req.UserProductInfo = this.config.userProductInfo();
+			// Send login request.
+			checkRtnCode("request login", this.traderApi.ReqUserLogin(req, Utils.increaseGet()));
+		} else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspError(CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspOrderAction(CThostFtdcInputOrderActionField inputOrderAction, CThostFtdcRspInfoField rspInfo,
+			int requestId, boolean isLast) {
+		this.listener.error(translate(inputOrderAction), translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspOrderInsert(CThostFtdcInputOrderField inputOrder, CThostFtdcRspInfoField rspInfo, int requestId,
+			boolean isLast) {
+		this.listener.error(translate(inputOrder), translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspQryInstrument(CThostFtdcInstrumentField instrument, CThostFtdcRspInfoField rspInfo, int requestId,
+			boolean isLast) {
+		if (rspInfo.code == 0)
+			this.listener.instrument(translate(instrument), isLast);
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateField instrumentCommissionRate,
+			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		if (rspInfo.code == 0)
+			this.listener.commission(translate(instrumentCommissionRate));
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspQryInstrumentMarginRate(CThostFtdcInstrumentMarginRateField instrumentMarginRate,
+			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		if (rspInfo.code == 0)
+			this.listener.margin(translate(instrumentMarginRate));
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField investorPositionDetail,
+			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		if (rspInfo.code == 0)
+			this.listener.position(translate(investorPositionDetail), isLast);
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspQryTradingAccount(CThostFtdcTradingAccountField tradingAccount, CThostFtdcRspInfoField rspInfo,
+			int requestId, boolean isLast) {
+		if (rspInfo.code == 0)
+			this.listener.account(translate(tradingAccount));
+		else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRspSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField settlementInfoConfirm,
+			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
+		this.state = State.STARTED;
+	}
+
+	@Override
+	public void OnRspUserLogin(CThostFtdcRspUserLoginField rspUserLogin, CThostFtdcRspInfoField rspInfo, int requestId,
+			boolean isLast) {
+		if (rspInfo.code == 0) {
+			CThostFtdcSettlementInfoConfirmField req = new CThostFtdcSettlementInfoConfirmField();
+			req.BrokerID = this.config.brokerId();
+			req.InvestorID = this.config.userId();
+			checkRtnCode("request settlement confirm", this.traderApi.ReqSettlementInfoConfirm(req, Utils.increaseGet()));
+		} else
+			this.listener.error(translate(rspInfo));
+			
+	}
+
+	@Override
+	public void OnRspUserLogout(CThostFtdcUserLogoutField userLogout, CThostFtdcRspInfoField rspInfo, int requestId,
+			boolean isLast) {
+		if (rspInfo.code == 0) {
+			this.state = State.STOPPED;
+		} else
+			this.listener.error(translate(rspInfo));
+	}
+
+	@Override
+	public void OnRtnOrder(CThostFtdcOrderField order) {
+		try {
+			this.context.local().orderStatus(transalte(order));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
+	}
+	
+	@Override
+	public void OnRtnTrade(CThostFtdcTradeField trade) {
+		try {
+			this.context.local().tradeReport(translate(trade));
+		} catch (KerError e) {
+			this.listener.error(e);
 		}
 	}
 }

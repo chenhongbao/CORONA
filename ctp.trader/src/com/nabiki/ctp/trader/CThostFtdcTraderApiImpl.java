@@ -170,4 +170,9 @@ public class CThostFtdcTraderApiImpl extends CThostFtdcTraderApi implements Auto
 	public void close() throws Exception {
 		this.Release();
 	}
+
+	@Override
+	public int ReqSettlementInfoConfirm(CThostFtdcSettlementInfoConfirmField settlementInfoConfirm, int requestId) {
+		return TraderNatives.ReqSettlementInfoConfirm(this.sessionId, settlementInfoConfirm, requestId);
+	}
 }
