@@ -4,6 +4,9 @@ import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.nabiki.corona.candle.api.EngineState;
+import com.nabiki.corona.candle.api.TickEngine;
+import com.nabiki.corona.candle.api.TickEngineListener;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.*;
@@ -16,7 +19,7 @@ import com.nabiki.ctp.md.struct.CThostFtdcRspUserLoginField;
 import com.nabiki.ctp.md.struct.CThostFtdcSpecificInstrumentField;
 import com.nabiki.ctp.md.struct.CThostFtdcUserLogoutField;
 
-public class TickEngine extends CThostFtdcMdSpi {
+public class CtpTickEngine extends CThostFtdcMdSpi implements TickEngine {
 	private EngineState state = EngineState.STOPPED;
 	
 	private final CandleServiceContext context;
@@ -27,11 +30,12 @@ public class TickEngine extends CThostFtdcMdSpi {
 	
 	private Set<String> subscribed = new HashSet<>();
 
-	public TickEngine(TickEngineListener l, CandleServiceContext context) {
+	public CtpTickEngine(TickEngineListener l, CandleServiceContext context) {
 		this.listener = l;
 		this.context = context;
 	}
 	
+	@Override
 	public void sendSymbols() throws KerError {
 		var symbols = this.context.info().symbols();
 		if (symbols == null || symbols.size() == 0)
@@ -43,6 +47,7 @@ public class TickEngine extends CThostFtdcMdSpi {
 		checkRtnCode("subscribe symbols", this.mdApi.SubscribeMarketData(instruments, instruments.length));
 	}
 
+	@Override
 	public void stop() {
 		// Change state.
 		changeState(EngineState.STOPPING);
@@ -53,10 +58,12 @@ public class TickEngine extends CThostFtdcMdSpi {
 		checkRtnCode("request logout", this.mdApi.ReqUserLogout(req, Utils.increaseGet()));
 	}
 
+	@Override
 	public EngineState state() {
 		return this.state;
 	}
 	
+	@Override
 	public void start() throws KerError {
 		this.config = this.context.info().remoteConfig().traderConfig();
 		if (this.config == null)

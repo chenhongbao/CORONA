@@ -8,13 +8,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.nabiki.corona.CandleMinute;
 import com.nabiki.corona.ErrorCode;
+import com.nabiki.corona.candle.api.CandleEngine;
+import com.nabiki.corona.candle.api.CandleEngineListener;
 import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.api.DataFactory;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
 
-public class CandleEngine extends TimerTask {
+public class TimerTaskCandleEngine extends TimerTask implements CandleEngine {
 
 	public final static int DEFAULT_PERIOD_MILLIS = 60 * 1000;
 
@@ -33,7 +35,7 @@ public class CandleEngine extends TimerTask {
 	// Working mark
 	private AtomicBoolean working = new AtomicBoolean(false);
 
-	public CandleEngine(CandleEngineListener l, CandleServiceContext context) throws KerError {
+	public TimerTaskCandleEngine(CandleEngineListener l, CandleServiceContext context) throws KerError {
 		if (l == null || context == null)
 			throw new KerError("Invalid parameters.");
 
@@ -52,6 +54,7 @@ public class CandleEngine extends TimerTask {
 		this.candles.clear();
 	}
 
+	@Override
 	public void state(boolean working) {
 		this.working.set(working);
 	}
@@ -76,7 +79,7 @@ public class CandleEngine extends TimerTask {
 		}
 
 		// Try generating candles.
-		for (int period : CandleEngine.periods) {
+		for (int period : TimerTaskCandleEngine.periods) {
 			for (var g : this.candles.values()) {
 				try {
 					var c = g.get(period, now);
@@ -109,6 +112,7 @@ public class CandleEngine extends TimerTask {
 		}
 	}
 
+	@Override
 	public void tick(KerTick t) throws KerError {
 		if (t == null || t.symbol() == null)
 			throw new KerError("Tick or symbol null pointer.");

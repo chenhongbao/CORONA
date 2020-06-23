@@ -1,4 +1,4 @@
-package com.nabiki.corona.candle.core;
+package com.nabiki.corona.candle.api;
 
 // Internal states.
 public enum EngineState {

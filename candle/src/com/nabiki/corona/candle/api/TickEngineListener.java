@@ -1,4 +1,4 @@
-package com.nabiki.corona.candle.core;
+package com.nabiki.corona.candle.api;
 
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;

@@ -17,6 +17,10 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
+import com.nabiki.corona.candle.api.EngineAction;
+import com.nabiki.corona.candle.api.EngineState;
+import com.nabiki.corona.candle.api.TickEngine;
+import com.nabiki.corona.candle.api.TickEngineListener;
 import com.nabiki.corona.candle.core.*;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
@@ -83,8 +87,8 @@ public class TickLauncher implements Runnable {
 	public void start(ComponentContext ctx) {
 		// Delayed until next minute
 		long delayMillis = 0;
-		var pastMillis = System.currentTimeMillis() % CandleEngine.DEFAULT_PERIOD_MILLIS;
-		delayMillis = CandleEngine.DEFAULT_PERIOD_MILLIS - pastMillis;
+		var pastMillis = System.currentTimeMillis() % TimerTaskCandleEngine.DEFAULT_PERIOD_MILLIS;
+		delayMillis = TimerTaskCandleEngine.DEFAULT_PERIOD_MILLIS - pastMillis;
 
 		try {
 			this.executor = new ScheduledThreadPoolExecutor(4);
@@ -95,7 +99,7 @@ public class TickLauncher implements Runnable {
 		}
 
 		// Create tick engine.
-		this.engine = new TickEngine(new TickPostListener(), this.context);
+		this.engine = new CtpTickEngine(new TickPostListener(), this.context);
 	}
 
 	@Deactivate

@@ -11,8 +11,8 @@ import org.osgi.service.log.Logger;
 import org.osgi.service.log.LoggerFactory;
 
 import com.nabiki.corona.ErrorCode;
-import com.nabiki.corona.candle.core.CandleEngine;
-import com.nabiki.corona.candle.core.CandleEngineListener;
+import com.nabiki.corona.candle.api.CandleEngineListener;
+import com.nabiki.corona.candle.core.TimerTaskCandleEngine;
 import com.nabiki.corona.candle.core.CandleServiceContext;
 import com.nabiki.corona.system.api.KerCandle;
 import com.nabiki.corona.system.api.KerError;
@@ -98,7 +98,7 @@ public class TickLocalService implements TickLocal {
 	// Use timer because the scheduleAtFixedRate will concurrently execute tasks if previous task takes longer than
 	// period to finish.
 	private Timer timer;
-	private CandleEngine engine;
+	private TimerTaskCandleEngine engine;
 	
 	public TickLocalService() {
 	}
@@ -107,7 +107,7 @@ public class TickLocalService implements TickLocal {
 	public void start(ComponentContext ctx) {
 		// The runtime info ref is set via service context. It can be null pointer here but will be set in future.	
 		try {
-			this.engine = new CandleEngine(new CandlePostListener(), this.context);
+			this.engine = new TimerTaskCandleEngine(new CandlePostListener(), this.context);
 		} catch (KerError e) {
 			this.log.error("Fail creating candle engine. {}", e.getMessage(), e);
 			return;
@@ -117,11 +117,11 @@ public class TickLocalService implements TickLocal {
 
 		// Delayed until next minute
 		long remainMsInCurMin = 0;
-		var elapseMsInCurMin = System.currentTimeMillis() % CandleEngine.DEFAULT_PERIOD_MILLIS;
-		remainMsInCurMin = CandleEngine.DEFAULT_PERIOD_MILLIS - elapseMsInCurMin;
+		var elapseMsInCurMin = System.currentTimeMillis() % TimerTaskCandleEngine.DEFAULT_PERIOD_MILLIS;
+		remainMsInCurMin = TimerTaskCandleEngine.DEFAULT_PERIOD_MILLIS - elapseMsInCurMin;
 
 		try {
-			this.timer.scheduleAtFixedRate(this.engine, remainMsInCurMin, CandleEngine.DEFAULT_PERIOD_MILLIS);
+			this.timer.scheduleAtFixedRate(this.engine, remainMsInCurMin, TimerTaskCandleEngine.DEFAULT_PERIOD_MILLIS);
 			this.log.info("Schedule candle engine.");
 		} catch (RejectedExecutionException e) {
 			this.log.warn("Fail scheduling candle engine. {}", e.getMessage());
