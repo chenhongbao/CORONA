@@ -9,10 +9,12 @@ import com.nabiki.corona.OrderPriceType;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
+import com.nabiki.corona.trade.api.TradeEngine;
+import com.nabiki.corona.trade.api.TradeEngineListener;
 import com.nabiki.ctp.trader.*;
 import com.nabiki.ctp.trader.struct.*;
 
-public class TradeEngine extends CThostFtdcTraderSpi {
+public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	public enum State {
 		STARTING, STARTED, STOPPING, STOPPED
 	}
@@ -26,11 +28,12 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 	private CThostFtdcTraderApi traderApi;
 	private CThostFtdcRspUserLoginField user;
 
-	public TradeEngine(TradeEngineListener listener, TradeServiceContext context) {
+	public CtpTradeEngine(TradeEngineListener listener, TradeServiceContext context) {
 		this.context = context;
 		this.listener = listener;
 	}
 
+	@Override
 	public void stop() {
 		this.state = State.STOPPING;
 		// Request logout.
@@ -40,10 +43,12 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 		checkRtnCode("Request logout", this.traderApi.ReqUserLogout(req, Utils.increaseGet()));
 	}
 
+	@Override
 	public State state() {
 		return this.state;
 	}
 
+	@Override
 	public void start() throws KerError {
 		this.config = this.context.info().remoteConfig().traderConfig();
 		if (this.config == null)
@@ -71,6 +76,7 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 		this.traderApi.Init();
 	}
 	
+	@Override
 	public synchronized void send(Request<?> request) throws KerError {
 		if (request == null)
 			throw new KerError("Request null pointer");

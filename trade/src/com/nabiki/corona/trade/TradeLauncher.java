@@ -5,8 +5,10 @@ import java.time.Instant;
 import org.osgi.service.component.annotations.Component;
 
 import com.nabiki.corona.system.api.KerError;
+import com.nabiki.corona.trade.api.TradeEngine;
+import com.nabiki.corona.trade.api.TradeEngineListener;
 import com.nabiki.corona.trade.core.*;
-import com.nabiki.corona.trade.core.TradeEngine.*;
+import com.nabiki.corona.trade.core.CtpTradeEngine.*;
 
 @Component(service = {})
 public class TradeLauncher implements Runnable {
@@ -17,7 +19,7 @@ public class TradeLauncher implements Runnable {
 	public TradeLauncher(TradeEngineListener listener, TradeServiceContext context) {
 		this.context = context;
 		this.listener = listener;
-		this.engine = new TradeEngine(this.listener, this.context);
+		this.engine = new CtpTradeEngine(this.listener, this.context);
 	}
 	
 	public TradeEngine remote() {

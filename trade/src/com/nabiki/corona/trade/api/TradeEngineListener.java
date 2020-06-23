@@ -1,4 +1,4 @@
-package com.nabiki.corona.trade.core;
+package com.nabiki.corona.trade.api;
 
 import com.nabiki.corona.system.api.*;
 

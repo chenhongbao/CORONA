@@ -24,6 +24,7 @@ import com.nabiki.corona.system.biz.api.TradeLocal;
 import com.nabiki.corona.system.biz.api.TradeRemote;
 import com.nabiki.corona.system.info.api.RuntimeInfo;
 import com.nabiki.corona.object.*;
+import com.nabiki.corona.trade.api.TradeEngineListener;
 import com.nabiki.corona.trade.core.*;
 
 @Component
