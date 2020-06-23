@@ -1,7 +1,7 @@
 package com.nabiki.corona.client.api;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Trade report to client.
@@ -28,7 +28,7 @@ public interface TradeReport {
 	
 	LocalDate tradeDate();
 
-	Instant tradeTime();
+	LocalTime tradeTime();
 
 	LocalDate tradingDay();
 }

@@ -6,6 +6,7 @@ import com.nabiki.corona.ActionFlag;
 import com.nabiki.corona.CloseReason;
 import com.nabiki.corona.HedgeFlag;
 import com.nabiki.corona.OrderPriceType;
+import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
@@ -27,6 +28,9 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	private RemoteConfig config;
 	private CThostFtdcTraderApi traderApi;
 	private CThostFtdcRspUserLoginField user;
+	
+	// Factory.
+	private DataFactory factory = DefaultDataFactory.create();
 
 	public CtpTradeEngine(TradeEngineListener listener, TradeServiceContext context) {
 		this.context = context;
@@ -131,6 +135,13 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 			throw new KerError("Instrument not found.");
 		return in.exchangeId();
 	}
+	
+	private int volumeMultiple(String symbol) throws KerError{
+		var in = this.context.info().instrument(symbol);
+		if (in == null)
+			throw new KerError("Instrument not found.");
+		return in.volumeMultiple();
+	}
 
 	private CThostFtdcInputOrderActionField translate(KerAction request) throws KerError {
 		var r = new CThostFtdcInputOrderActionField();
@@ -228,69 +239,237 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 		}
 	}
 
-	private KerOrder translate(CThostFtdcInputOrderField order) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerOrder translate(CThostFtdcInputOrderField order) throws KerError {
+		var r = this.factory.create(KerOrder.class);
+		r.contigentConditon((char)order.ContingentCondition);
+		r.direction((char)order.Direction);
+		r.gtdDate(Utils.date(order.GTDDate));
+		r.hedgeFlag((char)order.CombHedgeFlag);
+		r.ipAddress(order.IPAddress);
+		r.macAddress(order.MacAddress);
+		r.minVolume(order.MinVolume);
+		r.offsetFlag((char)order.CombOffsetFlag);
+		r.orderId(order.OrderRef);
+		r.price(order.LimitPrice);
+		r.priceType((char)order.OrderPriceType);
+		r.stopPrice(order.StopPrice);
+		r.symbol(order.InstrumentID);
+		r.timeCondition((char)order.TimeCondition);
+		r.volume(order.VolumeTotalOriginal);
+		r.volumeCondition((char)order.VolumeCondition);
+		return r;
 	}
 
-	private KerAction translate(CThostFtdcOrderActionField action) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerAction translate(CThostFtdcOrderActionField action) throws KerError {
+		var r = this.factory.create(KerAction.class);
+		r.ipAddress(action.IPAddress);
+		r.macAddress(action.MacAddress);
+		r.orderId(action.OrderRef);
+		r.symbol(action.InstrumentID);
+		return r;
 	}
 
-	private KerAction translate(CThostFtdcInputOrderActionField action) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerAction translate(CThostFtdcInputOrderActionField action) throws KerError {
+		var r = this.factory.create(KerAction.class);
+		r.ipAddress(action.IPAddress);
+		r.macAddress(action.MacAddress);
+		r.orderId(action.OrderRef);
+		r.symbol(action.InstrumentID);
+		return r;
 	}
 
-	private KerInstrument translate(CThostFtdcInstrumentField instrument) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerInstrument translate(CThostFtdcInstrumentField instrument) throws KerError {
+		var r = this.factory.create(KerInstrument.class);
+		r.createDate(Utils.date(instrument.CreateDate));
+		r.deliveryMonth(instrument.DeliveryMonth);
+		r.deliveryYear(instrument.DeliveryYear);
+		r.endDelivDate(Utils.date(instrument.EndDelivDate));
+		r.exchangeId(instrument.ExchangeID);
+		r.exchangeInstId(instrument.ExchangeInstID);
+		r.expireDate(Utils.date(instrument.ExpireDate));
+		r.instLifePhase((char)instrument.InstLifePhase);
+		r.isTrading(Utils.bool(instrument.IsTrading));
+		r.longMarginRatio(instrument.LongMarginRatio);
+		r.maxLimitOrderVolume(instrument.MaxLimitOrderVolume);
+		r.maxMarketOrderVolume(instrument.MaxMarketOrderVolume);
+		r.minLimitOrderVolume(instrument.MinLimitOrderVolume);
+		r.minMarketOrderVolume(instrument.MinMarketOrderVolume);
+		r.openDate(Utils.date(instrument.OpenDate));
+		r.positionDateType((char)instrument.PositionDateType);
+		r.positionType((char)instrument.PositionType);
+		r.priceTick(instrument.PriceTick);
+		r.productClass((char)instrument.ProductClass);
+		r.productId(instrument.ProductID);
+		r.shortMarginRatio(instrument.ShortMarginRatio);
+		r.startDelivDate(Utils.date(instrument.StartDelivDate));
+		r.symbol(instrument.InstrumentID);
+		r.underlyingInstrId(instrument.UnderlyingInstrID);
+		r.underlyingMultiple(instrument.UnderlyingMultiple);
+		r.volumeMultiple(instrument.VolumeMultiple);
+		return r;
 	}
 
-	private KerCommission translate(CThostFtdcInstrumentCommissionRateField commission) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerCommission translate(CThostFtdcInstrumentCommissionRateField commission) throws KerError {
+		var r = this.factory.create(KerCommission.class);
+		r.brokerId(commission.BrokerID);
+		r.closeRatioByMoney(commission.CloseRatioByMoney);
+		r.closeRatioByVolume(commission.CloseRatioByVolume);
+		r.closeTodayRatioByMoney(commission.CloseTodayRatioByMoney);
+		r.closeTodayRatioByVolume(commission.CloseTodayRatioByVolume);
+		r.exchangeId(exchangeId(commission.InstrumentID));
+		r.investorId(commission.InvestorID);
+		r.openRatioByMoney(commission.OpenRatioByMoney);
+		r.openRatioByVolume(commission.OpenRatioByVolume);
+		r.symbol(commission.InstrumentID);
+		return r;
 	}
 
-	private KerMargin translate(CThostFtdcInstrumentMarginRateField margin) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerMargin translate(CThostFtdcInstrumentMarginRateField margin) throws KerError {
+		var r = this.factory.create(KerMargin.class);
+		r.brokerId(margin.BrokerID);
+		r.exchangeId(exchangeId(margin.InstrumentID));
+		r.hedgeFlag((char)margin.HedgeFlag);
+		r.investorId(margin.InvestorID);
+		r.isRelative(Utils.bool(margin.IsRelative));
+		r.longMarginRatioByMoney(margin.LongMarginRatioByMoney);
+		r.longMarginRatioByVolume(margin.LongMarginRatioByVolume);
+		r.shortMarginRatioByMoney(margin.ShortMarginRatioByMoney);
+		r.shortMarginRatioByVolume(margin.ShortMarginRatioByVolume);
+		r.symbol(margin.InstrumentID);
+		return r;
 	}
 
-	private KerPositionDetail translate(CThostFtdcInvestorPositionDetailField pd) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerPositionDetail translate(CThostFtdcInvestorPositionDetailField pd) throws KerError {
+		var r = this.factory.create(KerPositionDetail.class);
+		r.closeAmount(pd.CloseAmount);
+		r.closeProfitByDate(pd.CloseProfitByDate);
+		r.closeProfitByTrade(pd.CloseProfitByTrade);
+		r.closeVolume(pd.CloseVolume);
+		r.combSymbol(pd.CombInstrumentID);
+		r.direction((char)pd.Direction);
+		r.exchangeMargin(pd.ExchMargin);
+		r.hedgeFlag((char)pd.HedgeFlag);
+		r.lastSettlementPrice(pd.LastSettlementPrice);
+		r.margin(pd.Margin);
+		r.marginRateByMoney(pd.MarginRateByMoney);
+		r.marginRateByVolume(pd.MarginRateByVolume);
+		r.openDate(Utils.date(pd.OpenDate));
+		r.openPrice(pd.OpenPrice);
+		r.positionProfitByDate(pd.PositionProfitByDate);
+		r.positionProfitByTrade(pd.PositionProfitByTrade);
+		r.settlementPrice(pd.SettlementPrice);
+		r.symbol(pd.InstrumentID);
+		r.timeFirstVolume(pd.TimeFirstVolume);
+		r.tradeType((char)pd.TradeType);
+		r.tradingDay(Utils.date(pd.TradingDay));
+		r.volume(pd.Volume);
+		r.volumeMultiple(volumeMultiple(pd.InstrumentID));
+		return r;
 	}
 
-	private KerAccount translate(CThostFtdcTradingAccountField account) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerAccount translate(CThostFtdcTradingAccountField account) throws KerError {
+		var r = this.factory.create(KerAccount.class);
+		r.available(account.Available);
+		r.balance(account.Balance);
+		r.brokerId(account.BrokerID);
+		r.closeProfit(account.CloseProfit);
+		r.commission(account.Commission);
+		r.currencyId(account.CurrencyID);
+		r.currentMargin(account.CurrMargin);
+		r.deposit(account.Deposit);
+		r.exchangeMargin(account.ExchangeMargin);
+		r.frozenCash(account.FrozenCash);
+		r.frozenCommission(account.FrozenCommission);
+		r.frozenMargin(account.FrozenMargin);
+		r.interest(account.Interest);
+		r.interestBase(account.InterestBase);
+		r.positionProfit(account.PositionProfit);
+		r.preBalance(account.PreBalance);
+		r.preDeposit(account.PreDeposit);
+		r.preMargin(account.PreMargin);
+		r.reserve(account.Reserve);
+		r.reserveBalance(account.ReserveBalance);
+		r.settlementId(account.SettlementID);
+		r.tradingDay(Utils.date(account.TradingDay));
+		r.withdraw(account.Withdraw);
+		r.withdrawQuota(account.WithdrawQuota);
+		return r;
 	}
 	
-	private KerOrderStatus transalte(CThostFtdcOrderField order) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerOrderStatus transalte(CThostFtdcOrderField order) throws KerError {
+		var r = this.factory.create(KerOrderStatus.class);
+		r.activeTime(Utils.time(order.ActiveTime));
+		r.cancelTime(Utils.time(order.CancelTime));
+		r.contigentCondition((char)order.ContingentCondition);
+		r.currencyId(order.CurrencyID);
+		r.direction((char)order.Direction);
+		r.forceCloseReason((char)order.ForceCloseReason);
+		r.gtdDate(Utils.date(order.GTDDate));
+		r.hedgeFlag((char)order.CombHedgeFlag);
+		r.insertTime(Utils.time(order.InsertTime));
+		r.ipAddress(order.IPAddress);
+		r.isAutoSuspend(Utils.bool(order.IsAutoSuspend));
+		r.macAddress(order.MacAddress);
+		r.minVolume(order.MinVolume);
+		r.offsetFlag((char)order.CombOffsetFlag);
+		r.orderId(order.OrderRef);
+		r.orderSource((char)order.OrderSource);
+		r.orderStatus((char)order.OrderStatus);
+		r.orderSubmitStatus((char)order.OrderSubmitStatus);
+		r.originalVolume(order.VolumeTotalOriginal);
+		r.price(order.LimitPrice);
+		r.priceType((char)order.OrderPriceType);
+		r.remoteFrontId(order.FrontID);
+		r.remoteSessionId(order.SessionID);
+		r.statusMessage(order.StatusMsg);
+		r.stopPrice(order.StopPrice);
+		r.suspendTime(Utils.time(order.SuspendTime));
+		r.symbol(order.InstrumentID);
+		r.timeCondition((char)order.TimeCondition);
+		r.tradedVolume(order.VolumeTraded);
+		r.tradingDay(Utils.date(order.TradingDay));
+		r.updateTime(Utils.time(order.UpdateTime));
+		r.volumeCondition((char)order.VolumeCondition);
+		r.zceTradedVolume(order.ZCETotalTradedVolume);
+		return r;
 	}
 
-	private KerTradeReport translate(CThostFtdcTradeField trade) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerTradeReport translate(CThostFtdcTradeField trade) throws KerError {
+		var r = this.factory.create(KerTradeReport.class);
+		r.direction((char)trade.Direction);
+		r.hedgeFlag((char)trade.HedgeFlag);
+		r.offsetFlag((char)trade.OffsetFlag);
+		r.orderId(trade.OrderRef);
+		r.price(trade.Price);
+		r.symbol(trade.InstrumentID);
+		r.tradeDate(Utils.date(trade.TradeDate));
+		r.tradeTime(Utils.time(trade.TradeTime));
+		r.tradeType((char)trade.TradeType);
+		r.tradingDay(Utils.date(trade.TradingDay));
+		r.volume(trade.Volume);
+		return r;
 	}
 
 	private KerError translate(CThostFtdcRspInfoField rsp) {
-		// TODO Auto-generated method stub
-		return null;
+		return new KerError(rsp.code, rsp.message);
 	}
 
 	@Override
 	public void OnErrRtnOrderAction(CThostFtdcOrderActionField orderAction, CThostFtdcRspInfoField rspInfo) {
-		this.listener.error(translate(orderAction), translate(rspInfo));
+		try {
+			this.listener.error(translate(orderAction), translate(rspInfo));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
 	}
 
 	@Override
 	public void OnErrRtnOrderInsert(CThostFtdcInputOrderField inputOrder, CThostFtdcRspInfoField rspInfo) {
-		this.listener.error(translate(inputOrder), translate(rspInfo));
+		try {
+			this.listener.error(translate(inputOrder), translate(rspInfo));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
 	}
 
 	@Override
@@ -336,20 +515,32 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	@Override
 	public void OnRspOrderAction(CThostFtdcInputOrderActionField inputOrderAction, CThostFtdcRspInfoField rspInfo,
 			int requestId, boolean isLast) {
-		this.listener.error(translate(inputOrderAction), translate(rspInfo));
+		try {
+			this.listener.error(translate(inputOrderAction), translate(rspInfo));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
 	}
 
 	@Override
 	public void OnRspOrderInsert(CThostFtdcInputOrderField inputOrder, CThostFtdcRspInfoField rspInfo, int requestId,
 			boolean isLast) {
-		this.listener.error(translate(inputOrder), translate(rspInfo));
+		try {
+			this.listener.error(translate(inputOrder), translate(rspInfo));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
 	}
 
 	@Override
 	public void OnRspQryInstrument(CThostFtdcInstrumentField instrument, CThostFtdcRspInfoField rspInfo, int requestId,
 			boolean isLast) {
 		if (rspInfo.code == 0)
-			this.listener.instrument(translate(instrument), isLast);
+			try {
+				this.listener.instrument(translate(instrument), isLast);
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		else
 			this.listener.error(translate(rspInfo));
 	}
@@ -358,7 +549,11 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	public void OnRspQryInstrumentCommissionRate(CThostFtdcInstrumentCommissionRateField instrumentCommissionRate,
 			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
 		if (rspInfo.code == 0)
-			this.listener.commission(translate(instrumentCommissionRate));
+			try {
+				this.listener.commission(translate(instrumentCommissionRate));
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		else
 			this.listener.error(translate(rspInfo));
 	}
@@ -367,7 +562,11 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	public void OnRspQryInstrumentMarginRate(CThostFtdcInstrumentMarginRateField instrumentMarginRate,
 			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
 		if (rspInfo.code == 0)
-			this.listener.margin(translate(instrumentMarginRate));
+			try {
+				this.listener.margin(translate(instrumentMarginRate));
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		else
 			this.listener.error(translate(rspInfo));
 	}
@@ -376,7 +575,11 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	public void OnRspQryInvestorPositionDetail(CThostFtdcInvestorPositionDetailField investorPositionDetail,
 			CThostFtdcRspInfoField rspInfo, int requestId, boolean isLast) {
 		if (rspInfo.code == 0)
-			this.listener.position(translate(investorPositionDetail), isLast);
+			try {
+				this.listener.position(translate(investorPositionDetail), isLast);
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		else
 			this.listener.error(translate(rspInfo));
 	}
@@ -385,7 +588,11 @@ public class CtpTradeEngine extends CThostFtdcTraderSpi implements TradeEngine {
 	public void OnRspQryTradingAccount(CThostFtdcTradingAccountField tradingAccount, CThostFtdcRspInfoField rspInfo,
 			int requestId, boolean isLast) {
 		if (rspInfo.code == 0)
-			this.listener.account(translate(tradingAccount));
+			try {
+				this.listener.account(translate(tradingAccount));
+			} catch (KerError e) {
+				this.listener.error(e);
+			}
 		else
 			this.listener.error(translate(rspInfo));
 	}

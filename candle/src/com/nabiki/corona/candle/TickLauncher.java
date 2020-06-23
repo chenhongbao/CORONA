@@ -1,6 +1,9 @@
 package com.nabiki.corona.candle;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.RejectedExecutionException;
@@ -22,6 +25,7 @@ import com.nabiki.corona.candle.api.EngineState;
 import com.nabiki.corona.candle.api.TickEngine;
 import com.nabiki.corona.candle.api.TickEngineListener;
 import com.nabiki.corona.candle.core.*;
+import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.KerError;
 import com.nabiki.corona.system.api.KerTick;
 import com.nabiki.corona.system.biz.api.TickLocal;
@@ -192,15 +196,14 @@ public class TickLauncher implements Runnable {
 		public TickPostListener() {
 		}
 
-		private boolean isWorkingTick(Instant update) {
-			var diff = Instant.now().getEpochSecond() - update.getEpochSecond();
-			return Math.abs(diff) < 60;
+		private boolean isWorkingTick(LocalDate date, LocalTime time) {
+			return Math.abs(Utils.minus(LocalDateTime.now(), LocalDateTime.of(date, time))) < 60;
 		}
 
 		@Override
 		public void tick(KerTick tick) {
 			// Check and set working state in tick local.
-			if (!this.working && isWorkingTick(tick.updateTime())) {
+			if (!this.working && isWorkingTick(tick.actionDay(), tick.updateTime())) {
 				this.working = true;
 				for (var local : tickLocals)
 					local.marketWorking(true);

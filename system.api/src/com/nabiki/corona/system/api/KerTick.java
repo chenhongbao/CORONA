@@ -1,7 +1,7 @@
 package com.nabiki.corona.system.api;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import com.nabiki.corona.client.api.Tick;
 
@@ -50,7 +50,9 @@ public interface KerTick extends Tick {
 
 	void isRealTime(boolean b);
 
-	void updateTime(Instant i);
+	void updateTime(LocalTime i);
+	
+	void updateMillis(int ms);
 
 	void tradingDay(LocalDate d);
 

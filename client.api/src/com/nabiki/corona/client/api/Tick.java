@@ -1,7 +1,7 @@
 package com.nabiki.corona.client.api;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Any object implementing this interface provides concrete data access to the tick flow from market.
@@ -54,7 +54,9 @@ public interface Tick {
 
 	boolean isRealTime();
 
-	Instant updateTime();
+	LocalTime updateTime();
+	
+	int updateMillis();
 
 	LocalDate tradingDay();
 

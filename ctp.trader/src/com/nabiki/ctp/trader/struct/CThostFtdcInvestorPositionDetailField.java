@@ -26,7 +26,7 @@ public class CThostFtdcInvestorPositionDetailField {
 	public double LastSettlementPrice;
 	public double SettlementPrice;
 	public int CloseVolume;
-	public int CloseAmount;
+	public double CloseAmount;
 	public int TimeFirstVolume;
 	public String InvestUnitID;
 

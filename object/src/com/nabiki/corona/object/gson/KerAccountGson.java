@@ -26,7 +26,7 @@ public class KerAccountGson implements KerAccount {
 	public double withdrawQuota;
 	public double reserve;
 	public LocalDate tradingDay;
-	public String settlementId;
+	public int settlementId;
 	public double exchangeMargin;
 	public double reserveBalance;
 	public String currencyId;
@@ -137,11 +137,6 @@ public class KerAccountGson implements KerAccount {
 	@Override
 	public LocalDate tradingDay() {
 		return this.tradingDay;
-	}
-
-	@Override
-	public String settlementId() {
-		return this.settlementId;
 	}
 
 	@Override
@@ -275,11 +270,6 @@ public class KerAccountGson implements KerAccount {
 	}
 
 	@Override
-	public void settlementId(String s) {
-		this.settlementId = s;
-	}
-
-	@Override
 	public void exchangeMargin(double d) {
 		this.exchangeMargin = d;
 	}
@@ -292,6 +282,16 @@ public class KerAccountGson implements KerAccount {
 	@Override
 	public void currencyId(String s) {
 		this.currencyId = s;
+	}
+
+	@Override
+	public int settlementId() {
+		return this.settlementId;
+	}
+
+	@Override
+	public void settlementId(int s) {
+		this.settlementId = s;
 	}
 
 }

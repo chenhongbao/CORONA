@@ -1,6 +1,6 @@
 package com.nabiki.corona.trade;
 
-import java.time.Instant;
+import java.time.LocalTime;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -88,7 +88,7 @@ public class TradeRemoteService implements TradeRemote {
 				status.originalVolume(order.volume());
 				status.tradedVolume(0);
 				status.price(0.0D);
-				status.updateTime(Instant.now());
+				status.updateTime(LocalTime.now());
 				status.orderStatus((char) OrderStatus.CANCELED);
 				status.orderSubmitStatus((char) OrderSubmitStatus.INSERT_REJECTED);
 

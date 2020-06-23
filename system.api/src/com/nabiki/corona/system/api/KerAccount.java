@@ -57,7 +57,7 @@ public interface KerAccount extends Account {
 
 	void tradingDay(LocalDate d);
 
-	void settlementId(String s);
+	void settlementId(int s);
 
 	void exchangeMargin(double d);
 

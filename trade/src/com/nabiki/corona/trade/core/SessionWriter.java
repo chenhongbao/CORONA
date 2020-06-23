@@ -3,9 +3,9 @@ package com.nabiki.corona.trade.core;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import com.nabiki.corona.system.Utils;
@@ -57,8 +57,8 @@ public class SessionWriter {
 		write(bytes, Path.of(dir.toAbsolutePath().toString(), "order.json"));
 	}
 	
-	public String formatInstant(Instant in) {
-		LocalDateTime dt = LocalDateTime.ofInstant(in, ZoneId.systemDefault());
+	public String formatTime(LocalTime time) {
+		var dt = LocalDateTime.of(LocalDate.now(), time);
 		return dt.format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss_SSS"));
 	}
 	
@@ -68,7 +68,7 @@ public class SessionWriter {
 			throw new KerError("Fail creating directory to save session info: " + rep.sessionId());
 		
 		var bytes = this.codec.encode(rep);
-		write(bytes, Path.of(dir.toAbsolutePath().toString(), "trade." + formatInstant(rep.tradeTime()) + ".json"));
+		write(bytes, Path.of(dir.toAbsolutePath().toString(), "trade." + formatTime(rep.tradeTime()) + ".json"));
 	}
 	
 	public void write(KerOrderStatus status) throws KerError {
@@ -77,6 +77,6 @@ public class SessionWriter {
 			throw new KerError("Fail creating directory to save session info: " + status.sessionId());
 		
 		var bytes = this.codec.encode(status);
-		write(bytes, Path.of(dir.toAbsolutePath().toString(), "status." + formatInstant(status.updateTime()) + ".json"));
+		write(bytes, Path.of(dir.toAbsolutePath().toString(), "status." + formatTime(status.updateTime()) + ".json"));
 	}
 }

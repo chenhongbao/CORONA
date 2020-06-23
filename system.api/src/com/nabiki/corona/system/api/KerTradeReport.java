@@ -1,6 +1,6 @@
 package com.nabiki.corona.system.api;
 
-import java.time.Instant;
+import java.time.LocalTime;
 import java.time.LocalDate;
 
 import com.nabiki.corona.client.api.TradeReport;
@@ -30,7 +30,7 @@ public interface KerTradeReport extends TradeReport {
 	
 	void tradeDate(LocalDate date);
 
-	void tradeTime(Instant t);
+	void tradeTime(LocalTime t);
 
 	char tradeType();
 

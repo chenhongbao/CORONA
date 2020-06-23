@@ -1,12 +1,14 @@
 package com.nabiki.corona.candle.core;
 
 import java.nio.file.Paths;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.nabiki.corona.candle.api.EngineState;
 import com.nabiki.corona.candle.api.TickEngine;
 import com.nabiki.corona.candle.api.TickEngineListener;
+import com.nabiki.corona.object.DefaultDataFactory;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.*;
@@ -27,6 +29,9 @@ public class CtpTickEngine extends CThostFtdcMdSpi implements TickEngine {
 
 	private RemoteConfig config;
 	private CThostFtdcMdApi mdApi;
+	
+	// Factory.
+	private DataFactory factory = DefaultDataFactory.create();
 	
 	private Set<String> subscribed = new HashSet<>();
 
@@ -113,14 +118,55 @@ public class CtpTickEngine extends CThostFtdcMdSpi implements TickEngine {
 		}
 	}
 	
-	private KerTick translate(CThostFtdcDepthMarketDataField depthMarketData) {
-		// TODO Auto-generated method stub
-		return null;
+	private KerTick translate(CThostFtdcDepthMarketDataField depth) throws KerError {
+		var r = this.factory.create(KerTick.class);
+		r.actionDay(Utils.date(depth.ActionDay));
+		r.askPrice(depth.AskPrice1);
+		r.askVolume(depth.AskVolume1);
+		r.averagePrice(depth.AveragePrice);
+		r.bidPrice(depth.BidPrice1);
+		r.bidVolume(depth.BidVolume1);
+		r.closePrice(depth.ClosePrice);
+		r.highestPrice(depth.HighestPrice);
+		r.lastPrice(depth.LastPrice);
+		r.lowerLimitPrice(depth.LowerLimitPrice);
+		r.lowestPrice(depth.LowestPrice);
+		r.openInterest((int)depth.OpenInterest);
+		r.openPrice(depth.OpenPrice);
+		r.preClosePrice(depth.PreClosePrice);
+		r.preOpenInterest((int)depth.PreOpenInterest);
+		r.preSettlementPrice(depth.PreSettlementPrice);
+		r.settlementPrice(depth.SettlementPrice);
+		r.symbol(depth.InstrumentID);
+		r.tradingDay(Utils.date(depth.TradingDay));
+		r.updateTime(Utils.time(depth.UpdateTime));
+		r.updateMillis(depth.UpdateMillisec);
+		r.upperLimitPrice(depth.UpperLimitPrice);
+		r.volume(depth.Volume);
+		// Check the tick type.
+		// Need close price to decide post market and realtime.
+		r.isPreMarket(isPreMarket());
+		r.isPostMarket(isPostMarket(r));
+		r.isRealTime(isReal(r));
+		return r;
+	}
+	
+	private boolean isPreMarket() {
+		// TODO Use 21:00 and 09:00 to check the pre market.
+		var hour = LocalTime.now().getHour();
+		return (8 < hour && hour < 9) || (20 < hour && hour < 21);
+	}
+	
+	private boolean isPostMarket(KerTick tick) {
+		return Utils.validPrice(tick.closePrice());
+	}
+	
+	private boolean isReal(KerTick tick) {
+		return !isPreMarket() && !isPostMarket(tick);
 	}
 	
 	private KerError translate(CThostFtdcRspInfoField rsp) {
-		// TODO Auto-generated method stub
-		return null;
+		return new KerError(rsp.code, rsp.message);
 	}
 
 	@Override
@@ -192,6 +238,10 @@ public class CtpTickEngine extends CThostFtdcMdSpi implements TickEngine {
 
 	@Override
 	public void OnRtnDepthMarketData(CThostFtdcDepthMarketDataField depthMarketData) {
-		this.listener.tick(translate(depthMarketData));
+		try {
+			this.listener.tick(translate(depthMarketData));
+		} catch (KerError e) {
+			this.listener.error(e);
+		}
 	}
 }

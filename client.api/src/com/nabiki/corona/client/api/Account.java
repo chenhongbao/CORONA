@@ -56,7 +56,7 @@ public interface Account {
 
 	LocalDate tradingDay();
 
-	String settlementId();
+	int settlementId();
 
 	double exchangeMargin();
 

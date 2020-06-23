@@ -11,7 +11,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +22,10 @@ import com.nabiki.corona.DirectionFlag;
 import com.nabiki.corona.system.api.KerError;
 
 public class Utils {
+	private static DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+	private static DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("hh:mm:ss");
+	private static DateTimeFormatter dateTimeFormat = DateTimeFormatter.ofPattern("yyyyMMddhh:mm:ss");
+	
 	// Set system console writes to file.
 	static {
 		var out = filePrintStream(Path.of("./stdout.txt"));
@@ -46,6 +52,49 @@ public class Utils {
 		} catch (IOException e) {
 			return null;
 		}
+	}
+	
+	public static LocalDate date(String date) {
+		return LocalDate.parse(date, dateFormat);
+	}
+	
+	public static LocalTime time(String time) {
+		return LocalTime.parse(time, timeFormat);
+	}
+	
+	public static long minus(LocalDateTime d1, LocalDateTime d2) {
+		return d1.toEpochSecond(ZoneOffset.UTC) - d2.toEpochSecond(ZoneOffset.UTC);
+	}
+	
+	/**
+	 * Get {@link LocalDateTime} from string valist.
+	 * 
+	 * @param vals string list starting with date, then time.
+	 * @return date time object parsed from strings
+	 */
+	public static LocalDateTime dateTime(String date, String time) {
+		return LocalDateTime.parse(date + time, dateTimeFormat);	
+	}
+	
+	public static String date(LocalDate date) {
+		return date.format(dateFormat);
+	}
+	
+	public static String time(LocalTime time) {
+		return time.format(timeFormat);
+	}
+	
+	public static String dateTime(LocalDateTime dateTime) {
+		return dateTime.format(dateTimeFormat);
+	}
+	
+	public static Instant timeStamp(String date, String time, int millis) {
+		var dt = dateTime(date, time);
+		return Instant.ofEpochMilli(dt.toInstant(ZoneOffset.UTC).toEpochMilli() + millis);
+	}
+	
+	public static boolean bool(int is) {
+		return is != 0 ? true : false;
 	}
 
 	public static LocalDate deepCopy(LocalDate source) {

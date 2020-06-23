@@ -1,7 +1,7 @@
 package com.nabiki.corona.client.api;
 
-import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 /**
  * Order report to client.
@@ -35,7 +35,7 @@ public interface OrderStatus {
 
 	char timeCondition();
 
-	Date gtdDate();
+	LocalDate gtdDate();
 
 	char volumeCondition();
 
@@ -47,7 +47,7 @@ public interface OrderStatus {
 
 	char orderSubmitStatus();
 
-	Date tradingDay();
+	LocalDate tradingDay();
 
 	char orderStatus();
 
@@ -60,15 +60,15 @@ public interface OrderStatus {
 	 */
 	int waitingVolume();
 
-	Instant insertTime();
+	LocalTime insertTime();
 
-	Instant activeTime();
+	LocalTime activeTime();
 
-	Instant suspendTime();
+	LocalTime suspendTime();
 
-	Instant updateTime();
+	LocalTime updateTime();
 
-	Instant cancelTime();
+	LocalTime cancelTime();
 
 	int zceTradedVolume();
 

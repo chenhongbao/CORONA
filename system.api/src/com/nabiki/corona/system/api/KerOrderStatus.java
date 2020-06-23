@@ -1,7 +1,7 @@
 package com.nabiki.corona.system.api;
 
-import java.time.Instant;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 import com.nabiki.corona.client.api.OrderStatus;
 
@@ -32,7 +32,7 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void timeCondition(char t);
 
-	void gtdDate(Date d);
+	void gtdDate(LocalDate d);
 
 	void volumeCondition(char t);
 
@@ -52,7 +52,7 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void orderSubmitStatus(char t);
 
-	void tradingDay(Date d);
+	void tradingDay(LocalDate d);
 
 	char orderSource();
 
@@ -64,15 +64,15 @@ public interface KerOrderStatus extends OrderStatus {
 
 	void waitingVolume(int i);
 
-	void insertTime(Instant i);
+	void insertTime(LocalTime i);
 
-	void activeTime(Instant i);
+	void activeTime(LocalTime i);
 
-	void suspendTime(Instant i);
+	void suspendTime(LocalTime i);
 
-	void updateTime(Instant i);
+	void updateTime(LocalTime i);
 
-	void cancelTime(Instant i);
+	void cancelTime(LocalTime i);
 
 	int remoteFrontId();
 
