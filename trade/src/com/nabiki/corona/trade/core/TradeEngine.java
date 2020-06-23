@@ -2,6 +2,10 @@ package com.nabiki.corona.trade.core;
 
 import java.nio.file.Paths;
 
+import com.nabiki.corona.ActionFlag;
+import com.nabiki.corona.CloseReason;
+import com.nabiki.corona.HedgeFlag;
+import com.nabiki.corona.OrderPriceType;
 import com.nabiki.corona.system.Utils;
 import com.nabiki.corona.system.api.*;
 import com.nabiki.corona.system.info.api.RemoteConfig;
@@ -20,6 +24,7 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 
 	private RemoteConfig config;
 	private CThostFtdcTraderApi traderApi;
+	private CThostFtdcRspUserLoginField user;
 
 	public TradeEngine(TradeEngineListener listener, TradeServiceContext context) {
 		this.context = context;
@@ -107,40 +112,98 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 			break;
 		}
 	}
-
-	private CThostFtdcInputOrderActionField translate(KerAction request) {
-		// TODO Auto-generated method stub
-		return null;
+	
+	private CThostFtdcRspUserLoginField user() throws KerError {
+		if (this.user == null)
+			throw new KerError("User login null pointer.");
+		return this.user;
+	}
+	
+	private String exchangeId(String symbol) throws KerError {
+		var in = this.context.info().instrument(symbol);
+		if (in == null)
+			throw new KerError("Instrument not found.");
+		return in.exchangeId();
 	}
 
-	private CThostFtdcInputOrderField translate(KerOrder request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcInputOrderActionField translate(KerAction request) throws KerError {
+		var r = new CThostFtdcInputOrderActionField();
+		r.BrokerID = user().BrokerID;
+		r.InvestorID = user().UserID;
+		r.UserID = user.UserID;
+		r.ActionFlag = ActionFlag.DELETE;
+		r.FrontID = user().FrontID;
+		r.SessionID = user().SessionID;
+		r.InstrumentID = request.symbol();
+		r.OrderRef = request.orderId();
+		r.ExchangeID = exchangeId(request.symbol());
+		return r;
 	}
 
-	private CThostFtdcQryInvestorPositionDetailField translate(KerQueryPositionDetail request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcInputOrderField translate(KerOrder request) throws KerError {
+		var r = new CThostFtdcInputOrderField();
+		r.BrokerID = user().BrokerID;
+		r.InvestorID = user().UserID;
+		r.ExchangeID = exchangeId(request.symbol());
+		r.InstrumentID = request.symbol();
+		r.UserID = user().UserID;
+		r.OrderPriceType = OrderPriceType.LIMIT_PRICE;
+		r.Direction = (byte)request.direction();
+		r.CombOffsetFlag = (byte)request.offsetFlag();
+		r.CombHedgeFlag = (byte)request.hedgeFlag();
+		r.LimitPrice = request.price();
+		r.VolumeTotalOriginal = request.volume();
+		r.TimeCondition = (byte)request.timeCondition();
+		r.MinVolume = 1;
+		r.ContingentCondition = (byte)request.contigentConditon();
+		r.StopPrice = 0D;
+		r.ForceCloseReason = (byte)CloseReason.NOT_FORCE_CLOSE;
+		r.IsAutoSuspend = 0;
+		return r;
 	}
 
-	private CThostFtdcQryTradingAccountField translate(KerQueryAccount request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcQryInvestorPositionDetailField translate(KerQueryPositionDetail request) throws KerError {
+		var r = new CThostFtdcQryInvestorPositionDetailField();
+		r.BrokerID = user().BrokerID;
+		r.InvestorID = user().UserID;
+		r.ExchangeID = exchangeId(request.symbol());
+		r.InstrumentID = request.symbol();
+		return r;
 	}
 
-	private CThostFtdcQryInstrumentCommissionRateField translate(KerQueryCommission request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcQryTradingAccountField translate(KerQueryAccount request) throws KerError {
+		var r = new CThostFtdcQryTradingAccountField();
+		r.AccountID = user().UserID;
+		r.BrokerID = user().BrokerID;
+		r.CurrencyID = this.config.currencyId();
+		r.InvestorID = user().UserID;
+		return r;
 	}
 
-	private CThostFtdcQryInstrumentMarginRateField translate(KerQueryMargin request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcQryInstrumentCommissionRateField translate(KerQueryCommission request) throws KerError {
+		var r = new CThostFtdcQryInstrumentCommissionRateField();
+		r.BrokerID = user().BrokerID;
+		r.ExchangeID = exchangeId(request.symbol());
+		r.InstrumentID = request.symbol();
+		r.InvestorID = user().UserID;
+		return r;
 	}
 
-	private CThostFtdcQryInstrumentField translate(KerQueryInstrument request) {
-		// TODO Auto-generated method stub
-		return null;
+	private CThostFtdcQryInstrumentMarginRateField translate(KerQueryMargin request) throws KerError {
+		var r = new CThostFtdcQryInstrumentMarginRateField();
+		r.BrokerID = user().BrokerID;
+		r.InvestorID = user().UserID;
+		r.InstrumentID = request.symbol();
+		r.ExchangeID = exchangeId(request.symbol());
+		r.HedgeFlag = (byte)HedgeFlag.SPECULATION;
+		return r;
+	}
+
+	private CThostFtdcQryInstrumentField translate(KerQueryInstrument request) throws KerError {
+		var  r = new CThostFtdcQryInstrumentField();
+		r.ExchangeID = exchangeId(request.symbol());
+		r.InstrumentID = request.symbol();
+		return r;
 	}
 
 	private void checkRtnCode(String msg, int n) {
@@ -331,6 +394,9 @@ public class TradeEngine extends CThostFtdcTraderSpi {
 	public void OnRspUserLogin(CThostFtdcRspUserLoginField rspUserLogin, CThostFtdcRspInfoField rspInfo, int requestId,
 			boolean isLast) {
 		if (rspInfo.code == 0) {
+			// Keep user login.
+			this.user = rspUserLogin;
+			// Settlement.
 			CThostFtdcSettlementInfoConfirmField req = new CThostFtdcSettlementInfoConfirmField();
 			req.BrokerID = this.config.brokerId();
 			req.InvestorID = this.config.userId();
